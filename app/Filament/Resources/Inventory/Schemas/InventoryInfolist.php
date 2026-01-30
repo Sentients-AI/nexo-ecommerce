@@ -67,7 +67,7 @@ final class InventoryInfolist
                                     ->limit(20)
                                     ->get()
                                     ->map(fn (StockMovement $movement) => [
-                                        'type' => $movement->type,
+                                        'type' => $movement->type->value,
                                         'quantity' => $movement->quantity,
                                         'reason' => $movement->reason ?? '-',
                                         'created_at' => $movement->created_at?->format('Y-m-d H:i:s'),
@@ -80,10 +80,10 @@ final class InventoryInfolist
                                     ->label('Type')
                                     ->badge()
                                     ->color(fn (string $state): string => match ($state) {
-                                        'reservation' => 'warning',
+                                        'reserve' => 'warning',
                                         'release' => 'info',
-                                        'adjustment_in', 'reconciliation' => 'success',
-                                        'adjustment_out', 'fulfillment' => 'danger',
+                                        'in', 'reconciliation' => 'success',
+                                        'out' => 'danger',
                                         default => 'gray',
                                     }),
 
