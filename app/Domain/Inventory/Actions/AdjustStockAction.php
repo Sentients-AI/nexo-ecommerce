@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Inventory\Actions;
 
 use App\Domain\Inventory\DTOs\AdjustStockData;
+use App\Domain\Inventory\Enums\StockMovementType;
 use App\Domain\Inventory\Models\Stock;
 use App\Domain\Inventory\Models\StockMovement;
 use Exception;
@@ -23,18 +24,18 @@ final class AdjustStockAction
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $newQuantity = $stock->quantity + $data->quantityChange;
+            $newQuantity = $stock->quantity_available + $data->quantityChange;
 
             if ($newQuantity < 0) {
                 throw new Exception('Stock adjustment would result in negative quantity');
             }
 
-            $stock->update(['quantity' => $newQuantity]);
+            $stock->update(['quantity_available' => $newQuantity]);
 
             StockMovement::query()->create([
                 'stock_id' => $stock->id,
                 'product_id' => $data->productId,
-                'type' => $data->quantityChange > 0 ? 'adjustment_in' : 'adjustment_out',
+                'type' => $data->quantityChange > 0 ? StockMovementType::In : StockMovementType::Out,
                 'quantity' => abs($data->quantityChange),
                 'reason' => $data->reason,
                 'user_id' => $data->userId,

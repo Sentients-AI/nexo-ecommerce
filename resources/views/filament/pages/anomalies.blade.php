@@ -268,7 +268,7 @@
                             @foreach($this->getNegativeStockProducts() as $stock)
                                 <tr>
                                     <td class="px-4 py-2 font-mono text-xs">
-                                        <a href="{{ route('filament.control-plane.resources.inventory.view', ['record' => $stock->id]) }}"
+                                        <a href="{{ route('filament.control-plane.resources.inventory.inventories.view', ['record' => $stock->id]) }}"
                                            class="text-primary-600 hover:underline">
                                             {{ $stock->product?->sku }}
                                         </a>
@@ -313,7 +313,7 @@
                             @foreach($this->getStaleReservations() as $stock)
                                 <tr>
                                     <td class="px-4 py-2 font-mono text-xs">
-                                        <a href="{{ route('filament.control-plane.resources.inventory.view', ['record' => $stock->id]) }}"
+                                        <a href="{{ route('filament.control-plane.resources.inventory.inventories.view', ['record' => $stock->id]) }}"
                                            class="text-primary-600 hover:underline">
                                             {{ $stock->product?->sku }}
                                         </a>
