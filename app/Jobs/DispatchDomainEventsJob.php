@@ -29,7 +29,7 @@ final class DispatchDomainEventsJob implements ShouldQueue
             ->orderBy('id')
             ->limit(50)
             ->get()
-            ->each(function ($record) {
+            ->each(function ($record): void {
                 $eventClass = $record->event_type;
 
                 event(new $eventClass(...$record->payload));
