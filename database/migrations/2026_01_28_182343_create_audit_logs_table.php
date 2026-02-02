@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('audit_logs', function (Blueprint $table) {
+        Schema::create('audit_logs', function (Blueprint $table): void {
             $table->id();
             $table->string('actor_type')->default('user'); // user, system
             $table->unsignedBigInteger('actor_id')->nullable();

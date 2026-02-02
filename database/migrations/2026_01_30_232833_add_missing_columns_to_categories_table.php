@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
+        Schema::table('categories', function (Blueprint $table): void {
             $table->text('description')->nullable()->after('slug');
             $table->foreignId('parent_id')->nullable()->after('description')->constrained('categories')->nullOnDelete();
             $table->boolean('is_active')->default(true)->after('parent_id');
@@ -27,7 +27,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('categories', function (Blueprint $table) {
+        Schema::table('categories', function (Blueprint $table): void {
             $table->dropForeign(['parent_id']);
             $table->dropColumn(['description', 'parent_id', 'is_active', 'image', 'sort_order']);
         });

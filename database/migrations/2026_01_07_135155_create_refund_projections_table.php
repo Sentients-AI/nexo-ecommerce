@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('refund_projections', function (Blueprint $table) {
+        Schema::create('refund_projections', function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('refund_id')->unique();
             $table->unsignedBigInteger('order_id');

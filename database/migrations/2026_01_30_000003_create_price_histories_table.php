@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('price_histories', function (Blueprint $table) {
+        Schema::create('price_histories', function (Blueprint $table): void {
             $table->id();
             $table->unsignedBigInteger('product_id');
             $table->bigInteger('old_price_cents')->unsigned()->nullable();

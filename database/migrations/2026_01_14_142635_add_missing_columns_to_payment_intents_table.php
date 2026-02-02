@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('payment_intents', function (Blueprint $table) {
+        Schema::table('payment_intents', function (Blueprint $table): void {
             $table->string('transaction_id')->nullable()->after('status');
             $table->json('gateway_response')->nullable()->after('transaction_id');
             $table->timestamp('failed_at')->nullable()->after('expires_at');
@@ -25,7 +25,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('payment_intents', function (Blueprint $table) {
+        Schema::table('payment_intents', function (Blueprint $table): void {
             $table->dropColumn(['transaction_id', 'gateway_response', 'failed_at']);
         });
     }
