@@ -21,7 +21,7 @@ final class UserPolicy
      * Determine whether the user can view the model.
      * Admin can view users.
      */
-    public function view(User $user, User $model): bool
+    public function view(User $user): bool
     {
         return $user->hasRole('admin');
     }
@@ -29,7 +29,7 @@ final class UserPolicy
     /**
      * No direct creation via control plane.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
         return false;
     }
@@ -37,7 +37,7 @@ final class UserPolicy
     /**
      * No direct editing via control plane.
      */
-    public function update(User $user, User $model): bool
+    public function update(): bool
     {
         return false;
     }
@@ -45,7 +45,7 @@ final class UserPolicy
     /**
      * No deletion allowed.
      */
-    public function delete(User $user, User $model): bool
+    public function delete(): bool
     {
         return false;
     }
@@ -54,7 +54,7 @@ final class UserPolicy
      * Assign role action.
      * Admin only can assign roles.
      */
-    public function assignRole(User $user, User $model): bool
+    public function assignRole(User $user): bool
     {
         return $user->hasRole('admin');
     }

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Domain\FeatureFlag\Models\FeatureFlag;
 use App\Domain\User\Models\User;
 
 final class FeatureFlagPolicy
@@ -22,7 +21,7 @@ final class FeatureFlagPolicy
      * Determine whether the user can view the model.
      * Admin can manage feature flags.
      */
-    public function view(User $user, FeatureFlag $flag): bool
+    public function view(User $user): bool
     {
         return $user->hasRole('admin');
     }
@@ -30,7 +29,7 @@ final class FeatureFlagPolicy
     /**
      * No direct creation via UI.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
         return false;
     }
@@ -38,7 +37,7 @@ final class FeatureFlagPolicy
     /**
      * No direct editing via UI.
      */
-    public function update(User $user, FeatureFlag $flag): bool
+    public function update(): bool
     {
         return false;
     }
@@ -46,7 +45,7 @@ final class FeatureFlagPolicy
     /**
      * No deletion allowed.
      */
-    public function delete(User $user, FeatureFlag $flag): bool
+    public function delete(): bool
     {
         return false;
     }
@@ -55,7 +54,7 @@ final class FeatureFlagPolicy
      * Toggle feature flag action.
      * Admin only can toggle feature flags.
      */
-    public function toggle(User $user, FeatureFlag $flag): bool
+    public function toggle(User $user): bool
     {
         return $user->hasRole('admin');
     }
