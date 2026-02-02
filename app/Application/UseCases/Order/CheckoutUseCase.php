@@ -25,7 +25,7 @@ final readonly class CheckoutUseCase
 
     public function execute(CheckoutRequest $request): CheckoutResponse
     {
-        return DB::transaction(function () use ($request) {
+        return DB::transaction(function () use ($request): CheckoutResponse {
             // Load cart with items
             $cart = Cart::query()
                 ->with('items.product')

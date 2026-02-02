@@ -29,7 +29,7 @@ final readonly class CheckoutResponse
             totalCents: $order->total_cents,
             currency: $order->currency,
             status: $order->status->value,
-            paymentIntentId: $paymentIntent ? PaymentIntentId::fromInt($paymentIntent->id) : null,
+            paymentIntentId: $paymentIntent instanceof PaymentIntent ? PaymentIntentId::fromInt($paymentIntent->id) : null,
             providerReference: $paymentIntent?->provider_reference,
         );
     }

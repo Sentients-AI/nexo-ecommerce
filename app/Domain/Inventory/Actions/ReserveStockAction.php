@@ -9,6 +9,7 @@ use App\Domain\Inventory\Enums\StockMovementType;
 use App\Domain\Inventory\Exceptions\InsufficientStockException;
 use App\Domain\Inventory\Models\Stock;
 use App\Domain\Inventory\Models\StockMovement;
+use App\Shared\Metrics\MetricsRecorder;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -21,6 +22,8 @@ final class ReserveStockAction
      */
     public function execute(ReserveStockData $data): Stock
     {
+        MetricsRecorder::increment('inventory_reservation_attempts_total');
+
         return DB::transaction(function () use ($data) {
             $stock = Stock::query()
                 ->where('product_id', $data->productId)
@@ -28,6 +31,9 @@ final class ReserveStockAction
                 ->firstOrFail();
 
             if (! $stock->isAvailable($data->quantity)) {
+                MetricsRecorder::increment('inventory_underflow_attempts_total', [
+                    'product_id' => (string) $data->productId,
+                ]);
                 throw new InsufficientStockException(
                     productId: $data->productId,
                     requested: $data->quantity,

@@ -61,9 +61,7 @@ final class Cart extends BaseModel
      */
     public function getSubtotalAttribute(): float
     {
-        return $this->items->sum(function (CartItem $item) {
-            return $item->quantity * (float) $item->price;
-        });
+        return $this->items->sum(fn (CartItem $item): float => $item->quantity * (float) $item->price);
     }
 
     /**
