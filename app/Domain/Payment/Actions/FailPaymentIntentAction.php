@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Domain\Payment\Actions;
 
 use App\Domain\Payment\Contracts\PaymentGatewayService;
@@ -20,7 +22,7 @@ final readonly class FailPaymentIntentAction
             return $intent;
         }
 
-        return DB::transaction(function () use ($intent) {
+        return DB::transaction(function () use ($intent): PaymentIntent {
 
             try {
                 $this->gateway->cancelIntent($intent);

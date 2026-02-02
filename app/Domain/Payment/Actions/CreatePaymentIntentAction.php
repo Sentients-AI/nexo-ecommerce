@@ -10,7 +10,7 @@ use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Models\PaymentIntent;
 use Illuminate\Support\Facades\DB;
 
-final class CreatePaymentIntentAction
+final readonly class CreatePaymentIntentAction
 {
     public function __construct(
         private PaymentGatewayService $gateway
