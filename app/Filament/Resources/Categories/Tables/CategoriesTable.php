@@ -78,7 +78,7 @@ final class CategoriesTable
                 EditAction::make(),
                 DeleteAction::make()
                     ->requiresConfirmation()
-                    ->before(function (Category $record) {
+                    ->before(function (Category $record): void {
                         if ($record->hasChildren()) {
                             throw new DomainException('Cannot delete a category that has child categories.');
                         }

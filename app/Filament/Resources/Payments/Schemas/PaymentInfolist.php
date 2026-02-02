@@ -89,7 +89,7 @@ final class PaymentInfolist
                             ->columnSpanFull(),
                     ])
                     ->collapsed()
-                    ->visible(fn (PaymentIntent $record): bool => is_array($record->gateway_response) && ! empty($record->gateway_response)),
+                    ->visible(fn (PaymentIntent $record): bool => is_array($record->gateway_response) && $record->gateway_response !== []),
 
                 Section::make('Metadata')
                     ->schema([
@@ -99,25 +99,23 @@ final class PaymentInfolist
                             ->columnSpanFull(),
                     ])
                     ->collapsed()
-                    ->visible(fn (PaymentIntent $record): bool => is_array($record->metadata) && ! empty($record->metadata)),
+                    ->visible(fn (PaymentIntent $record): bool => is_array($record->metadata) && $record->metadata !== []),
 
                 Section::make('Payment Event Timeline')
                     ->schema([
                         RepeatableEntry::make('paymentEvents')
                             ->label('')
-                            ->state(function (PaymentIntent $record): array {
-                                return DomainEventRecord::query()
-                                    ->where('payload->payment_intent_id', $record->id)
-                                    ->orWhere('payload->paymentIntentId', $record->id)
-                                    ->orderBy('occurred_at', 'desc')
-                                    ->get()
-                                    ->map(fn (DomainEventRecord $event) => [
-                                        'event_type' => class_basename($event->event_type),
-                                        'occurred_at' => $event->occurred_at?->format('Y-m-d H:i:s'),
-                                        'payload' => json_encode($event->payload, JSON_PRETTY_PRINT),
-                                    ])
-                                    ->toArray();
-                            })
+                            ->state(fn (PaymentIntent $record): array => DomainEventRecord::query()
+                                ->where('payload->payment_intent_id', $record->id)
+                                ->orWhere('payload->paymentIntentId', $record->id)
+                                ->orderBy('occurred_at', 'desc')
+                                ->get()
+                                ->map(fn (DomainEventRecord $event): array => [
+                                    'event_type' => class_basename($event->event_type),
+                                    'occurred_at' => $event->occurred_at?->format('Y-m-d H:i:s'),
+                                    'payload' => json_encode($event->payload, JSON_PRETTY_PRINT),
+                                ])
+                                ->toArray())
                             ->schema([
                                 TextEntry::make('event_type')
                                     ->label('Event')

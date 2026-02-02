@@ -111,19 +111,17 @@ final class OrderInfolist
                     ->schema([
                         RepeatableEntry::make('domainEvents')
                             ->label('')
-                            ->state(function (Order $record): array {
-                                return DomainEventRecord::query()
-                                    ->where('payload->order_id', $record->id)
-                                    ->orWhere('payload->orderId', $record->id)
-                                    ->orderBy('occurred_at', 'desc')
-                                    ->get()
-                                    ->map(fn (DomainEventRecord $event) => [
-                                        'event_type' => class_basename($event->event_type),
-                                        'occurred_at' => $event->occurred_at?->format('Y-m-d H:i:s'),
-                                        'payload' => json_encode($event->payload, JSON_PRETTY_PRINT),
-                                    ])
-                                    ->toArray();
-                            })
+                            ->state(fn (Order $record): array => DomainEventRecord::query()
+                                ->where('payload->order_id', $record->id)
+                                ->orWhere('payload->orderId', $record->id)
+                                ->orderBy('occurred_at', 'desc')
+                                ->get()
+                                ->map(fn (DomainEventRecord $event): array => [
+                                    'event_type' => class_basename($event->event_type),
+                                    'occurred_at' => $event->occurred_at?->format('Y-m-d H:i:s'),
+                                    'payload' => json_encode($event->payload, JSON_PRETTY_PRINT),
+                                ])
+                                ->toArray())
                             ->schema([
                                 TextEntry::make('event_type')
                                     ->label('Event')

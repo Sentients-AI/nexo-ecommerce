@@ -100,23 +100,21 @@ final class ProductInfolist
                     ->schema([
                         RepeatableEntry::make('priceHistories')
                             ->label('')
-                            ->state(function (Product $record): array {
-                                return PriceHistory::query()
-                                    ->where('product_id', $record->id)
-                                    ->orderBy('created_at', 'desc')
-                                    ->limit(10)
-                                    ->get()
-                                    ->map(fn (PriceHistory $history) => [
-                                        'old_price' => $history->old_price_cents
-                                            ? number_format($history->old_price_cents / 100, 2)
-                                            : '-',
-                                        'new_price' => number_format($history->new_price_cents / 100, 2),
-                                        'reason' => $history->reason ?? '-',
-                                        'effective_at' => $history->effective_at?->format('Y-m-d H:i'),
-                                        'changed_by' => $history->changedBy?->name ?? 'System',
-                                    ])
-                                    ->toArray();
-                            })
+                            ->state(fn (Product $record): array => PriceHistory::query()
+                                ->where('product_id', $record->id)
+                                ->orderBy('created_at', 'desc')
+                                ->limit(10)
+                                ->get()
+                                ->map(fn (PriceHistory $history): array => [
+                                    'old_price' => $history->old_price_cents
+                                        ? number_format($history->old_price_cents / 100, 2)
+                                        : '-',
+                                    'new_price' => number_format($history->new_price_cents / 100, 2),
+                                    'reason' => $history->reason ?? '-',
+                                    'effective_at' => $history->effective_at?->format('Y-m-d H:i'),
+                                    'changed_by' => $history->changedBy?->name ?? 'System',
+                                ])
+                                ->toArray())
                             ->schema([
                                 TextEntry::make('old_price')
                                     ->label('Old'),

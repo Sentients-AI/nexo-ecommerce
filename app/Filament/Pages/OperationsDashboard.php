@@ -34,7 +34,7 @@ final class OperationsDashboard extends Dashboard
         ];
     }
 
-    public function getColumns(): int|array
+    public function getColumns(): int
     {
         return 2;
     }

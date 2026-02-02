@@ -94,19 +94,17 @@ final class RefundInfolist
                     ->schema([
                         RepeatableEntry::make('refundEvents')
                             ->label('')
-                            ->state(function (Refund $record): array {
-                                return DomainEventRecord::query()
-                                    ->where('payload->refund_id', $record->id)
-                                    ->orWhere('payload->refundId', $record->id)
-                                    ->orderBy('occurred_at', 'desc')
-                                    ->get()
-                                    ->map(fn (DomainEventRecord $event) => [
-                                        'event_type' => class_basename($event->event_type),
-                                        'occurred_at' => $event->occurred_at?->format('Y-m-d H:i:s'),
-                                        'payload' => json_encode($event->payload, JSON_PRETTY_PRINT),
-                                    ])
-                                    ->toArray();
-                            })
+                            ->state(fn (Refund $record): array => DomainEventRecord::query()
+                                ->where('payload->refund_id', $record->id)
+                                ->orWhere('payload->refundId', $record->id)
+                                ->orderBy('occurred_at', 'desc')
+                                ->get()
+                                ->map(fn (DomainEventRecord $event): array => [
+                                    'event_type' => class_basename($event->event_type),
+                                    'occurred_at' => $event->occurred_at?->format('Y-m-d H:i:s'),
+                                    'payload' => json_encode($event->payload, JSON_PRETTY_PRINT),
+                                ])
+                                ->toArray())
                             ->schema([
                                 TextEntry::make('event_type')
                                     ->label('Event')

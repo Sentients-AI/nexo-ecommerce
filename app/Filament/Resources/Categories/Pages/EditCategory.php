@@ -20,7 +20,7 @@ final class EditCategory extends EditRecord
     {
         return [
             DeleteAction::make()
-                ->before(function () {
+                ->before(function (): void {
                     if ($this->record->hasChildren()) {
                         throw new DomainException('Cannot delete a category that has child categories.');
                     }

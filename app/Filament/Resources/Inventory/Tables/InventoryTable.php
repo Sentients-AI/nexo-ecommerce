@@ -41,9 +41,7 @@ final class InventoryTable
 
                 TextColumn::make('net_available')
                     ->label('Net Available')
-                    ->sortable(query: function (Builder $query, string $direction): Builder {
-                        return $query->orderByRaw('(quantity_available - quantity_reserved) '.$direction);
-                    })
+                    ->sortable(query: fn (Builder $query, string $direction): Builder => $query->orderByRaw('(quantity_available - quantity_reserved) '.$direction))
                     ->alignRight()
                     ->state(fn ($record): int => $record->quantity_available - $record->quantity_reserved)
                     ->color(fn ($state): string => $state <= 0 ? 'danger' : ($state <= 5 ? 'warning' : 'success')),

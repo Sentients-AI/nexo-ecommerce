@@ -36,7 +36,7 @@ final class Anomalies extends Page
         return $count > 0 ? (string) $count : null;
     }
 
-    public static function getNavigationBadgeColor(): ?string
+    public static function getNavigationBadgeColor(): string
     {
         return 'danger';
     }
@@ -64,7 +64,7 @@ final class Anomalies extends Page
     public function getPaymentAmountMismatches(): Collection
     {
         return PaymentIntent::query()
-            ->whereHas('order', function ($query) {
+            ->whereHas('order', function ($query): void {
                 $query->whereRaw('orders.total_cents != payment_intents.amount');
             })
             ->with('order')
@@ -106,9 +106,9 @@ final class Anomalies extends Page
         return Stock::query()
             ->with('product')
             ->where('quantity_reserved', '>', 0)
-            ->whereHas('product', function ($query) {
-                $query->whereDoesntHave('stock', function ($q) {
-                    $q->whereHas('movements', function ($m) {
+            ->whereHas('product', function ($query): void {
+                $query->whereDoesntHave('stock', function ($q): void {
+                    $q->whereHas('movements', function ($m): void {
                         $m->where('type', 'reservation')
                             ->where('created_at', '>', now()->subHours(24));
                     });
