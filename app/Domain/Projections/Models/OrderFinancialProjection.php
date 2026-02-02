@@ -20,6 +20,10 @@ final class OrderFinancialProjection extends Model
         'refund_status',
     ];
 
+    protected $attributes = [
+
+    ];
+
     protected function casts(): array
     {
         return [
