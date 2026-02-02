@@ -49,7 +49,7 @@ final class InventoryInfolist
                             ->state(fn (Stock $record): int => $record->quantity_available - $record->quantity_reserved)
                             ->size('lg')
                             ->weight('bold')
-                            ->color(fn (Stock $record): string => ! $record->isInStock() ? 'danger' : 'success'),
+                            ->color(fn (Stock $record): string => $record->isInStock() ? 'success' : 'danger'),
 
                         TextEntry::make('updated_at')
                             ->label('Last Updated')
@@ -60,21 +60,19 @@ final class InventoryInfolist
                     ->schema([
                         RepeatableEntry::make('movements')
                             ->label('')
-                            ->state(function (Stock $record): array {
-                                return StockMovement::query()
-                                    ->where('stock_id', $record->id)
-                                    ->orderBy('created_at', 'desc')
-                                    ->limit(20)
-                                    ->get()
-                                    ->map(fn (StockMovement $movement) => [
-                                        'type' => $movement->type->value,
-                                        'quantity' => $movement->quantity,
-                                        'reason' => $movement->reason ?? '-',
-                                        'created_at' => $movement->created_at?->format('Y-m-d H:i:s'),
-                                        'user' => $movement->user?->name ?? 'System',
-                                    ])
-                                    ->toArray();
-                            })
+                            ->state(fn (Stock $record): array => StockMovement::query()
+                                ->where('stock_id', $record->id)
+                                ->orderBy('created_at', 'desc')
+                                ->limit(20)
+                                ->get()
+                                ->map(fn (StockMovement $movement): array => [
+                                    'type' => $movement->type->value,
+                                    'quantity' => $movement->quantity,
+                                    'reason' => $movement->reason ?? '-',
+                                    'created_at' => $movement->created_at?->format('Y-m-d H:i:s'),
+                                    'user' => $movement->user?->name ?? 'System',
+                                ])
+                                ->toArray())
                             ->schema([
                                 TextEntry::make('type')
                                     ->label('Type')

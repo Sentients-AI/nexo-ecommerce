@@ -118,7 +118,7 @@ final class Pricing extends Page implements HasTable
                     ->form([
                         TextInput::make('new_price_cents')
                             ->label('New Price (in cents)')
-                            ->helperText(fn (?Product $record): string => $record ? "Current: {$record->price_cents} cents" : '')
+                            ->helperText(fn (?Product $record): string => $record instanceof Product ? "Current: {$record->price_cents} cents" : '')
                             ->numeric()
                             ->required()
                             ->minValue(0),
@@ -166,7 +166,7 @@ final class Pricing extends Page implements HasTable
                     ->form([
                         TextInput::make('new_price_cents')
                             ->label('New Price (in cents)')
-                            ->helperText(fn (?Product $record): string => $record ? "Current: {$record->price_cents} cents" : '')
+                            ->helperText(fn (?Product $record): string => $record instanceof Product ? "Current: {$record->price_cents} cents" : '')
                             ->numeric()
                             ->required()
                             ->minValue(0),

@@ -1,7 +1,51 @@
 <x-filament-panels::page>
     <div class="space-y-6">
+        {{-- Active Alerts --}}
+        @php $alertsCount = $this->getActiveAlertsCount(); @endphp
+        @if($alertsCount > 0)
+            <x-filament::section>
+                <x-slot name="heading">
+                    <span class="text-danger-600">Active Alerts ({{ $alertsCount }})</span>
+                </x-slot>
+                <x-slot name="description">
+                    Alerts requiring immediate attention
+                </x-slot>
+
+                <div class="space-y-3">
+                    @foreach($this->getActiveAlerts() as $alert)
+                        <div class="p-4 rounded-lg border {{ $alert->definition->severity->value === 'critical' ? 'bg-danger-50 dark:bg-danger-900/20 border-danger-300 dark:border-danger-700' : 'bg-warning-50 dark:bg-warning-900/20 border-warning-300 dark:border-warning-700' }}">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <x-filament::badge :color="$alert->definition->severity->value === 'critical' ? 'danger' : 'warning'">
+                                        {{ strtoupper($alert->definition->severity->value) }}
+                                    </x-filament::badge>
+                                    <div>
+                                        <span class="font-semibold">{{ $alert->definition->name }}</span>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ $alert->definition->description }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right text-sm">
+                                    <div>Actual: <span class="font-mono">{{ number_format((float) $alert->actual_value, 2) }}</span></div>
+                                    <div class="text-gray-500">Threshold: {{ number_format((float) $alert->threshold_value, 2) }}</div>
+                                    <div class="text-xs text-gray-400">{{ $alert->triggered_at->diffForHumans() }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </x-filament::section>
+        @endif
+
         {{-- Queue Stats --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <x-filament::section>
+                <div class="text-center">
+                    <div class="text-3xl font-bold {{ $alertsCount > 0 ? 'text-danger-600' : 'text-success-600' }}">
+                        {{ number_format($alertsCount) }}
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">Active Alerts</div>
+                </div>
+            </x-filament::section>
             @php $queueStats = $this->getQueueStats(); @endphp
             <x-filament::section>
                 <div class="text-center">

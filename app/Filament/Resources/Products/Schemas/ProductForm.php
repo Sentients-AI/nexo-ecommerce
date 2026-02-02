@@ -31,7 +31,7 @@ final class ProductForm
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
+                            ->afterStateUpdated(function (Get $get, Set $set, ?string $state): void {
                                 if (! $get('slug') || $get('slug') === Str::slug($get('name_original') ?? '')) {
                                     $set('slug', Str::slug($state ?? ''));
                                 }
@@ -78,7 +78,7 @@ final class ProductForm
 
                         Placeholder::make('price_display')
                             ->label('Price')
-                            ->content(fn (?Product $record): string => $record
+                            ->content(fn (?Product $record): string => $record instanceof Product
                                 ? number_format($record->price_cents / 100, 2).' '.$record->currency
                                 : 'Not set'
                             ),
@@ -94,7 +94,7 @@ final class ProductForm
                             ->label('Currency')
                             ->content(fn (?Product $record): string => $record?->currency ?? 'USD'),
                     ])
-                    ->visible(fn (?Product $record): bool => $record !== null),
+                    ->visible(fn (?Product $record): bool => $record instanceof Product),
 
                 Section::make('Initial Pricing')
                     ->description('Set the initial price for the new product.')
@@ -129,7 +129,7 @@ final class ProductForm
                             ->default('USD')
                             ->required(),
                     ])
-                    ->visible(fn (?Product $record): bool => $record === null),
+                    ->visible(fn (?Product $record): bool => ! $record instanceof Product),
 
                 Section::make('SEO')
                     ->collapsed()

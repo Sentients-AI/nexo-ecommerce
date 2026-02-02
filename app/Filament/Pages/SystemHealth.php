@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Filament\Pages;
 
 use App\Domain\Idempotency\Models\IdempotencyKey;
+use App\Shared\Alerting\AlertTrigger;
+use App\Shared\Alerting\Enums\AlertTriggerStatus;
 use BackedEnum;
 use Exception;
 use Filament\Pages\Page;
@@ -66,7 +68,7 @@ final class SystemHealth extends Page
         // or responses indicating conflicts (4xx status codes)
         return IdempotencyKey::query()
             ->where('created_at', '>', now()->subDay())
-            ->where(function ($query) {
+            ->where(function ($query): void {
                 $query->whereIn('response_code', [409, 422, 400])
                     ->orWhere('response_body', 'like', '%conflict%');
             })
@@ -82,8 +84,6 @@ final class SystemHealth extends Page
         if (! file_exists($logPath)) {
             return collect();
         }
-
-        $lines = [];
         $file = new SplFileObject($logPath, 'r');
         $file->seek(PHP_INT_MAX);
         $totalLines = $file->key();
@@ -122,7 +122,7 @@ final class SystemHealth extends Page
     public function getDatabaseStats(): array
     {
         try {
-            $tables = [
+            return [
                 'orders' => DB::table('orders')->count(),
                 'payment_intents' => DB::table('payment_intents')->count(),
                 'refunds' => DB::table('refunds')->count(),
@@ -130,8 +130,6 @@ final class SystemHealth extends Page
                 'stocks' => DB::table('stocks')->count(),
                 'audit_logs' => DB::table('audit_logs')->count(),
             ];
-
-            return $tables;
         } catch (Exception $e) {
             return ['error' => $e->getMessage()];
         }
@@ -142,5 +140,22 @@ final class SystemHealth extends Page
         return [
             'driver' => config('cache.default'),
         ];
+    }
+
+    public function getActiveAlerts(): Collection
+    {
+        return AlertTrigger::query()
+            ->with('definition')
+            ->where('status', AlertTriggerStatus::Active)
+            ->orderBy('triggered_at', 'desc')
+            ->limit(20)
+            ->get();
+    }
+
+    public function getActiveAlertsCount(): int
+    {
+        return AlertTrigger::query()
+            ->where('status', AlertTriggerStatus::Active)
+            ->count();
     }
 }

@@ -53,19 +53,17 @@ final class RoleInfolist
                     ->schema([
                         RepeatableEntry::make('users')
                             ->label('')
-                            ->state(function (Role $record): array {
-                                return $record->users()
-                                    ->orderBy('name')
-                                    ->limit(50)
-                                    ->get()
-                                    ->map(fn ($user) => [
-                                        'id' => $user->id,
-                                        'name' => $user->name,
-                                        'email' => $user->email,
-                                        'created_at' => $user->created_at?->format('Y-m-d H:i'),
-                                    ])
-                                    ->toArray();
-                            })
+                            ->state(fn (Role $record): array => $record->users()
+                                ->orderBy('name')
+                                ->limit(50)
+                                ->get()
+                                ->map(fn ($user): array => [
+                                    'id' => $user->id,
+                                    'name' => $user->name,
+                                    'email' => $user->email,
+                                    'created_at' => $user->created_at?->format('Y-m-d H:i'),
+                                ])
+                                ->toArray())
                             ->schema([
                                 TextEntry::make('id')
                                     ->label('ID'),
