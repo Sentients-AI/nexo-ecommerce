@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('system_configs', function (Blueprint $table) {
+        Schema::create('system_configs', function (Blueprint $table): void {
             $table->id();
             $table->string('group', 50)->index();
             $table->string('key', 100);

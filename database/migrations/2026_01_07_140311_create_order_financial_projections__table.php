@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('order_financial_projections', function (Blueprint $table) {
+        Schema::create('order_financial_projections', function (Blueprint $table): void {
             $table->unsignedBigInteger('order_id')->primary();
             $table->bigInteger('total_amount');
             $table->bigInteger('paid_amount');

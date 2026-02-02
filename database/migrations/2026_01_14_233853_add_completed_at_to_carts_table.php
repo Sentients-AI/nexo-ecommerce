@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('carts', function (Blueprint $table) {
+        Schema::table('carts', function (Blueprint $table): void {
             $table->timestamp('completed_at')->nullable()->after('session_id');
         });
     }
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('carts', function (Blueprint $table) {
+        Schema::table('carts', function (Blueprint $table): void {
             $table->dropColumn('completed_at');
         });
     }
