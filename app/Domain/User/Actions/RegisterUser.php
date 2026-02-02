@@ -16,15 +16,11 @@ final class RegisterUser
      */
     public function execute(RegisterUserData $data): User
     {
-        return DB::transaction(function () use ($data) {
-            $user = User::query()->create([
-                'name' => $data->name,
-                'email' => $data->email,
-                'password' => Hash::make($data->password),
-                'role_id' => $data->roleId,
-            ]);
-
-            return $user;
-        });
+        return DB::transaction(fn () => User::query()->create([
+            'name' => $data->name,
+            'email' => $data->email,
+            'password' => Hash::make($data->password),
+            'role_id' => $data->roleId,
+        ]));
     }
 }
