@@ -59,7 +59,7 @@ final class HandleStripeEventJob implements ShouldQueue
             return; // idempotent - already processed or not found
         }
 
-        DB::transaction(function () use ($intent) {
+        DB::transaction(function () use ($intent): void {
             $failureMessage = $this->event->data->object->last_payment_error->message ?? 'Payment failed';
 
             $intent->markAsFailed([
