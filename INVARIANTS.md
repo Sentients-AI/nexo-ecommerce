@@ -22,20 +22,22 @@ This document defines the critical invariants for the order-payment-refund lifec
 | Invariant | Description | Guard Location |
 |-----------|-------------|----------------|
 | **INV-PAY-001** | A payment intent must never be confirmed twice | `PaymentStatus::isTerminal()` check |
-| **INV-PAY-002** | A payment must never exceed the order total | `CreatePaymentIntentAction` |
+| **INV-PAY-002** | A payment must never exceed the order total | `PaymentAmountGuard`, `CreatePaymentIntentAction` |
 | **INV-PAY-003** | A payment intent must never exist without an associated order | Foreign key constraint |
 | **INV-PAY-004** | The same idempotency key must never create different payment intents | Unique constraint + fingerprint validation |
 | **INV-PAY-005** | A terminal payment state (Succeeded/Failed/Cancelled) must never change | `isTerminal()` guard |
+| **INV-PAY-006** | A paid order must have an associated payment intent | `OrderPaymentRequiredGuard` |
 
 ### Refund Domain
 
 | Invariant | Description | Guard Location |
 |-----------|-------------|----------------|
 | **INV-REF-001** | A refund must never be requested for an unpaid order | `RequestRefundAction`, `InitiateRefundAction` |
-| **INV-REF-002** | Total refunded amount must never exceed order total | `Order::markPartiallyRefunded()` |
+| **INV-REF-002** | Total refunded amount must never exceed order total | `RefundAmountGuard`, `Order::markPartiallyRefunded()` |
 | **INV-REF-003** | A refund must never be processed without approval | `ProcessRefundAction` |
 | **INV-REF-004** | A terminal refund (Succeeded/Failed/Rejected/Cancelled) must never be re-approved | `ApproveRefundAction` |
 | **INV-REF-005** | A fully refunded order must never accept additional refunds | `Order::isRefundable()` |
+| **INV-REF-006** | A succeeded refund must have a provider reference | `RefundProviderConfirmationGuard` |
 
 ### Inventory Domain
 
@@ -281,6 +283,58 @@ $cartSpec->assertSatisfiedBy($cart);
 
 ---
 
+## 10. Domain Guards
+
+Guards enforce invariants at the domain layer and dispatch `InvariantViolationAttempted` events for security monitoring.
+
+### 10.1 Guard Interface
+
+All guards implement:
+- `check(): bool` - Returns true if invariant holds
+- `getViolationMessage(): string` - Human-readable violation description
+- `getGuardName(): string` - Guard identifier for logging
+- `enforce(): void` - Throws `DomainException` and dispatches event if check fails
+
+### 10.2 Payment Guards
+
+| Guard | Invariant | Context |
+|-------|-----------|---------|
+| `PaymentAmountGuard` | Payment amount ≤ order total | payment_amount, order_total, order_id |
+| `OrderPaymentRequiredGuard` | Paid orders have payment intent | order_id, order_status |
+
+### 10.3 Refund Guards
+
+| Guard | Invariant | Context |
+|-------|-----------|---------|
+| `RefundAmountGuard` | (current_refunded + proposed) ≤ order_total | refund_amount, current_refunded, order_total |
+| `RefundProviderConfirmationGuard` | Succeeded refunds have provider_reference | refund_id, refund_status |
+
+### 10.4 Order Guards
+
+| Guard | Invariant | Context |
+|-------|-----------|---------|
+| `OrderStateGuard` | Valid state transitions only | order_id, current_status, target_status |
+
+---
+
+## 11. Resilience Actions
+
+### 11.1 Retry Actions
+
+| Action | Purpose | Idempotency |
+|--------|---------|-------------|
+| `RetryOrderFinalizationAction` | Recover orders stuck in Pending when payment succeeded | Uses `lockForUpdate()`, checks payment status |
+| `RetryRefundExecutionAction` | Retry failed/approved refunds with payment gateway | Records domain events on outcome |
+
+### 11.2 Compensation Actions
+
+| Action | Trigger | Effect |
+|--------|---------|--------|
+| `CompensateStockOnCancelAction` | Order cancellation | Releases reserved stock with `StockMovement` |
+| `ReplayDomainEventsAction` | Projection drift | Replays events from `domain_events` table |
+
+---
+
 ## Audit Findings (Requiring Fixes)
 
 ### Missing Guards
@@ -292,9 +346,9 @@ $cartSpec->assertSatisfiedBy($cart);
    - Delivered → Refunded
 3. **`Refund` model** has no `canTransitionTo()` method for state machine enforcement
 4. **`HandleStripeEventJob::handleFailure()`** calls `ConfirmPaymentIntentAction` which expects `Processing` state - this is a bug
-5. **`Order::markPartiallyRefunded()`** has no guard against being called on non-paid orders
-6. **`Order::markRefunded()`** has no guard against being called on non-paid orders
-7. **Missing guard**: Refund amount validation against order total - currently only in `Order::markPartiallyRefunded()` (clamps), but should also validate in `RequestRefundAction` and `InitiateRefundAction`
+5. ~~**`Order::markPartiallyRefunded()`** has no guard against being called on non-paid orders~~ (Addressed by `RefundAmountGuard`)
+6. ~~**`Order::markRefunded()`** has no guard against being called on non-paid orders~~ (Addressed by `RefundAmountGuard`)
+7. ~~**Missing guard**: Refund amount validation against order total~~ (Addressed by `RefundAmountGuard`)
 
 ### Missing Tests
 
