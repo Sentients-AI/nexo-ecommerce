@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('payment_intents', function (Blueprint $table) {
+        Schema::create('payment_intents', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('order_id')->constrained();
             $table->string('provider');

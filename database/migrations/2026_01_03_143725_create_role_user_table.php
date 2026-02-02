@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('role_user', function (Blueprint $table) {
+        Schema::create('role_user', function (Blueprint $table): void {
             $table->foreignid('user_id')->constrained()->onDelete('cascade');
             $table->foreignid('role_id')->constrained()->onDelete('cascade');
             $table->primary(['user_id', 'role_id']);
