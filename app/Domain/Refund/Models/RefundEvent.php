@@ -20,10 +20,6 @@ final class RefundEvent extends BaseModel
         'occurred_at',
     ];
 
-    protected array $dates = [
-        'occurred_at',
-    ];
-
     protected $casts = [
         'payload' => 'array',
         'occurred_at' => 'datetime',

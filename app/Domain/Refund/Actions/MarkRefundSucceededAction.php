@@ -17,7 +17,7 @@ final class MarkRefundSucceededAction
             return; // idempotency guard
         }
 
-        DB::transaction(function () use ($refund, $externalId) {
+        DB::transaction(function () use ($refund, $externalId): void {
             $refund->update([
                 'status' => RefundStatus::Succeeded,
                 'external_refund_id' => $externalId,

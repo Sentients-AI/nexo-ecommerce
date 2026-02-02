@@ -10,7 +10,7 @@ use App\Domain\Order\Models\Order;
 use App\Domain\Refund\Events\RefundSucceeded;
 use App\Domain\Refund\Models\Refund;
 
-final class ReleaseStockOnRefund
+final readonly class ReleaseStockOnRefund
 {
     public function __construct(
         private ReleaseStockAction $releaseStockAction
@@ -44,8 +44,8 @@ final class ReleaseStockOnRefund
                 productId: $item->product_id,
                 quantity: $quantityToRelease,
                 orderId: $order->id,
-                referenceType: 'refund',
                 referenceId: $refund->id,
+                referenceType: 'refund',
             ));
         }
     }

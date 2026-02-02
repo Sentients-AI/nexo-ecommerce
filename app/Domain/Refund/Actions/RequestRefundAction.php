@@ -9,6 +9,7 @@ use App\Domain\Refund\Enums\RefundStatus;
 use App\Domain\Refund\Events\RefundRequested;
 use App\Domain\Refund\Models\Refund;
 use App\Shared\Domain\DomainEventRecorder;
+use App\Shared\Metrics\MetricsRecorder;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -53,6 +54,8 @@ final class RequestRefundAction
                     reason: $reason,
                 )
             );
+
+            MetricsRecorder::increment('refunds_requested_total', ['currency' => $order->currency]);
 
             return $refund;
         });

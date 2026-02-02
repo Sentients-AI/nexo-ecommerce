@@ -23,6 +23,7 @@ final class Refund extends Model
         'approved_by',
         'approved_at',
         'external_refund_id',
+        'provider_reference',
     ];
 
     protected $casts = [
@@ -33,6 +34,10 @@ final class Refund extends Model
         'reason' => 'string',
         'external_refund_id' => 'string',
         'created_at' => 'datetime',
+    ];
+
+    protected $attributes = [
+        'status' => RefundStatus::class,
     ];
 
     public function order(): BelongsTo

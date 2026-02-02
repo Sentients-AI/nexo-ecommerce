@@ -7,6 +7,7 @@ namespace App\Domain\Refund\Actions;
 use App\Domain\Refund\Enums\RefundStatus;
 use App\Domain\Refund\Models\Refund;
 use App\Domain\User\Models\User;
+use App\Shared\Metrics\MetricsRecorder;
 use DomainException;
 
 final class ApproveRefundAction
@@ -24,6 +25,8 @@ final class ApproveRefundAction
             'approved_by' => $admin->id,
             'approved_at' => now(),
         ]);
+
+        MetricsRecorder::increment('refunds_approved_total', ['currency' => $refund->currency]);
 
         return $refund;
     }
