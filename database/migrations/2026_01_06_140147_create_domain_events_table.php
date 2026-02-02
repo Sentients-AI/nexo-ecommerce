@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('domain_events', function (Blueprint $table) {
+        Schema::create('domain_events', function (Blueprint $table): void {
             $table->id();
             $table->string('event_type');
             $table->json('payload');

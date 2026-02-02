@@ -13,11 +13,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orders', function (Blueprint $table) {
+        Schema::create('orders', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('order_number')->unique();
-            $table->string('status')->index();;
+            $table->string('status')->index();
             $table->bigInteger('subtotal_cents')->unsigned();
             $table->bigInteger('tax_cents')->unsigned()->default(0);
             $table->bigInteger('shipping_cost_cents')->unsigned()->default(0);
