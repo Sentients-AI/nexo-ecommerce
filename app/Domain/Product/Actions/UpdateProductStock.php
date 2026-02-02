@@ -9,10 +9,10 @@ use App\Domain\Inventory\DTOs\AdjustStockData;
 use App\Domain\Product\DTOs\UpdateStockData;
 use App\Domain\Product\Models\Product;
 
-final class UpdateProductStock
+final readonly class UpdateProductStock
 {
     public function __construct(
-        private readonly AdjustStock $adjustStock,
+        private AdjustStock $adjustStock,
     ) {}
 
     /**
