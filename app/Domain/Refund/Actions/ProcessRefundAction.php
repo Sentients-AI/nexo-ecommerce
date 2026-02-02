@@ -10,6 +10,7 @@ use App\Domain\Refund\Events\RefundFailed;
 use App\Domain\Refund\Events\RefundSucceeded;
 use App\Domain\Refund\Models\Refund;
 use App\Shared\Domain\DomainEventRecorder;
+use App\Shared\Metrics\MetricsRecorder;
 use DomainException;
 use Throwable;
 
@@ -49,6 +50,8 @@ final readonly class ProcessRefundAction
                     currency: $refund->currency,
                 )
             );
+
+            MetricsRecorder::increment('refunds_completed_total', ['currency' => $refund->currency]);
 
             return $refund;
 
