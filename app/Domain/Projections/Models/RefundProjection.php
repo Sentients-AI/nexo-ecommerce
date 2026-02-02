@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Projections\Models;
 
+use App\Domain\Refund\Enums\RefundStatus;
 use Illuminate\Database\Eloquent\Model;
 
 final class RefundProjection extends Model
@@ -15,6 +16,13 @@ final class RefundProjection extends Model
         'status',
         'approved_at',
         'succeeded_at',
+    ];
+
+    protected $attributes = [
+        'status' => RefundStatus::class,
+        'approved_at' => null,
+        'succeeded_at' => null,
+        'amount_cents' => 0.0,
     ];
 
     public function refundId(): int
