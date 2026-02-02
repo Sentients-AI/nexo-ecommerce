@@ -9,7 +9,7 @@ use App\Domain\Payment\DTOs\ProviderResponse;
 use App\Domain\Payment\Models\PaymentIntent;
 use Stripe\StripeClient;
 
-final class PaymentGatewayService implements PaymentGatewayServiceContract
+final readonly class PaymentGatewayService implements PaymentGatewayServiceContract
 {
     public function __construct(
         private StripeClient $stripe

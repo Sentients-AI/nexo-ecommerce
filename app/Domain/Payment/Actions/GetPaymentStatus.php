@@ -13,10 +13,6 @@ final class GetPaymentStatus
      */
     public function execute(string $paymentId): Payment
     {
-        $payment = Payment::query()
-            ->with('order')
-            ->findOrFail($paymentId);
-
         // Here you could also check with the payment gateway
         // to get the latest status if needed
         // Example:
@@ -27,6 +23,8 @@ final class GetPaymentStatus
         //     }
         // }
 
-        return $payment;
+        return Payment::query()
+            ->with('order')
+            ->findOrFail($paymentId);
     }
 }
