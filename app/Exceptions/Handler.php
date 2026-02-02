@@ -42,27 +42,21 @@ final class Handler extends ExceptionHandler
      */
     public function register(): void
     {
-        $this->renderable(function (EmptyCartException $e) {
-            return response()->json([
-                'error' => 'CART_EMPTY',
-                'message' => $e->getMessage(),
-            ], 422);
-        });
+        $this->renderable(fn (EmptyCartException $e) => response()->json([
+            'error' => 'CART_EMPTY',
+            'message' => $e->getMessage(),
+        ], 422));
 
-        $this->renderable(function (InsufficientStockException $e) {
-            return response()->json([
-                'error' => 'INSUFFICIENT_STOCK',
-                'product_id' => $e->productId,
-                'requested' => $e->requested,
-                'available' => $e->available,
-            ], 409);
-        });
+        $this->renderable(fn (InsufficientStockException $e) => response()->json([
+            'error' => 'INSUFFICIENT_STOCK',
+            'product_id' => $e->productId,
+            'requested' => $e->requested,
+            'available' => $e->available,
+        ], 409));
 
-        $this->renderable(function (ConflictHttpException $e) {
-            return response()->json([
-                'error' => 'IDEMPOTENCY_CONFLICT',
-                'message' => $e->getMessage(),
-            ], 409);
-        });
+        $this->renderable(fn (ConflictHttpException $e) => response()->json([
+            'error' => 'IDEMPOTENCY_CONFLICT',
+            'message' => $e->getMessage(),
+        ], 409));
     }
 }
