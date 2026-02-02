@@ -15,8 +15,10 @@ use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Tax\Actions\CalculateTax;
 use App\Domain\Tax\DTOs\TaxCalculationData;
+use App\Shared\Metrics\MetricsRecorder;
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 final readonly class CreateOrderFromCart
 {
@@ -34,6 +36,25 @@ final readonly class CreateOrderFromCart
      * @throws Exception
      */
     public function execute(CreateOrderData $data): Order
+    {
+        try {
+            $order = $this->createOrder($data);
+            MetricsRecorder::increment('orders_created_total', ['currency' => $data->currency]);
+
+            return $order;
+        } catch (InsufficientStockException $e) {
+            MetricsRecorder::increment('orders_checkout_failed_total', ['reason' => 'insufficient_stock']);
+            throw $e;
+        } catch (EmptyCartException $e) {
+            MetricsRecorder::increment('orders_checkout_failed_total', ['reason' => 'empty_cart']);
+            throw $e;
+        } catch (Throwable $e) {
+            MetricsRecorder::increment('orders_checkout_failed_total', ['reason' => 'unknown']);
+            throw $e;
+        }
+    }
+
+    private function createOrder(CreateOrderData $data): Order
     {
         return DB::transaction(function () use ($data) {
             $cart = Cart::query()

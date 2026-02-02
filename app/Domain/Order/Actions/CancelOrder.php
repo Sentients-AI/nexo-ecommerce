@@ -10,10 +10,10 @@ use App\Domain\Order\Models\Order;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
-final class CancelOrder
+final readonly class CancelOrder
 {
     public function __construct(
-        private readonly ReleaseStock $releaseStock,
+        private ReleaseStock $releaseStock,
     ) {}
 
     /**
@@ -37,8 +37,8 @@ final class CancelOrder
                 $this->releaseStock->execute(new ReserveStockData(
                     productId: $item->product_id,
                     quantity: $item->quantity,
-                    referenceType: Order::class,
                     referenceId: $order->id,
+                    referenceType: Order::class,
                 ));
             }
 

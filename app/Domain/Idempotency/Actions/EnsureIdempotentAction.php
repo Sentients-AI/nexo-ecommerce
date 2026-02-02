@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Idempotency\Actions;
 
 use App\Domain\Idempotency\Models\IdempotencyKey;
+use App\Shared\Metrics\MetricsRecorder;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 final class EnsureIdempotentAction
@@ -33,6 +34,7 @@ final class EnsureIdempotentAction
 
         $currentFingerprint = hash('sha256', json_encode($payload));
         if ($currentFingerprint !== $record->request_fingerprint) {
+            MetricsRecorder::increment('idempotency_conflicts_total', ['action' => $action]);
             throw new ConflictHttpException(
                 'Idempotency key reused with different payload'
             );
