@@ -32,7 +32,7 @@ abstract readonly class AbstractId implements JsonSerializable, Stringable
 
     final public static function fromNullableInt(?int $value): ?static
     {
-        return $value !== null ? static::fromInt($value) : null;
+        return $value !== null ? self::fromInt($value) : null;
     }
 
     final public function equals(self $other): bool
