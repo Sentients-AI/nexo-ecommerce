@@ -22,7 +22,7 @@ final class RefundPolicy
      * Determine whether the user can view the model.
      * Support, Finance, and Admin can view refunds.
      */
-    public function view(User $user, Refund $refund): bool
+    public function view(User $user): bool
     {
         return $user->hasAnyRole(['support', 'finance', 'admin']);
     }
@@ -30,7 +30,7 @@ final class RefundPolicy
     /**
      * No direct creation allowed in control plane.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
         return false;
     }
@@ -38,7 +38,7 @@ final class RefundPolicy
     /**
      * No direct editing allowed in control plane.
      */
-    public function update(User $user, Refund $refund): bool
+    public function update(): bool
     {
         return false;
     }
@@ -46,7 +46,7 @@ final class RefundPolicy
     /**
      * No deletion allowed in control plane.
      */
-    public function delete(User $user, Refund $refund): bool
+    public function delete(): bool
     {
         return false;
     }
@@ -55,7 +55,7 @@ final class RefundPolicy
      * Approve refund action.
      * Finance and Admin can approve refunds.
      */
-    public function approve(User $user, Refund $refund): bool
+    public function approve(User $user): bool
     {
         return $user->hasAnyRole(['finance', 'admin']);
     }
@@ -64,7 +64,7 @@ final class RefundPolicy
      * Reject refund action.
      * Finance and Admin can reject refunds.
      */
-    public function reject(User $user, Refund $refund): bool
+    public function reject(User $user): bool
     {
         return $user->hasAnyRole(['finance', 'admin']);
     }
@@ -73,7 +73,7 @@ final class RefundPolicy
      * Execute refund action.
      * Finance and Admin can execute refunds.
      */
-    public function execute(User $user, Refund $refund): bool
+    public function execute(User $user): bool
     {
         return $user->hasAnyRole(['finance', 'admin']);
     }

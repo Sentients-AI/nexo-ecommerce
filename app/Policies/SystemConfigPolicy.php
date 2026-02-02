@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use App\Domain\Config\Models\SystemConfig;
 use App\Domain\User\Models\User;
 
 final class SystemConfigPolicy
@@ -22,7 +21,7 @@ final class SystemConfigPolicy
      * Determine whether the user can view the model.
      * Admin can view system configurations.
      */
-    public function view(User $user, SystemConfig $config): bool
+    public function view(User $user): bool
     {
         return $user->hasRole('admin');
     }
@@ -30,7 +29,7 @@ final class SystemConfigPolicy
     /**
      * No direct creation via UI.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
         return false;
     }
@@ -38,7 +37,7 @@ final class SystemConfigPolicy
     /**
      * No direct editing via UI.
      */
-    public function update(User $user, SystemConfig $config): bool
+    public function update(): bool
     {
         return false;
     }
@@ -46,7 +45,7 @@ final class SystemConfigPolicy
     /**
      * No deletion allowed.
      */
-    public function delete(User $user, SystemConfig $config): bool
+    public function delete(): bool
     {
         return false;
     }
@@ -55,7 +54,7 @@ final class SystemConfigPolicy
      * Update value action.
      * Admin only can update config values.
      */
-    public function updateValue(User $user, SystemConfig $config): bool
+    public function updateValue(User $user): bool
     {
         return $user->hasRole('admin');
     }

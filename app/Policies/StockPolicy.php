@@ -22,7 +22,7 @@ final class StockPolicy
      * Determine whether the user can view the model.
      * Support, Finance, and Admin can view stock.
      */
-    public function view(User $user, Stock $stock): bool
+    public function view(User $user): bool
     {
         return $user->hasAnyRole(['support', 'finance', 'admin']);
     }
@@ -30,7 +30,7 @@ final class StockPolicy
     /**
      * No direct creation allowed in control plane.
      */
-    public function create(User $user): bool
+    public function create(): bool
     {
         return false;
     }
@@ -38,7 +38,7 @@ final class StockPolicy
     /**
      * No direct editing allowed in control plane.
      */
-    public function update(User $user, Stock $stock): bool
+    public function update(): bool
     {
         return false;
     }
@@ -46,7 +46,7 @@ final class StockPolicy
     /**
      * No deletion allowed in control plane.
      */
-    public function delete(User $user, Stock $stock): bool
+    public function delete(): bool
     {
         return false;
     }
@@ -55,7 +55,7 @@ final class StockPolicy
      * Adjust stock action.
      * Admin only can adjust stock.
      */
-    public function adjust(User $user, Stock $stock): bool
+    public function adjust(User $user): bool
     {
         return $user->hasRole('admin');
     }
@@ -64,7 +64,7 @@ final class StockPolicy
      * Reconcile stock action.
      * Admin only can reconcile stock.
      */
-    public function reconcile(User $user, Stock $stock): bool
+    public function reconcile(User $user): bool
     {
         return $user->hasRole('admin');
     }
