@@ -36,7 +36,7 @@ final class ProductFactory extends Factory
             'currency' => 'MYR',
             'is_active' => $this->faker->boolean(90),
             'slug' => $this->faker->slug(),
-            'images' => $this->faker->imageUrl(),
+            'images' => ['https://placehold.co/640x480/'.mb_substr(md5($this->faker->word()), 0, 6).'/white?text='.urlencode($this->faker->word())],
             'meta_title' => $this->faker->optional()->sentence(6),
             'meta_description' => json_encode([
                 'content' => $this->faker->optional()->paragraph(),

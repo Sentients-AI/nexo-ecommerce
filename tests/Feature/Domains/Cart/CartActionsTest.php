@@ -21,7 +21,7 @@ describe('GetCart', function () {
         $existingCart = Cart::factory()->create(['user_id' => $user->id]);
 
         $action = app(GetCart::class);
-        $cart = $action->execute((string) $user->id, null);
+        $cart = $action->execute((string) $user->id);
 
         expect($cart->id)->toBe($existingCart->id);
     });
@@ -30,7 +30,7 @@ describe('GetCart', function () {
         $user = User::factory()->create();
 
         $action = app(GetCart::class);
-        $cart = $action->execute((string) $user->id, null);
+        $cart = $action->execute((string) $user->id);
 
         expect($cart)->toBeInstanceOf(Cart::class);
         expect((int) $cart->user_id)->toBe($user->id);
@@ -51,7 +51,7 @@ describe('GetCart', function () {
 
     it('throws exception when no user or session provided', function () {
         $action = app(GetCart::class);
-        $action->execute(null, null);
+        $action->execute();
     })->throws(InvalidArgumentException::class, 'Either userId or sessionId must be provided');
 });
 

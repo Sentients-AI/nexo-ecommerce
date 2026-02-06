@@ -70,7 +70,7 @@ final class ReplayDomainEventsAction
             }
         });
 
-        if (! empty($errors)) {
+        if ($errors !== []) {
             Log::warning('Domain event replay completed with errors', [
                 'total' => $total,
                 'replayed' => $replayed,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use App\Domain\Role\Models\Role;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -21,7 +22,10 @@ final class DatabaseSeeder extends Seeder
             'name' => 'admin',
             'email' => 'admin@example.com',
             'password' => bcrypt('password'),
-            'role_id' => 1,
+            'role_id' => Role::query()->firstOrCreate(
+                ['name' => 'admin'],
+                ['description' => 'Administrator']
+            ),
         ]);
 
         //        $this->call([

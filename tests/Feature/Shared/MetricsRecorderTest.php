@@ -57,9 +57,7 @@ describe('MetricsRecorder', function () {
     });
 
     it('measures timing with callback', function () {
-        $result = MetricsRecorder::timing('operation_duration_ms', function () {
-            return 'completed';
-        });
+        $result = MetricsRecorder::timing('operation_duration_ms', fn () => 'completed');
 
         expect($result)->toBe('completed');
 

@@ -6,6 +6,7 @@ namespace App\Domain\User\Models;
 
 use App\Domain\Role\Models\Role;
 use App\Shared\Models\BaseModel;
+use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Auth\Authenticatable;
@@ -92,9 +93,9 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
     /**
      * Create a new factory instance for the model.
      */
-    protected static function newFactory(): \Database\Factories\UserFactory
+    protected static function newFactory(): UserFactory
     {
-        return \Database\Factories\UserFactory::new();
+        return UserFactory::new();
     }
 
     /**

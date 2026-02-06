@@ -18,5 +18,5 @@ it('test order fails when stock is insufficient', function () {
     ]);
 
     $action = app(ReserveStockAction::class);
-    $action->execute($product->id, 5);
+    $action->execute($product->id);
 });

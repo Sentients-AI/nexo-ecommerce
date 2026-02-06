@@ -8,13 +8,14 @@ use App\Domain\Product\DTOs\ChangePriceData;
 use App\Domain\Product\Models\PriceHistory;
 use App\Domain\Product\Models\Product;
 use App\Shared\Domain\AuditLog;
+use Carbon\Carbon;
 use DomainException;
 
 final class SchedulePriceChangeAction
 {
     public function execute(ChangePriceData $data): PriceHistory
     {
-        if (! $data->effectiveAt instanceof \Carbon\Carbon || $data->effectiveAt->isPast()) {
+        if (! $data->effectiveAt instanceof Carbon || $data->effectiveAt->isPast()) {
             throw new DomainException('Scheduled price change must have a future effective date.');
         }
 

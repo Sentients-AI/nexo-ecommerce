@@ -6,6 +6,7 @@ namespace App\Domain\Cart\Models;
 
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
+use Carbon\Carbon;
 use Database\Factories\CartFactory;
 use DomainException;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * @property int $user_id
  * @property-read string $session_id
- * @property-read \Carbon\Carbon|null $completed_at
+ * @property-read Carbon|null $completed_at
  */
 final class Cart extends BaseModel
 {

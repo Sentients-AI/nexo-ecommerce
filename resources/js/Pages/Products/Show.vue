@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -8,6 +8,8 @@ import ImageLightbox from '@/Components/Products/ImageLightbox.vue';
 import QuantityStepper from '@/Components/UI/QuantityStepper.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import { useCart } from '@/Composables/useCart';
+import { useWishlist } from '@/Composables/useWishlist';
+import { useRecentlyViewed } from '@/Composables/useRecentlyViewed';
 import type { ProductApiResource } from '@/types/api';
 
 interface Props {
@@ -19,6 +21,13 @@ const props = defineProps<Props>();
 
 const page = usePage();
 const { addToCart, loading: cartLoading, error: cartError } = useCart();
+const { isInWishlist, toggleWishlist } = useWishlist();
+const { addToRecentlyViewed } = useRecentlyViewed();
+
+// Track product view on mount
+onMounted(() => {
+    addToRecentlyViewed(props.product.id);
+});
 
 const quantity = ref(1);
 const selectedImage = ref(0);
@@ -287,17 +296,38 @@ const trustBadges = [
                             </div>
                         </Transition>
 
-                        <button
-                            @click="handleAddToCart"
-                            :disabled="cartLoading"
-                            class="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                        >
-                            <Spinner v-if="cartLoading" size="sm" color="white" />
-                            <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                            </svg>
-                            {{ cartLoading ? 'Adding...' : 'Add to Cart' }}
-                        </button>
+                        <div class="flex gap-3">
+                            <button
+                                @click="handleAddToCart"
+                                :disabled="cartLoading"
+                                class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <Spinner v-if="cartLoading" size="sm" color="white" />
+                                <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                                </svg>
+                                {{ cartLoading ? 'Adding...' : 'Add to Cart' }}
+                            </button>
+
+                            <!-- Wishlist button -->
+                            <button
+                                @click="toggleWishlist(product.id)"
+                                class="flex items-center justify-center rounded-xl border-2 px-5 py-4 transition-all"
+                                :class="isInWishlist(product.id)
+                                    ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-500'
+                                    : 'border-gray-300 dark:border-gray-600 text-gray-500 hover:border-red-300 hover:text-red-500'"
+                            >
+                                <svg
+                                    class="h-6 w-6"
+                                    :fill="isInWishlist(product.id) ? 'currentColor' : 'none'"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="2"
+                                    stroke="currentColor"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Out of stock message -->

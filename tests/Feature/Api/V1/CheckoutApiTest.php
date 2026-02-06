@@ -20,21 +20,17 @@ beforeEach(function () {
     // Mock the payment gateway service for all checkout tests
     $mock = Mockery::mock(PaymentGatewayService::class);
     $mock->shouldReceive('createIntent')
-        ->andReturnUsing(function ($intent) {
-            return new ProviderResponse(
-                provider: 'test',
-                reference: 'pi_test_'.uniqid(),
-                clientSecret: 'cs_test_'.uniqid(),
-            );
-        });
+        ->andReturnUsing(fn ($intent) => new ProviderResponse(
+            provider: 'test',
+            reference: 'pi_test_'.uniqid(),
+            clientSecret: 'cs_test_'.uniqid(),
+        ));
     $mock->shouldReceive('confirmIntent')
-        ->andReturnUsing(function ($intent) {
-            return new ProviderResponse(
-                provider: 'test',
-                reference: $intent->provider_reference,
-                clientSecret: 'cs_test_confirmed',
-            );
-        });
+        ->andReturnUsing(fn ($intent) => new ProviderResponse(
+            provider: 'test',
+            reference: $intent->provider_reference,
+            clientSecret: 'cs_test_confirmed',
+        ));
     $this->app->instance(PaymentGatewayService::class, $mock);
 });
 

@@ -80,7 +80,7 @@ final class StockMovement extends BaseModel
     {
         return [
             'quantity' => 'integer',
-            'type' => StockMovementType::class
+            'type' => StockMovementType::class,
         ];
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\OrderController;
+use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\Api\V1\RefundController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,4 +29,9 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
 
     // Refunds
     Route::post('/orders/{order}/refunds', [RefundController::class, 'store'])->name('api.v1.orders.refunds.store');
+
+    // Promotions
+    Route::post('/cart/apply-promotion', [PromotionController::class, 'apply'])->name('api.v1.cart.apply-promotion');
+    Route::post('/cart/validate-promotion', [PromotionController::class, 'validate'])->name('api.v1.cart.validate-promotion');
+    Route::get('/promotions/active', [PromotionController::class, 'active'])->name('api.v1.promotions.active');
 });

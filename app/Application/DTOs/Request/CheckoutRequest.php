@@ -14,6 +14,7 @@ final readonly class CheckoutRequest
         public CartId $cartId,
         public string $currency = 'MYR',
         public ?string $idempotencyKey = null,
+        public ?string $promotionCode = null,
     ) {}
 
     /**
@@ -28,6 +29,7 @@ final readonly class CheckoutRequest
             cartId: CartId::fromInt((int) $data['cart_id']),
             currency: $data['currency'] ?? 'MYR',
             idempotencyKey: $data['idempotency_key'] ?? null,
+            promotionCode: $data['promotion_code'] ?? null,
         );
     }
 }

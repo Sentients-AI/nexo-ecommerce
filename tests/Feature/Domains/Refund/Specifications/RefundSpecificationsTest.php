@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
+use App\Domain\Order\Specifications\OrderIsRefundable;
 use App\Domain\Payment\Models\PaymentIntent;
 use App\Domain\Refund\Enums\RefundStatus;
 use App\Domain\Refund\Models\Refund;
@@ -117,7 +118,7 @@ it('composes OrderIsRefundable AND RefundAmountIsValid', function () {
         'refunded_amount_cents' => 0,
     ]);
 
-    $spec = (new \App\Domain\Order\Specifications\OrderIsRefundable)
+    $spec = (new OrderIsRefundable)
         ->and(new RefundAmountIsValid(5000));
 
     expect($spec->isSatisfiedBy($order))->toBeTrue();

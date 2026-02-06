@@ -6,6 +6,7 @@ namespace App\Domain\Order\Models;
 
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Payment\Models\PaymentIntent;
+use App\Domain\Promotion\Models\Promotion;
 use App\Domain\Refund\Models\Refund;
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
@@ -35,6 +36,8 @@ final class Order extends BaseModel
         'total_cents',
         'currency',
         'refunded_amount_cents',
+        'promotion_id',
+        'discount_cents',
     ];
 
     /**
@@ -75,6 +78,14 @@ final class Order extends BaseModel
     public function refunds(): HasMany
     {
         return $this->hasMany(Refund::class);
+    }
+
+    /**
+     * Get the promotion applied to this order.
+     */
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
     }
 
     /**
@@ -189,6 +200,7 @@ final class Order extends BaseModel
             'shipping_cost_cents' => 'integer',
             'total_cents' => 'integer',
             'refunded_amount_cents' => 'integer',
+            'discount_cents' => 'integer',
             'status' => OrderStatus::class,
         ];
     }

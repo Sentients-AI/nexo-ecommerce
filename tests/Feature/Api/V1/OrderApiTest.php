@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Order\Models\Order;
+use App\Domain\Product\Models\Product;
 use App\Domain\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -157,7 +158,7 @@ describe('Order Show API', function () {
     it('returns order with items', function () {
         $user = User::factory()->create();
         $order = Order::factory()->create(['user_id' => $user->id]);
-        $product = App\Domain\Product\Models\Product::factory()->create();
+        $product = Product::factory()->create();
         $order->items()->create([
             'product_id' => $product->id,
             'quantity' => 2,

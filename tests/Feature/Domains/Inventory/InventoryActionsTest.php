@@ -104,8 +104,8 @@ describe('ReleaseStockAction', function () {
         $stock = $action->execute(new ReserveStockData(
             productId: $product->id,
             quantity: 2,
-            referenceType: 'order',
             referenceId: 1,
+            referenceType: 'order',
         ));
 
         expect($stock->quantity_reserved)->toBe(1);
@@ -123,8 +123,8 @@ describe('ReleaseStockAction', function () {
         $action->execute(new ReserveStockData(
             productId: $product->id,
             quantity: 2,
-            referenceType: 'order',
             referenceId: 1,
+            referenceType: 'order',
         ));
 
         expect(StockMovement::count())->toBe(1);
@@ -144,8 +144,8 @@ describe('ReleaseStockAction', function () {
         $stock = $action->execute(new ReserveStockData(
             productId: $product->id,
             quantity: 10,
-            referenceType: 'order',
             referenceId: 1,
+            referenceType: 'order',
         ));
 
         expect($stock->quantity_reserved)->toBe(0);

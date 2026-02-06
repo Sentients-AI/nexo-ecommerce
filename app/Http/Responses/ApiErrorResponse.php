@@ -9,13 +9,13 @@ use App\Domain\Shared\ErrorMessages;
 use Illuminate\Http\JsonResponse;
 use Throwable;
 
-final class ApiErrorResponse
+final readonly class ApiErrorResponse
 {
     public function __construct(
-        private readonly ErrorCode $code,
-        private readonly ?string $customMessage = null,
-        private readonly ?string $correlationId = null,
-        private readonly array $details = [],
+        private ErrorCode $code,
+        private ?string $customMessage = null,
+        private ?string $correlationId = null,
+        private array $details = [],
     ) {}
 
     /**
@@ -70,7 +70,7 @@ final class ApiErrorResponse
             $body['error']['correlation_id'] = $this->correlationId;
         }
 
-        if (! empty($this->details) && config('app.debug')) {
+        if ($this->details !== [] && config('app.debug')) {
             $body['error']['details'] = $this->details;
         }
 

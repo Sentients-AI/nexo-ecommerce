@@ -43,7 +43,7 @@ final class AuditProjectionDriftCommand extends Command
         $violations = array_merge($violations, $this->auditRefundProviderConfirmations());
 
         // Report findings
-        if (empty($violations)) {
+        if ($violations === []) {
             $this->info('No invariant violations detected.');
 
             return self::SUCCESS;
