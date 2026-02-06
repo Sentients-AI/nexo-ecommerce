@@ -9,7 +9,6 @@ use App\Domain\Order\Actions\CreateOrderFromCart;
 use App\Domain\Order\DTOs\CreateOrderData;
 use App\Domain\Order\Models\Order;
 use App\Domain\User\Models\User;
-use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

@@ -121,9 +121,11 @@ export function useApi() {
             }
 
             if (status === 422) {
+                // Laravel validation errors have message at root level, not in error object
+                const validationData = axiosError.response?.data as { message?: string } | undefined;
                 return {
                     code: ErrorCode.ValidationFailed,
-                    message: axiosError.response?.data?.message || messageForCode(ErrorCode.ValidationFailed),
+                    message: validationData?.message || messageForCode(ErrorCode.ValidationFailed),
                     retryable: false,
                 };
             }

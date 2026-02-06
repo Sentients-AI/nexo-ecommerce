@@ -161,7 +161,7 @@ describe('PriceHistory model', function () {
     it('identifies scheduled price changes', function () {
         $product = Product::factory()->create();
 
-        $scheduled = PriceHistory::create([
+        $scheduled = PriceHistory::query()->create([
             'product_id' => $product->id,
             'old_price_cents' => 1000,
             'new_price_cents' => 1500,
@@ -170,7 +170,7 @@ describe('PriceHistory model', function () {
             'created_at' => now(),
         ]);
 
-        $past = PriceHistory::create([
+        $past = PriceHistory::query()->create([
             'product_id' => $product->id,
             'old_price_cents' => 800,
             'new_price_cents' => 1000,
@@ -186,7 +186,7 @@ describe('PriceHistory model', function () {
     it('identifies active price changes', function () {
         $product = Product::factory()->create();
 
-        $active = PriceHistory::create([
+        $active = PriceHistory::query()->create([
             'product_id' => $product->id,
             'old_price_cents' => 1000,
             'new_price_cents' => 1500,
