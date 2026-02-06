@@ -9,7 +9,6 @@ use App\Domain\Cart\DTOs\CartItemData;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Product\Models\Product;
 use App\Domain\User\Models\User;
-use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
