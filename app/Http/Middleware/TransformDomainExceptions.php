@@ -11,6 +11,7 @@ use App\Http\Responses\ApiErrorResponse;
 use Closure;
 use DomainException;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,7 +36,7 @@ final class TransformDomainExceptions
         }
     }
 
-    private function transformDomainException(Request $request, DomainException $e): Response
+    private function transformDomainException(Request $request, DomainException $e): JsonResponse
     {
         $message = $e->getMessage();
 
@@ -57,7 +58,7 @@ final class TransformDomainExceptions
         Request $request,
         ErrorCode $code,
         ?string $customMessage = null
-    ): Response {
+    ): JsonResponse {
         $correlationId = $request->header(AttachCorrelationId::HEADER_NAME);
 
         $response = $customMessage

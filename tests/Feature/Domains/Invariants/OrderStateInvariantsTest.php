@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Order\Support\OrderStateGuard;
+use App\Domain\Payment\Contracts\PaymentGatewayService;
 use App\Domain\Payment\Enums\PaymentStatus;
 use App\Domain\Payment\Models\PaymentIntent;
 use App\Domain\Refund\Actions\ApproveRefundAction;
@@ -160,8 +161,8 @@ describe('INV-REF-003: Refund must never be processed without approval', functio
             'reason' => 'Customer request',
         ]);
 
-        $mockGateway = Mockery::mock(App\Domain\Payment\Contracts\PaymentGatewayService::class);
-        $this->app->instance(App\Domain\Payment\Contracts\PaymentGatewayService::class, $mockGateway);
+        $mockGateway = Mockery::mock(PaymentGatewayService::class);
+        $this->app->instance(PaymentGatewayService::class, $mockGateway);
 
         $action = app(ProcessRefundAction::class);
         $action->execute($refund);
@@ -179,8 +180,8 @@ describe('INV-REF-003: Refund must never be processed without approval', functio
             'reason' => 'Customer request',
         ]);
 
-        $mockGateway = Mockery::mock(App\Domain\Payment\Contracts\PaymentGatewayService::class);
-        $this->app->instance(App\Domain\Payment\Contracts\PaymentGatewayService::class, $mockGateway);
+        $mockGateway = Mockery::mock(PaymentGatewayService::class);
+        $this->app->instance(PaymentGatewayService::class, $mockGateway);
 
         $action = app(ProcessRefundAction::class);
         $action->execute($refund);

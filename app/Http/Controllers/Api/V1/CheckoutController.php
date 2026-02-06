@@ -67,6 +67,7 @@ final class CheckoutController extends Controller
                     cartId: CartId::fromInt($cart->id),
                     currency: $request->validated('currency'),
                     idempotencyKey: $idempotencyKey,
+                    promotionCode: $request->validated('promotion_code'),
                 )
             );
 

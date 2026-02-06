@@ -75,14 +75,19 @@ final readonly class CreateOrderFromCart
 
             // Calculate totals
             $subtotalCents = $cart->subtotal;
+            $discountCents = $data->discountCents;
+
+            // Apply discount to subtotal (discount cannot exceed subtotal)
+            $discountCents = min($discountCents, (int) $subtotalCents);
+            $subtotalAfterDiscount = $subtotalCents - $discountCents;
 
             $taxCents = $this->calculateTax->execute(
-                new TaxCalculationData((int) $subtotalCents)
+                new TaxCalculationData((int) $subtotalAfterDiscount)
             );
 
             $shippingCents = 1000;
 
-            $totalCents = $subtotalCents + $taxCents + $shippingCents;
+            $totalCents = $subtotalAfterDiscount + $taxCents + $shippingCents;
 
             // STEP 2: Create order AFTER stock validation passes
             $order = Order::query()->create([
@@ -94,6 +99,8 @@ final readonly class CreateOrderFromCart
                 'shipping_cost_cents' => $shippingCents,
                 'total_cents' => $totalCents,
                 'currency' => $data->currency,
+                'promotion_id' => $data->promotionId,
+                'discount_cents' => $discountCents,
             ]);
 
             // STEP 3: Create order items and reserve stock (already validated)

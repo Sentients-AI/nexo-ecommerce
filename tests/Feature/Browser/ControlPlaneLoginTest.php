@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,6 +20,6 @@ it('loads the control plane login page successfully', function () {
 it('resolves user model correctly from auth config', function () {
     $userModel = config('auth.providers.users.model');
 
-    expect($userModel)->toBe(App\Domain\User\Models\User::class);
+    expect($userModel)->toBe(User::class);
     expect(class_exists($userModel))->toBeTrue();
 });

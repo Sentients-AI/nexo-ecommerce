@@ -7,6 +7,7 @@ namespace App\Domain\User\Actions;
 use App\Domain\User\DTOs\LoginData;
 use App\Domain\User\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
@@ -43,7 +44,7 @@ final class AuthenticateUser
     {
         $user = User::query()->where('email', $data->email)->first();
 
-        if (! $user || ! \Illuminate\Support\Facades\Hash::check($data->password, $user->password)) {
+        if (! $user || ! Hash::check($data->password, $user->password)) {
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);

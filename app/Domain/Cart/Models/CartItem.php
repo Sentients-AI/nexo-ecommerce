@@ -6,6 +6,7 @@ namespace App\Domain\Cart\Models;
 
 use App\Domain\Product\Models\Product;
 use App\Shared\Models\BaseModel;
+use Database\Factories\CartItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -60,9 +61,9 @@ final class CartItem extends BaseModel
     /**
      * Create a new factory instance for the model.
      */
-    protected static function newFactory(): \Database\Factories\CartItemFactory
+    protected static function newFactory(): CartItemFactory
     {
-        return \Database\Factories\CartItemFactory::new();
+        return CartItemFactory::new();
     }
 
     /**

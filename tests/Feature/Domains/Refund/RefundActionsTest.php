@@ -186,7 +186,7 @@ describe('ProcessRefundAction', function () {
 
         try {
             $action->execute($refund);
-        } catch (Exception $e) {
+        } catch (Exception) {
             expect($refund->fresh()->status)->toBe(RefundStatus::Failed);
         }
     });

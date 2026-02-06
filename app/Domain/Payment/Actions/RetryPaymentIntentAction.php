@@ -1,5 +1,9 @@
 <?php
+
+declare(strict_types=1);
+
 namespace App\Domain\Payment\Actions;
+
 use App\Domain\Payment\Models\PaymentIntent;
 
 final class RetryPaymentIntentAction
@@ -8,6 +12,7 @@ final class RetryPaymentIntentAction
     {
         if ($intent->isExpired() || $intent->attempts >= 3) {
             FailPaymentIntentAction::execute($intent);
+
             return;
         }
 

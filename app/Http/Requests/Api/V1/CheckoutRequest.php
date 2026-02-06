@@ -21,6 +21,7 @@ final class CheckoutRequest extends FormRequest
         return [
             'cart_id' => ['required', 'integer', 'exists:carts,id'],
             'currency' => ['required', 'string', 'size:3'],
+            'promotion_code' => ['nullable', 'string', 'max:50'],
         ];
     }
 
