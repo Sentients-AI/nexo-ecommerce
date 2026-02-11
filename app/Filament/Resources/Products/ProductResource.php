@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Products;
 
 use App\Domain\Product\Models\Product;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Products\Pages\CreateProduct;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Filament\Resources\Products\Pages\ListProducts;
@@ -21,6 +22,8 @@ use UnitEnum;
 
 final class ProductResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = Product::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingBag;

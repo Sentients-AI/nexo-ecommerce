@@ -49,10 +49,10 @@ describe('ChangePriceAction', function () {
             ->where('product_id', $product->id)
             ->first();
 
-        expect($history)->not->toBeNull();
-        expect($history->old_price_cents)->toBe(1000);
-        expect($history->new_price_cents)->toBe(1500);
-        expect($history->reason)->toBe('Test reason');
+        expect($history)->not->toBeNull()
+            ->and($history->old_price_cents)->toBe(1000)
+            ->and($history->new_price_cents)->toBe(1500)
+            ->and($history->reason)->toBe('Test reason');
     });
 
     it('creates audit log', function () {
@@ -113,8 +113,8 @@ describe('SchedulePriceChangeAction', function () {
             effectiveAt: $futureDate,
         ));
 
-        expect($result)->toBeInstanceOf(PriceHistory::class);
-        expect($result->isScheduled())->toBeTrue();
+        expect($result)->toBeInstanceOf(PriceHistory::class)
+            ->and($result->isScheduled())->toBeTrue();
 
         $product->refresh();
         expect((int) $product->price_cents)->toBe(1000);
@@ -179,8 +179,8 @@ describe('PriceHistory model', function () {
             'created_at' => now(),
         ]);
 
-        expect($scheduled->isScheduled())->toBeTrue();
-        expect($past->isScheduled())->toBeFalse();
+        expect($scheduled->isScheduled())->toBeTrue()
+            ->and($past->isScheduled())->toBeFalse();
     });
 
     it('identifies active price changes', function () {

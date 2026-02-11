@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\Product\Models;
 
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class PriceHistory extends BaseModel
 {
+    use BelongsToTenant;
+
     public $timestamps = false;
 
     protected $fillable = [

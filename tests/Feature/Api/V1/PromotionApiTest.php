@@ -10,10 +10,12 @@ use App\Domain\Promotion\Models\Promotion;
 use App\Domain\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Traits\WithTenant;
 
-uses(TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class, WithTenant::class);
 
 beforeEach(function () {
+    $this->setUpTenant();
     $this->user = User::factory()->create();
     $this->cart = Cart::factory()->create(['user_id' => $this->user->id]);
     $this->product = Product::factory()->create(['price_cents' => 10000]);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Promotions;
 
 use App\Domain\Promotion\Models\Promotion;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Promotions\Pages\CreatePromotion;
 use App\Filament\Resources\Promotions\Pages\EditPromotion;
 use App\Filament\Resources\Promotions\Pages\ListPromotions;
@@ -21,6 +22,8 @@ use UnitEnum;
 
 final class PromotionResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = Promotion::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedGift;

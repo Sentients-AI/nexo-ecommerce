@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Inventory\Models;
 
 use App\Domain\Product\Models\Product;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\StockFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Stock extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * The name of the "created at" column.

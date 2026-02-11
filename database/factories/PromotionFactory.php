@@ -7,7 +7,9 @@ namespace Database\Factories;
 use App\Domain\Promotion\Enums\DiscountType;
 use App\Domain\Promotion\Enums\PromotionScope;
 use App\Domain\Promotion\Models\Promotion;
+use App\Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Context;
 
 /**
  * @extends Factory<Promotion>
@@ -39,7 +41,18 @@ final class PromotionFactory extends Factory
             'usage_count' => 0,
             'per_user_limit' => null,
             'is_active' => true,
+            'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
+    }
+
+    /**
+     * Associate the promotion with a specific tenant.
+     */
+    public function forTenant(Tenant $tenant): self
+    {
+        return $this->state(fn (array $attributes): array => [
+            'tenant_id' => $tenant->id,
+        ]);
     }
 
     /**

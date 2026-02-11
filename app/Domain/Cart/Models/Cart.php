@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Cart\Models;
 
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
 use Carbon\Carbon;
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 final class Cart extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * The attributes that are mass assignable.

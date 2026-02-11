@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Domain\FeatureFlag\Models;
 
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Context;
 
 final class FeatureFlag extends BaseModel
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'key',
         'name',
@@ -25,8 +29,11 @@ final class FeatureFlag extends BaseModel
 
     public static function isEnabled(string $key): bool
     {
+        $tenantId = Context::get('tenant_id');
+        $cacheKey = $tenantId ? "feature_flag:{$tenantId}:{$key}" : "feature_flag:{$key}";
+
         return Cache::remember(
-            "feature_flag:$key",
+            $cacheKey,
             now()->addMinutes(5),
             fn () => self::query()->where('key', $key)->value('is_enabled') ?? false
         );
@@ -34,7 +41,9 @@ final class FeatureFlag extends BaseModel
 
     public static function clearCache(string $key): void
     {
-        Cache::forget("feature_flag:$key");
+        $tenantId = Context::get('tenant_id');
+        $cacheKey = $tenantId ? "feature_flag:{$tenantId}:{$key}" : "feature_flag:{$key}";
+        Cache::forget($cacheKey);
     }
 
     public static function clearAllCache(): void

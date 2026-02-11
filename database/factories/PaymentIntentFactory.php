@@ -6,7 +6,9 @@ namespace Database\Factories;
 
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Models\PaymentIntent;
+use App\Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Context;
 
 /**
  * @extends Factory<PaymentIntent>
@@ -36,6 +38,17 @@ final class PaymentIntentFactory extends Factory
                 'client_ip' => $this->faker->ipv4(),
                 'user_agent' => $this->faker->userAgent(),
             ],
+            'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
+    }
+
+    /**
+     * Associate the payment intent with a specific tenant.
+     */
+    public function forTenant(Tenant $tenant): self
+    {
+        return $this->state(fn (array $attributes): array => [
+            'tenant_id' => $tenant->id,
+        ]);
     }
 }

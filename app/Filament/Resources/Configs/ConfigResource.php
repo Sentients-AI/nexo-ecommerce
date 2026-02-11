@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Configs;
 
 use App\Domain\Config\Models\SystemConfig;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Configs\Pages\ListConfigs;
 use App\Filament\Resources\Configs\Pages\ViewConfig;
 use App\Filament\Resources\Configs\Schemas\ConfigInfolist;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 final class ConfigResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = SystemConfig::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;

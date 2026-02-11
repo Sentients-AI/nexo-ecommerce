@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Domain\Idempotency\Models;
 
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\IdempotencyKeyFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 final class IdempotencyKey extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * The name of the "updated at" column.

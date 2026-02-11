@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Payments;
 
 use App\Domain\Payment\Models\PaymentIntent;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Payments\Pages\ListPayments;
 use App\Filament\Resources\Payments\Pages\ViewPayment;
 use App\Filament\Resources\Payments\Schemas\PaymentInfolist;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 final class PaymentResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = PaymentIntent::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;

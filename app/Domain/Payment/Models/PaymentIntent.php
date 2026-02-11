@@ -6,6 +6,7 @@ namespace App\Domain\Payment\Models;
 
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Enums\PaymentStatus;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\PaymentIntentFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class PaymentIntent extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * The attributes that are mass assignable.

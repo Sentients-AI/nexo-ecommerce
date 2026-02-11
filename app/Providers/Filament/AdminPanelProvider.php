@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Http\Middleware\FilamentTenantMiddleware;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -12,12 +13,15 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 final class AdminPanelProvider extends PanelProvider
@@ -25,6 +29,13 @@ final class AdminPanelProvider extends PanelProvider
     public function panel(Panel $panel): Panel
     {
         return $panel
+            ->routes(function () {
+                Route::get('/clear-tenant', function () {
+                    session()->forget('filament_selected_tenant_id');
+
+                    return redirect()->route('filament.control-plane.pages.operations-dashboard');
+                })->name('clear-tenant');
+            })
             ->default()
             ->id('control-plane')
             ->path('control-plane')
@@ -43,6 +54,9 @@ final class AdminPanelProvider extends PanelProvider
                 AccountWidget::class,
             ])
             ->navigationGroups([
+                NavigationGroup::make('Tenant Management')
+                    ->icon('heroicon-o-building-office-2')
+                    ->collapsed(false),
                 NavigationGroup::make('Operations')
                     ->icon('heroicon-o-chart-bar'),
                 NavigationGroup::make('Catalog')
@@ -52,6 +66,16 @@ final class AdminPanelProvider extends PanelProvider
                     ->collapsed(),
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->renderHook(
+                PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
+                fn () => auth()->user()?->isSuperAdmin()
+                    ? Blade::render('<livewire:tenant-switcher />')
+                    : '',
+            )
+            ->renderHook(
+                PanelsRenderHook::BODY_START,
+                fn () => view('components.tenant-banner'),
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -65,6 +89,7 @@ final class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                FilamentTenantMiddleware::class,
             ]);
     }
 }

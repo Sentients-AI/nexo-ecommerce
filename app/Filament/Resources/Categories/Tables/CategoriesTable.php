@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Categories\Tables;
 
 use App\Domain\Category\Models\Category;
-use DomainException;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -78,12 +78,25 @@ final class CategoriesTable
                 EditAction::make(),
                 DeleteAction::make()
                     ->requiresConfirmation()
-                    ->before(function (Category $record): void {
+                    ->before(function (Category $record, DeleteAction $action): void {
                         if ($record->hasChildren()) {
-                            throw new DomainException('Cannot delete a category that has child categories.');
+                            Notification::make()
+                                ->title('Cannot delete category')
+                                ->body('This category has child categories. Please delete or reassign them first.')
+                                ->danger()
+                                ->send();
+
+                            $action->cancel();
                         }
+
                         if ($record->products()->exists()) {
-                            throw new DomainException('Cannot delete a category that has products.');
+                            Notification::make()
+                                ->title('Cannot delete category')
+                                ->body('This category has products. Please delete or reassign them first.')
+                                ->danger()
+                                ->send();
+
+                            $action->cancel();
                         }
                     }),
             ])

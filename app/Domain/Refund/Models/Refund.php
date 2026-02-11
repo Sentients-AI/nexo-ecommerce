@@ -6,6 +6,7 @@ namespace App\Domain\Refund\Models;
 
 use App\Domain\Order\Models\Order;
 use App\Domain\Refund\Enums\RefundStatus;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Domain\User\Models\User;
 use DomainException;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class Refund extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'order_id',
         'payment_intent_id',

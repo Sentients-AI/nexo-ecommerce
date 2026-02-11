@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Database\Factories;
 
 use App\Domain\Order\Models\Order;
+use App\Domain\Tenant\Models\Tenant;
 use App\Domain\User\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Context;
 
 /**
  * @extends Factory<Order>
@@ -37,7 +39,18 @@ final class OrderFactory extends Factory
             'total_cents' => $totalCents,
             'currency' => 'USD',
             'refunded_amount_cents' => 0,
+            'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
+    }
+
+    /**
+     * Associate the order with a specific tenant.
+     */
+    public function forTenant(Tenant $tenant): self
+    {
+        return $this->state(fn (array $attributes): array => [
+            'tenant_id' => $tenant->id,
+        ]);
     }
 
     public function pending(): self
