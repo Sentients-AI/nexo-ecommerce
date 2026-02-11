@@ -405,3 +405,57 @@ Guest users can add items to cart before registering
 Cart persists across page reloads via session
 
 Login merges or transfers cart to authenticated user
+
+2026-02-07 — Shared database multi-tenancy with tenant_id column
+
+Decision
+Multi-tenancy is implemented using a shared database with a nullable `tenant_id` column on all tenant-scoped tables. Tenant isolation is enforced via a `TenantScope` global scope applied through the `BelongsToTenant` trait.
+
+Reason
+Shared database is simpler to operate than database-per-tenant. A global scope ensures data isolation without requiring explicit filtering in every query.
+
+Trade-offs
+
+All queries must respect tenant scope (enforced by global scope)
+
+Cross-tenant queries require explicit `withoutTenancy()` call
+
+Nullable tenant_id allows super admins to exist outside any tenant
+
+Composite unique indexes needed for fields like SKU (unique per tenant, not globally)
+
+Consequences
+
+Automatic tenant filtering on all model queries
+
+Super admins can impersonate tenants via session-based tenant switcher
+
+Queue jobs propagate tenant context automatically via Laravel Context
+
+Factories respect tenant context or create new tenant if none set
+
+21 models are tenant-scoped; pivot tables and roles are shared
+
+2026-02-07 — Subdomain-based tenant identification
+
+Decision
+Tenants are identified by subdomain (e.g., `acme-store.yourdomain.com`). The `ResolveTenantFromSubdomain` middleware resolves the tenant and sets it in Laravel's Context facade.
+
+Reason
+Subdomains provide clear tenant separation in URLs and are familiar to users. Context facade allows tenant to propagate across the request lifecycle including queued jobs.
+
+Trade-offs
+
+Requires wildcard DNS configuration
+
+Local development needs hosts file entries or special handling
+
+Reserved subdomains (www, api, admin) must be blocked
+
+Consequences
+
+Each tenant has a unique, branded URL
+
+Tenant context is available throughout request via `Context::get('tenant_id')`
+
+API requests resolve tenant from authenticated user instead of subdomain

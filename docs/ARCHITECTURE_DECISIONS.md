@@ -410,6 +410,131 @@ Keys expire after a reasonable window (e.g., 24 hours) to prevent unbounded stor
 
 ---
 
+## Why Shared Database Multi-Tenancy?
+
+This system supports multiple tenants (independent stores) sharing a single database with row-level isolation.
+
+### The Multi-Tenancy Spectrum
+
+```
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  Single Tenant  │  │ Shared Database │  │ Database per    │
+│  (Simple)       │  │ (This System)   │  │ Tenant          │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+     Simple              Balanced              Complex
+     No isolation        Row isolation         Full isolation
+     No overhead         Moderate overhead     High overhead
+```
+
+### Why Shared Database?
+
+**Operational Simplicity**
+- Single database to backup, migrate, and monitor
+- No connection pooling per tenant
+- Easy cross-tenant reporting for platform admins
+
+**Implementation**
+```php
+// BelongsToTenant trait adds automatic scoping
+trait BelongsToTenant
+{
+    public static function bootBelongsToTenant(): void
+    {
+        // Auto-set tenant_id on create
+        static::creating(function (Model $model) {
+            if ($model->tenant_id === null) {
+                $model->tenant_id = Context::get('tenant_id');
+            }
+        });
+
+        // Auto-filter queries by tenant
+        static::addGlobalScope(new TenantScope());
+    }
+}
+
+// TenantScope filters all queries
+class TenantScope implements Scope
+{
+    public function apply(Builder $builder, Model $model): void
+    {
+        $tenantId = Context::get('tenant_id');
+        if ($tenantId !== null) {
+            $builder->where('tenant_id', $tenantId);
+        }
+    }
+}
+```
+
+**Bypassing for Admin Operations**
+```php
+// Super admins need to see all tenants
+$allOrders = Order::withoutTenancy()->get();
+
+// Or query specific tenant
+$tenantOrders = Order::withoutTenancy()
+    ->where('tenant_id', $specificTenantId)
+    ->get();
+```
+
+### Tenant Resolution
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Request Arrives                          │
+└─────────────────────────────────────────────────────────────┘
+                              │
+              ┌───────────────┴───────────────┐
+              ▼                               ▼
+     ┌─────────────────┐             ┌─────────────────┐
+     │  Web Request    │             │  API Request    │
+     │  (Subdomain)    │             │  (Auth Token)   │
+     └────────┬────────┘             └────────┬────────┘
+              │                               │
+              ▼                               ▼
+     ┌─────────────────┐             ┌─────────────────┐
+     │ ResolveTenant   │             │ ResolveTenant   │
+     │ FromSubdomain   │             │ FromUser        │
+     └────────┬────────┘             └────────┬────────┘
+              │                               │
+              └───────────────┬───────────────┘
+                              ▼
+                    ┌─────────────────┐
+                    │ Context::add(   │
+                    │   'tenant_id',  │
+                    │   $tenant->id   │
+                    │ )               │
+                    └─────────────────┘
+```
+
+### Queue Job Context Propagation
+
+Tenant context automatically propagates to queued jobs:
+
+```php
+// In AppServiceProvider
+Context::dehydrating(function (ContextDehydrating $event) {
+    $event->setHidden('tenant_id', Context::get('tenant_id'));
+});
+
+Context::hydrated(function (ContextHydrated $event) {
+    $tenantId = $event->getHidden('tenant_id');
+    if ($tenantId) {
+        Context::add('tenant_id', $tenantId);
+    }
+});
+```
+
+### Trade-offs Accepted
+
+| Benefit | Trade-off |
+|---------|-----------|
+| Simple operations | Must remember to scope queries |
+| Easy cross-tenant queries | Composite unique indexes needed |
+| Single migration path | Cannot use database-level isolation |
+| Shared connection pool | Noisy neighbor risk (mitigated by query limits) |
+
+---
+
 ## Summary
 
 | Decision | Problem Solved | Trade-off Accepted |
@@ -419,6 +544,7 @@ Keys expire after a reasonable window (e.g., 24 hours) to prevent unbounded stor
 | Projections | Slow complex queries, calculation duplication | Eventual consistency, rebuild complexity |
 | Filament | Admin panel development time | Tied to Filament's upgrade cycle |
 | Idempotency | Duplicate requests, network failures | Storage overhead, implementation complexity |
+| Shared DB Multi-tenancy | Operational complexity of DB-per-tenant | Must enforce row-level isolation |
 
 These decisions optimize for:
 1. **Developer productivity**: Find code fast, change code safely

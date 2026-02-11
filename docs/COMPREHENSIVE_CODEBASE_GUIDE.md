@@ -27,8 +27,9 @@ This document explains every aspect of the modular e-commerce system, including 
 
 ### What Is This Application?
 
-This is a **modular monolith e-commerce system** built with Laravel, implementing Domain-Driven Design (DDD) principles. It handles:
+This is a **multi-tenant modular monolith e-commerce platform** built with Laravel, implementing Domain-Driven Design (DDD) principles. It handles:
 
+- **Multi-tenancy** with shared database and subdomain identification
 - Product catalog and categories
 - Shopping cart management
 - Order processing and checkout
@@ -36,7 +37,7 @@ This is a **modular monolith e-commerce system** built with Laravel, implementin
 - Inventory management with concurrency control
 - Refund workflow with approval process
 - Promotions and discounts
-- Admin control panel (Filament)
+- Admin control plane (Filament) with tenant management
 
 ### Request Flow
 
@@ -134,6 +135,7 @@ app/
 │   ├── Role/           # User roles
 │   ├── Shared/         # Cross-cutting domain concerns
 │   ├── Tax/            # Tax calculation
+│   ├── Tenant/         # Multi-tenancy (tenant isolation)
 │   └── User/           # User management
 │
 ├── Filament/            # Admin panel
@@ -976,6 +978,154 @@ final readonly class EnsureIdempotentAction
 ```
 
 **Why fingerprint?** If someone sends same key with different data, that's a bug (or attack). We catch it early.
+
+---
+
+### Tenant Domain
+
+**Purpose**: Manage multi-tenancy with shared database isolation.
+
+#### Models
+
+**Tenant.php**
+```php
+final class Tenant extends Model
+{
+    protected $fillable = [
+        'name',
+        'slug',        // Used for subdomain identification
+        'email',
+        'is_active',
+        'settings',    // JSON: currency, timezone, etc.
+    ];
+
+    // Relationships
+    public function users(): HasMany;
+    public function products(): HasMany;
+    public function orders(): HasMany;
+}
+```
+
+#### Traits
+
+**BelongsToTenant.php**
+```php
+trait BelongsToTenant
+{
+    public static function bootBelongsToTenant(): void
+    {
+        // Auto-set tenant_id from Context on create
+        static::creating(function (Model $model) {
+            if ($model->tenant_id === null) {
+                $model->tenant_id = Context::get('tenant_id');
+            }
+        });
+
+        // Apply global scope for automatic filtering
+        static::addGlobalScope(new TenantScope());
+    }
+
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+}
+```
+
+**Why a trait?** All tenant-scoped models need the same behavior: auto-set tenant_id and apply filtering. A trait provides consistent implementation.
+
+#### Scopes
+
+**TenantScope.php**
+```php
+class TenantScope implements Scope
+{
+    public function apply(Builder $builder, Model $model): void
+    {
+        $tenantId = Context::get('tenant_id');
+
+        if ($tenantId !== null) {
+            $builder->where($model->getTable() . '.tenant_id', $tenantId);
+        }
+    }
+}
+```
+
+**Key Design Decisions:**
+- Uses Laravel's `Context` facade for tenant propagation
+- `tenant_id = null` in Context means show all (super admin mode)
+- Scope is automatically applied to all queries
+
+#### Middleware
+
+**ResolveTenantFromSubdomain.php**
+```php
+final class ResolveTenantFromSubdomain
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $host = $request->getHost();
+        $baseDomain = config('tenancy.base_domain');
+
+        // Extract subdomain
+        $subdomain = str_replace('.' . $baseDomain, '', $host);
+
+        // Skip for reserved subdomains (www, api, admin)
+        if (in_array($subdomain, config('tenancy.reserved_subdomains'))) {
+            return $next($request);
+        }
+
+        // Resolve tenant by slug
+        $tenant = Tenant::where('slug', $subdomain)
+            ->where('is_active', true)
+            ->first();
+
+        if ($tenant) {
+            Context::add('tenant_id', $tenant->id);
+        }
+
+        return $next($request);
+    }
+}
+```
+
+**ResolveTenantFromUser.php** (for API routes)
+```php
+final class ResolveTenantFromUser
+{
+    public function handle(Request $request, Closure $next): Response
+    {
+        $user = $request->user();
+
+        if ($user && $user->tenant_id) {
+            Context::add('tenant_id', $user->tenant_id);
+        }
+
+        return $next($request);
+    }
+}
+```
+
+#### Bypassing Tenant Scope
+
+For admin operations that need to see all tenants:
+
+```php
+// Using the withoutTenancy macro
+$allOrders = Order::withoutTenancy()->get();
+
+// Query specific tenant
+$tenantOrders = Order::withoutTenancy()
+    ->where('tenant_id', $specificTenantId)
+    ->get();
+```
+
+The `withoutTenancy()` macro is registered in `AppServiceProvider`:
+```php
+Builder::macro('withoutTenancy', function () {
+    return $this->withoutGlobalScope(TenantScope::class);
+});
+```
 
 ---
 
@@ -1986,17 +2136,18 @@ SESSION_DRIVER=redis
 
 ## Summary
 
-This codebase demonstrates a production-ready e-commerce system with:
+This codebase demonstrates a production-ready **multi-tenant** e-commerce platform with:
 
-1. **Clear Architecture**: Domain-driven design with bounded contexts
-2. **Type Safety**: Enums, value objects, TypeScript
-3. **Business Rules**: Specifications pattern for composable validation
-4. **Concurrency Control**: SELECT FOR UPDATE for inventory
-5. **Event-Driven**: Domain events for cross-cutting concerns
-6. **Audit Trail**: Stock movements, domain events, audit logs
-7. **Idempotency**: Prevents duplicate operations
-8. **Comprehensive Testing**: Unit, feature, browser, torture tests
-9. **Modern Frontend**: Vue 3, Inertia, Tailwind CSS
-10. **Admin Dashboard**: Filament with custom widgets and pages
+1. **Multi-Tenancy**: Shared database with automatic tenant isolation via global scopes
+2. **Clear Architecture**: Domain-driven design with bounded contexts
+3. **Type Safety**: Enums, value objects, TypeScript
+4. **Business Rules**: Specifications pattern for composable validation
+5. **Concurrency Control**: SELECT FOR UPDATE for inventory
+6. **Event-Driven**: Domain events for cross-cutting concerns
+7. **Audit Trail**: Stock movements, domain events, audit logs
+8. **Idempotency**: Prevents duplicate operations
+9. **Comprehensive Testing**: Unit, feature, browser, torture tests
+10. **Modern Frontend**: Vue 3, Inertia, Tailwind CSS
+11. **Admin Control Plane**: Filament with tenant management, cross-tenant widgets, and tenant impersonation
 
-The architecture prioritizes maintainability and correctness over raw performance, making it suitable for most e-commerce volumes while remaining extractable to microservices if needed.
+The architecture prioritizes maintainability and correctness over raw performance, making it suitable for most e-commerce volumes while remaining extractable to microservices if needed. The multi-tenancy implementation allows the platform to serve multiple independent stores from a single deployment.

@@ -4,6 +4,19 @@ All endpoints return JSON. API version 1 is available at `/api/v1/`.
 
 ---
 
+## Multi-Tenancy
+
+API requests are tenant-scoped based on the authenticated user's tenant. All data returned is automatically filtered to the user's tenant.
+
+**Tenant Resolution**
+- **Web/Storefront**: Resolved from subdomain (e.g., `acme-store.yourdomain.com`)
+- **API**: Resolved from the authenticated user's `tenant_id`
+
+**Super Admin Access**
+Super admins (users with `tenant_id = NULL`) can access data across all tenants through the Control Plane admin interface.
+
+---
+
 ## Error Response Format
 
 All errors follow a standardized schema:

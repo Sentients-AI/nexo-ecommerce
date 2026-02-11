@@ -16,14 +16,29 @@ Fast lookup for common tasks and code locations.
 | Apply promotion | `app/Domain/Promotion/Actions/FindBestPromotionAction.php` | Find best discount |
 | Request refund | `app/Domain/Refund/Actions/RequestRefundAction.php` | Creates refund request |
 
+### Multi-Tenancy
+
+| What | Where |
+|------|-------|
+| Tenant model | `app/Domain/Tenant/Models/Tenant.php` |
+| Tenant scope trait | `app/Domain/Tenant/Traits/BelongsToTenant.php` |
+| Tenant global scope | `app/Domain/Tenant/Scopes/TenantScope.php` |
+| Subdomain resolver | `app/Http/Middleware/ResolveTenantFromSubdomain.php` |
+| API tenant resolver | `app/Http/Middleware/ResolveTenantFromUser.php` |
+| Filament tenant filter | `app/Http/Middleware/FilamentTenantMiddleware.php` |
+| Tenant switcher (Livewire) | `app/Livewire/TenantSwitcher.php` |
+| Tenant config | `config/tenancy.php` |
+
 ### Data Structures
 
 | What | Where | Fields |
 |------|-------|--------|
-| Order model | `app/Domain/Order/Models/Order.php` | status, total_cents, items |
-| Product model | `app/Domain/Product/Models/Product.php` | name, price_cents, sale_price |
-| Cart model | `app/Domain/Cart/Models/Cart.php` | user_id, items |
-| Stock model | `app/Domain/Inventory/Models/Stock.php` | quantity_available, quantity_reserved |
+| Tenant model | `app/Domain/Tenant/Models/Tenant.php` | name, slug, email, is_active, settings |
+| Order model | `app/Domain/Order/Models/Order.php` | tenant_id, status, total_cents, items |
+| Product model | `app/Domain/Product/Models/Product.php` | tenant_id, name, price_cents, sale_price |
+| Cart model | `app/Domain/Cart/Models/Cart.php` | tenant_id, user_id, items |
+| Stock model | `app/Domain/Inventory/Models/Stock.php` | tenant_id, quantity_available, quantity_reserved |
+| User model | `app/Domain/User/Models/User.php` | tenant_id, name, email, roles |
 
 ### Validation Rules
 
@@ -164,6 +179,27 @@ $orders = Order::where('user_id', $userId)
     ->with('items')
     ->orderByDesc('created_at')
     ->paginate(10);
+```
+
+### Multi-Tenancy Queries
+
+```php
+// Normal query (auto-filtered by tenant)
+$products = Product::all();  // Only current tenant's products
+
+// Bypass tenant scope (admin operations)
+$allProducts = Product::withoutTenancy()->get();
+
+// Query specific tenant
+$tenantProducts = Product::withoutTenancy()
+    ->where('tenant_id', $tenantId)
+    ->get();
+
+// Get current tenant ID
+$tenantId = Context::get('tenant_id');
+
+// Set tenant context manually (e.g., in tests)
+Context::add('tenant_id', $tenant->id);
 ```
 
 ---
@@ -374,6 +410,8 @@ new Intl.NumberFormat('en-US', {
 3. **One active cart per user** - Enforced in `getOrCreateCart`
 4. **Idempotency keys prevent duplicate checkouts** - Required header
 5. **Refunds cannot exceed order total** - Specification validates
+6. **Tenant data isolation** - All queries automatically filtered by `tenant_id`
+7. **Super admins have no tenant** - `tenant_id = NULL` for platform admins
 
 ---
 

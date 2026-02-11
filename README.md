@@ -1,6 +1,6 @@
 # Modular E-Commerce System
 
-A Domain-Driven Design (DDD) e-commerce system built with Laravel, featuring strict invariant enforcement, event-driven architecture, and comprehensive business rule validation.
+A Domain-Driven Design (DDD) **multi-tenant** e-commerce platform built with Laravel, featuring strict invariant enforcement, event-driven architecture, and comprehensive business rule validation.
 
 ## Architecture Overview
 
@@ -19,7 +19,9 @@ app/
 │   ├── Order/               # Order processing
 │   ├── Payment/             # Payment handling
 │   ├── Product/             # Product catalog
+│   ├── Promotion/           # Discounts and promotions
 │   ├── Refund/              # Refund management
+│   ├── Tenant/              # Multi-tenancy (tenant isolation)
 │   └── User/                # User management
 │   └── {Domain}/
 │       ├── Actions/         # Domain services/commands
@@ -37,6 +39,23 @@ app/
     ├── Specifications/      # Specification pattern base
     ├── ValueObjects/        # AbstractId base class
     └── Domain/              # Domain event infrastructure
+```
+
+## Multi-Tenancy
+
+The system supports multi-tenancy with a shared database architecture:
+
+- **Subdomain identification**: Each tenant has a unique subdomain (e.g., `acme-store.yourdomain.com`)
+- **Automatic data isolation**: All tenant-scoped models use the `BelongsToTenant` trait
+- **Super admin access**: Platform administrators can view and manage all tenants
+- **Tenant switcher**: Super admins can impersonate tenant views in the control plane
+
+```php
+// Automatic tenant scoping via BelongsToTenant trait
+$products = Product::all(); // Only returns current tenant's products
+
+// Bypass for admin operations
+$allProducts = Product::withoutTenancy()->get();
 ```
 
 ## Key DDD Patterns
