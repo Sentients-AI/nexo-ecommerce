@@ -9,6 +9,7 @@ use App\Domain\Order\Models\Order;
 use App\Domain\Product\Models\Product;
 use App\Domain\Promotion\Enums\DiscountType;
 use App\Domain\Promotion\Enums\PromotionScope;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Carbon\Carbon;
 use Database\Factories\PromotionFactory;
@@ -18,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Promotion extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * The attributes that are mass assignable.

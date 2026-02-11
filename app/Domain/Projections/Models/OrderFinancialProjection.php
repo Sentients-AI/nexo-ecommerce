@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Domain\Projections\Models;
 
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 final class OrderFinancialProjection extends Model
 {
+    use BelongsToTenant;
+
     public $incrementing = false;
 
     protected $primaryKey = 'order_id';

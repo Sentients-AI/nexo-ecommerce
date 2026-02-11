@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Promotion\Models;
 
 use App\Domain\Order\Models\Order;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
 use Database\Factories\PromotionUsageFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class PromotionUsage extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * The attributes that are mass assignable.

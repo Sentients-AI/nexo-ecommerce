@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Orders;
 
 use App\Domain\Order\Models\Order;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Orders\Pages\ListOrders;
 use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Orders\RelationManagers\RefundsRelationManager;
@@ -20,6 +21,8 @@ use UnitEnum;
 
 final class OrderResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = Order::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedShoppingCart;

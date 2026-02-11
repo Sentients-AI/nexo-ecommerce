@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\User\Models;
 
 use App\Domain\Role\Models\Role;
+use App\Domain\Tenant\Models\Tenant;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -23,7 +25,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 final class User extends BaseModel implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract, FilamentUser
 {
-    use Authenticatable, Authorizable, CanResetPassword, HasApiTokens, HasFactory, MustVerifyEmail, Notifiable;
+    use Authenticatable, Authorizable, BelongsToTenant, CanResetPassword, HasApiTokens, HasFactory, MustVerifyEmail, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -35,6 +37,7 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
         'email',
         'password',
         'role_id',
+        'tenant_id',
     ];
 
     /**
@@ -82,10 +85,23 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
     }
 
     /**
+     * Check if user is a super admin (no tenant, with super_admin role).
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->tenant_id === null && $this->hasRole('super_admin');
+    }
+
+    /**
      * Check if user can access Filament panel.
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        // Super admins can access any panel
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
         // Allow access to users with admin, support, or finance roles
         return in_array($this->role?->name, ['admin', 'support', 'finance'], true);
     }

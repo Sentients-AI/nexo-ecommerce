@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\FeatureFlags;
 
 use App\Domain\FeatureFlag\Models\FeatureFlag;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\FeatureFlags\Pages\ListFeatureFlags;
 use App\Filament\Resources\FeatureFlags\Pages\ViewFeatureFlag;
 use App\Filament\Resources\FeatureFlags\Schemas\FeatureFlagInfolist;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 final class FeatureFlagResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = FeatureFlag::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedFlag;

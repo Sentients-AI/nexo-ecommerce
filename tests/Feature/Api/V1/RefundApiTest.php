@@ -9,8 +9,13 @@ use App\Domain\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use Tests\Traits\WithTenant;
 
-uses(TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class, WithTenant::class);
+
+beforeEach(function () {
+    $this->setUpTenant();
+});
 
 describe('Request Refund API', function () {
     it('requires authentication', function () {

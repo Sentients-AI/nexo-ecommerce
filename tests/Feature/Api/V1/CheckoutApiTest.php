@@ -13,10 +13,12 @@ use App\Domain\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use Tests\Traits\WithTenant;
 
-uses(TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class, WithTenant::class);
 
 beforeEach(function () {
+    $this->setUpTenant();
     // Mock the payment gateway service for all checkout tests
     $mock = Mockery::mock(PaymentGatewayService::class);
     $mock->shouldReceive('createIntent')

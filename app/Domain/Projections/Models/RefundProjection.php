@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Domain\Projections\Models;
 
 use App\Domain\Refund\Enums\RefundStatus;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 
 final class RefundProjection extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'refund_id',
         'order_id',

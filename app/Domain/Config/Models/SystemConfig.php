@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace App\Domain\Config\Models;
 
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Context;
 
 final class SystemConfig extends BaseModel
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'group',
         'key',
@@ -23,8 +27,11 @@ final class SystemConfig extends BaseModel
 
     public static function getValue(string $group, string $key, mixed $default = null): mixed
     {
+        $tenantId = Context::get('tenant_id');
+        $cacheKey = $tenantId ? "system_config:{$tenantId}:{$group}:{$key}" : "system_config:{$group}:{$key}";
+
         return Cache::remember(
-            "system_config:{$group}:{$key}",
+            $cacheKey,
             now()->addMinutes(30),
             function () use ($group, $key, $default) {
                 $config = self::query()
@@ -53,7 +60,9 @@ final class SystemConfig extends BaseModel
 
     public static function clearCache(string $group, string $key): void
     {
-        Cache::forget("system_config:{$group}:{$key}");
+        $tenantId = Context::get('tenant_id');
+        $cacheKey = $tenantId ? "system_config:{$tenantId}:{$group}:{$key}" : "system_config:{$group}:{$key}";
+        Cache::forget($cacheKey);
     }
 
     public static function clearGroupCache(string $group): void

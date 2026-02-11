@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Inventory;
 
 use App\Domain\Inventory\Models\Stock;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Inventory\Pages\ListInventory;
 use App\Filament\Resources\Inventory\Pages\ViewInventory;
 use App\Filament\Resources\Inventory\Schemas\InventoryInfolist;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 final class InventoryResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = Stock::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;

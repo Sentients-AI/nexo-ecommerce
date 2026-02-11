@@ -6,8 +6,10 @@ namespace Database\Factories;
 
 use App\Domain\Category\Models\Category;
 use App\Domain\Product\Models\Product;
+use App\Domain\Tenant\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Context;
 
 /**
  * @extends Factory<Product>
@@ -28,6 +30,8 @@ final class ProductFactory extends Factory
      */
     public function definition(): array
     {
+        $tenantId = Context::get('tenant_id');
+
         return [
             'sku' => $this->faker->unique()->bothify('SKU-####-????'),
             'name' => $this->faker->words(3, true),
@@ -42,7 +46,20 @@ final class ProductFactory extends Factory
                 'content' => $this->faker->optional()->paragraph(),
             ]),
             'sale_price' => $this->faker->numberBetween(1000, 100000),
-            'category_id' => Category::factory()->create()->id,
+            'category_id' => $tenantId
+                ? Category::query()->inRandomOrder()->first()?->id ?? Category::factory()->create()->id
+                : Category::factory()->create()->id,
+            'tenant_id' => $tenantId ?? Tenant::factory(),
         ];
+    }
+
+    /**
+     * Associate the product with a specific tenant.
+     */
+    public function forTenant(Tenant $tenant): self
+    {
+        return $this->state(fn (array $attributes): array => [
+            'tenant_id' => $tenant->id,
+        ]);
     }
 }

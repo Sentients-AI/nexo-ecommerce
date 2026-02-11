@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Cart\Models;
 
 use App\Domain\Product\Models\Product;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\CartItemFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class CartItem extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * Indicates if the model should be timestamped.

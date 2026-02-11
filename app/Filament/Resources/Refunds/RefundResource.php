@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Refunds;
 
 use App\Domain\Refund\Models\Refund;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Refunds\Pages\ListRefunds;
 use App\Filament\Resources\Refunds\Pages\ViewRefund;
 use App\Filament\Resources\Refunds\Schemas\RefundInfolist;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 final class RefundResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = Refund::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedReceiptRefund;

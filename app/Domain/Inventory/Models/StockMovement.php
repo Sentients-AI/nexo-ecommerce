@@ -6,6 +6,7 @@ namespace App\Domain\Inventory\Models;
 
 use App\Domain\Inventory\Enums\StockMovementType;
 use App\Domain\Product\Models\Product;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\StockMovementFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 final class StockMovement extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * The name of the "updated at" column.

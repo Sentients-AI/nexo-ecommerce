@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Users;
 
 use App\Domain\User\Models\User;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\Pages\ViewUser;
 use App\Filament\Resources\Users\Schemas\UserInfolist;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 final class UserResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUsers;

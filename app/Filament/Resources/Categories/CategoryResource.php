@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Categories;
 
 use App\Domain\Category\Models\Category;
+use App\Filament\Concerns\HasTenantAwareness;
 use App\Filament\Resources\Categories\Pages\CreateCategory;
 use App\Filament\Resources\Categories\Pages\EditCategory;
 use App\Filament\Resources\Categories\Pages\ListCategories;
@@ -19,6 +20,8 @@ use UnitEnum;
 
 final class CategoryResource extends Resource
 {
+    use HasTenantAwareness;
+
     protected static ?string $model = Category::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTag;

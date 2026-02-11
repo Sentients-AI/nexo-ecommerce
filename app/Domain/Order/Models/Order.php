@@ -8,6 +8,7 @@ use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Payment\Models\PaymentIntent;
 use App\Domain\Promotion\Models\Promotion;
 use App\Domain\Refund\Models\Refund;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
 use Database\Factories\OrderFactory;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 final class Order extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * The attributes that are mass assignable.

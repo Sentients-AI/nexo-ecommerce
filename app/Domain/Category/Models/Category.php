@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Category\Models;
 
 use App\Domain\Product\Models\Product;
+use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Category extends BaseModel
 {
-    use HasFactory;
+    use BelongsToTenant, HasFactory;
 
     /**
      * Indicates if the model should be timestamped.
