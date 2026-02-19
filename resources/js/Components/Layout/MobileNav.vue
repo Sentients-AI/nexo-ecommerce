@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onUnmounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
+import { useLocale } from '@/Composables/useLocale';
+import { useWishlist } from '@/Composables/useWishlist';
 
 interface Props {
     show: boolean;
@@ -14,6 +16,8 @@ const emit = defineEmits<{
 
 const page = usePage();
 const isAuthenticated = ref(page.props.auth?.user !== null);
+const { t, localePath } = useLocale();
+const { count: wishlistCount } = useWishlist();
 
 function close() {
     emit('close');
@@ -76,7 +80,7 @@ onUnmounted(() => {
             >
                 <!-- Header -->
                 <div class="flex items-center justify-between px-4 py-5 border-b border-gray-200 dark:border-gray-700">
-                    <Link href="/" class="text-xl font-bold text-gray-900 dark:text-white" @click="close">
+                    <Link :href="localePath('/')" class="text-xl font-bold text-gray-900 dark:text-white" @click="close">
                         Store
                     </Link>
                     <button
@@ -93,33 +97,46 @@ onUnmounted(() => {
                 <!-- Navigation -->
                 <nav class="px-4 py-6 space-y-2">
                     <Link
-                        href="/"
+                        :href="localePath('/')"
                         class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                         @click="close"
                     >
-                        Home
+                        {{ t('nav.home') }}
                     </Link>
                     <Link
-                        href="/products"
+                        :href="localePath('/products')"
                         class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                         @click="close"
                     >
-                        Products
+                        {{ t('nav.products') }}
                     </Link>
                     <Link
                         v-if="isAuthenticated"
-                        href="/orders"
+                        :href="localePath('/orders')"
                         class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                         @click="close"
                     >
-                        Orders
+                        {{ t('nav.orders') }}
                     </Link>
                     <Link
-                        href="/cart"
+                        :href="localePath('/wishlist')"
+                        class="flex items-center justify-between px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        @click="close"
+                    >
+                        {{ t('nav.wishlist') }}
+                        <span
+                            v-if="wishlistCount > 0"
+                            class="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50 px-1.5 text-xs font-medium text-red-600 dark:text-red-400"
+                        >
+                            {{ wishlistCount }}
+                        </span>
+                    </Link>
+                    <Link
+                        :href="localePath('/cart')"
                         class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                         @click="close"
                     >
-                        Cart
+                        {{ t('nav.cart') }}
                     </Link>
                 </nav>
 
@@ -130,29 +147,29 @@ onUnmounted(() => {
                             Signed in as <span class="font-medium text-gray-900 dark:text-white">{{ page.props.auth?.user?.name }}</span>
                         </div>
                         <Link
-                            href="/logout"
+                            :href="localePath('/logout')"
                             method="post"
                             as="button"
                             class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                             @click="close"
                         >
-                            Sign Out
+                            {{ t('nav.logout') }}
                         </Link>
                     </template>
                     <template v-else>
                         <Link
-                            href="/login"
+                            :href="localePath('/login')"
                             class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
                             @click="close"
                         >
-                            Sign In
+                            {{ t('nav.sign_in') }}
                         </Link>
                         <Link
-                            href="/register"
+                            :href="localePath('/register')"
                             class="block px-3 py-2 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-500 text-center"
                             @click="close"
                         >
-                            Sign Up
+                            {{ t('nav.sign_up') }}
                         </Link>
                     </template>
                 </div>

@@ -28,6 +28,9 @@ export enum ErrorCode {
     RefundAmountExceedsLimit = 'REFUND_AMOUNT_EXCEEDS_LIMIT',
     RefundAlreadyProcessed = 'REFUND_ALREADY_PROCESSED',
 
+    // Review errors
+    ReviewAlreadySubmitted = 'REVIEW_ALREADY_SUBMITTED',
+
     // Idempotency errors
     IdempotencyConflict = 'IDEMPOTENCY_CONFLICT',
 
@@ -71,6 +74,7 @@ export function httpStatusForCode(code: ErrorCode): number {
         [ErrorCode.InsufficientStock]: 422,
         [ErrorCode.RefundAmountExceedsLimit]: 422,
         [ErrorCode.RefundAlreadyProcessed]: 422,
+        [ErrorCode.ReviewAlreadySubmitted]: 422,
         [ErrorCode.ValidationFailed]: 422,
 
         [ErrorCode.CartNotFound]: 404,
@@ -120,6 +124,7 @@ export function messageForCode(code: ErrorCode): string {
         [ErrorCode.RefundNotFound]: 'Refund request not found.',
         [ErrorCode.RefundAmountExceedsLimit]: 'Refund amount exceeds the refundable limit.',
         [ErrorCode.RefundAlreadyProcessed]: 'This refund has already been processed.',
+        [ErrorCode.ReviewAlreadySubmitted]: 'You have already reviewed this product.',
 
         [ErrorCode.IdempotencyConflict]: 'A request with this ID is already being processed.',
 

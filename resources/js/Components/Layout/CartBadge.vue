@@ -2,8 +2,10 @@
 import { computed, onMounted } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useCart } from '@/Composables/useCart';
+import { useLocale } from '@/Composables/useLocale';
 
 const { totalItems, fetchCart } = useCart();
+const { localePath } = useLocale();
 
 const hasItems = computed(() => totalItems.value > 0);
 const displayCount = computed(() => totalItems.value > 99 ? '99+' : totalItems.value.toString());
@@ -15,7 +17,7 @@ onMounted(() => {
 
 <template>
     <Link
-        href="/cart"
+        :href="localePath('/cart')"
         class="relative p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
     >
         <span class="sr-only">View cart</span>

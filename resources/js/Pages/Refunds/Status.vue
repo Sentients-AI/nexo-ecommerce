@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
+import { useLocale } from '@/Composables/useLocale';
 import { RefundStatus } from '@/types/models';
 
 interface Refund {
@@ -29,6 +30,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { localePath } = useLocale();
 
 function formatPrice(cents: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -452,7 +454,7 @@ const progressPercentage = computed(() => {
                             If you have any questions about your refund or need assistance, our support team is here to help.
                         </p>
                         <Link
-                            href="/contact"
+                            :href="localePath('/contact')"
                             class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors"
                         >
                             Contact Support
@@ -476,7 +478,7 @@ const progressPercentage = computed(() => {
                     View Order
                 </Link>
                 <Link
-                    href="/orders"
+                    :href="localePath('/orders')"
                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
                 >
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

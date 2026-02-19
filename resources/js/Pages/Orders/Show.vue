@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
+import { useLocale } from '@/Composables/useLocale';
 import { OrderStatus, RefundStatus } from '@/types/models';
 
 interface OrderItem {
@@ -53,6 +54,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { localePath } = useLocale();
 
 const isReordering = ref(false);
 
@@ -200,7 +202,7 @@ const netTotal = computed(() => {
             <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                     <Link
-                        href="/orders"
+                        :href="localePath('/orders')"
                         class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
                     >
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -253,7 +255,7 @@ const netTotal = computed(() => {
 
                                 <div class="flex-1 min-w-0">
                                     <Link
-                                        :href="`/products/${item.product_id}`"
+                                        :href="localePath(`/products/${item.product_id}`)"
                                         class="font-medium text-gray-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                     >
                                         {{ item.product_name }}
@@ -337,7 +339,7 @@ const netTotal = computed(() => {
                         <!-- Request refund -->
                         <Link
                             v-if="order.is_refundable && order.remaining_refundable_amount > 0"
-                            :href="`/orders/${order.id}/refund`"
+                            :href="localePath(`/orders/${order.id}/refund`)"
                             class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                         >
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -487,7 +489,7 @@ const netTotal = computed(() => {
                             If you have any questions about your order, our support team is here to help.
                         </p>
                         <Link
-                            href="/contact"
+                            :href="localePath('/contact')"
                             class="mt-4 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
                         >
                             Contact Support

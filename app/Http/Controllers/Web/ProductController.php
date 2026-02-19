@@ -18,6 +18,8 @@ final class ProductController extends Controller
         $products = Product::query()
             ->where('is_active', true)
             ->with(['category', 'stock'])
+            ->withCount(['reviews' => fn ($q) => $q->where('is_approved', true)])
+            ->withAvg(['reviews' => fn ($q) => $q->where('is_approved', true)], 'rating')
             ->when($request->filled('category'), fn ($q) => $q->whereHas('category', fn ($q) => $q->where('slug', $request->category)))
             ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->search.'%'))
             ->when($request->boolean('featured'), fn ($q) => $q->where('is_featured', true))
@@ -42,7 +44,7 @@ final class ProductController extends Controller
                 'price_asc' => $q->orderByRaw('COALESCE(sale_price, price_cents) ASC'),
                 'price_desc' => $q->orderByRaw('COALESCE(sale_price, price_cents) DESC'),
                 'name_asc' => $q->orderBy('name', 'asc'),
-                'popular' => $q->orderBy('is_featured', 'desc')->orderBy('created_at', 'desc'),
+                'popular' => $q->orderBy('view_count', 'desc')->orderBy('reviews_avg_rating', 'desc'),
                 default => $q->orderBy('created_at', 'desc'),
             }, fn ($q) => $q->orderBy('created_at', 'desc'))
             ->paginate(12)
@@ -69,24 +71,48 @@ final class ProductController extends Controller
         ]);
     }
 
-    public function show(Product $product): Response
+    public function wishlist(Request $request): Response
+    {
+        $ids = array_filter(array_map('intval', explode(',', $request->query('ids', ''))));
+
+        $products = empty($ids) ? collect() : Product::query()
+            ->where('is_active', true)
+            ->whereIn('id', $ids)
+            ->with(['category', 'stock'])
+            ->get();
+
+        return Inertia::render('Wishlist/Index', [
+            'products' => $products,
+        ]);
+    }
+
+    public function show(string $locale, Product $product): Response
     {
         if (! $product->is_active) {
             abort(404);
         }
 
-        $product->load(['category', 'stock']);
+        $product->increment('view_count');
+        $product->load(['category', 'stock', 'tenant:id,name,slug']);
+
+        $reviewStats = [
+            'average_rating' => $product->reviews()->approved()->avg('rating'),
+            'review_count' => $product->reviews()->approved()->count(),
+        ];
 
         $relatedProducts = Product::query()
             ->where('is_active', true)
             ->where('id', '!=', $product->id)
             ->when($product->category_id, fn ($q) => $q->where('category_id', $product->category_id))
             ->with(['stock'])
+            ->withCount(['reviews' => fn ($q) => $q->where('is_approved', true)])
+            ->withAvg(['reviews' => fn ($q) => $q->where('is_approved', true)], 'rating')
             ->limit(4)
             ->get();
 
         return Inertia::render('Products/Show', [
             'product' => $product,
+            'reviewStats' => $reviewStats,
             'relatedProducts' => $relatedProducts,
         ]);
     }

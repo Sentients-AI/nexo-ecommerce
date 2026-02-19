@@ -3,6 +3,9 @@ import { ref } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
+import { useLocale } from '@/Composables/useLocale';
+
+const { localePath } = useLocale();
 
 const form = useForm({
     email: '',
@@ -13,7 +16,7 @@ const form = useForm({
 const showPassword = ref(false);
 
 function submit() {
-    form.post('/login', {
+    form.post(localePath('/login'), {
         onFinish: () => {
             form.reset('password');
         },
@@ -100,7 +103,7 @@ function togglePassword() {
                         </h2>
                         <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
                             Don't have an account?
-                            <Link href="/register" class="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 transition-colors">
+                            <Link :href="localePath('/register')" class="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 transition-colors">
                                 Create one for free
                             </Link>
                         </p>
@@ -197,7 +200,7 @@ function togglePassword() {
                                 />
                                 <span class="text-sm text-gray-600 dark:text-gray-400">Remember me</span>
                             </label>
-                            <Link href="/forgot-password" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 transition-colors">
+                            <Link :href="localePath('/forgot-password')" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 transition-colors">
                                 Forgot password?
                             </Link>
                         </div>

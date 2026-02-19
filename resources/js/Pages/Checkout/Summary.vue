@@ -6,6 +6,7 @@ import CheckoutProgress from '@/Components/Checkout/CheckoutProgress.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import { useCheckout } from '@/Composables/useCheckout';
 import { usePayments } from '@/Composables/usePayments';
+import { useLocale } from '@/Composables/useLocale';
 import type { CartApiResource } from '@/types/api';
 
 function normalizeImages(images: string | string[] | null | undefined): string[] {
@@ -21,6 +22,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { localePath } = useLocale();
 
 const { initiateCheckout, loading: checkoutLoading, error: checkoutError, clearError } = useCheckout();
 const { stripe, elements, loading: stripeLoading, error: stripeError, createElements, confirmPayment, paymentProcessing } = usePayments(props.stripePublicKey);
@@ -201,7 +203,7 @@ function getIdempotencyKey(operation: string): string {
                     <!-- Edit cart link -->
                     <div class="mt-4 text-center">
                         <Link
-                            href="/cart"
+                            :href="localePath('/cart')"
                             class="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
                         >
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">

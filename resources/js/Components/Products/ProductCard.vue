@@ -3,6 +3,7 @@ import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useCart } from '@/Composables/useCart';
 import { useWishlist } from '@/Composables/useWishlist';
+import { useLocale } from '@/Composables/useLocale';
 import type { ProductApiResource } from '@/types/api';
 import Spinner from '@/Components/UI/Spinner.vue';
 
@@ -25,6 +26,7 @@ const emit = defineEmits<{
 
 const { addToCart, loading } = useCart();
 const { isInWishlist, toggleWishlist } = useWishlist();
+const { localePath } = useLocale();
 const isAdding = ref(false);
 const showAddedFeedback = ref(false);
 const isHovered = ref(false);
@@ -111,7 +113,7 @@ const isNew = computed(() => {
     <!-- Grid View -->
     <Link
         v-if="viewMode === 'grid'"
-        :href="`/products/${product.slug}`"
+        :href="localePath(`/products/${product.slug}`)"
         class="group relative flex flex-col rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
         @mouseenter="isHovered = true"
         @mouseleave="isHovered = false"
@@ -269,7 +271,7 @@ const isNew = computed(() => {
     <!-- List View -->
     <Link
         v-else
-        :href="`/products/${product.slug}`"
+        :href="localePath(`/products/${product.slug}`)"
         class="group flex rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
         @mouseenter="isHovered = true"
         @mouseleave="isHovered = false"

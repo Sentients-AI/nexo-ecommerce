@@ -29,6 +29,8 @@ final class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $locale = app()->getLocale();
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -38,6 +40,26 @@ final class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'locale' => $locale,
+            'supportedLocales' => ['en', 'ar', 'ms'],
+            'isRtl' => $locale === 'ar',
+            'translations' => fn () => $this->getTranslations($locale),
         ];
+    }
+
+    /**
+     * Load translations for the given locale.
+     *
+     * @return array<string, string>
+     */
+    private function getTranslations(string $locale): array
+    {
+        $path = lang_path("{$locale}/ui.php");
+
+        if (file_exists($path)) {
+            return require $path;
+        }
+
+        return require lang_path('en/ui.php');
     }
 }

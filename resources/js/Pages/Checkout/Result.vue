@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CheckoutProgress from '@/Components/Checkout/CheckoutProgress.vue';
+import { useLocale } from '@/Composables/useLocale';
 import type { OrderApiResource } from '@/types/api';
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const showConfetti = ref(false);
+const { localePath } = useLocale();
 
 function formatPrice(cents: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -180,7 +182,7 @@ onMounted(() => {
             <!-- Actions -->
             <div class="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                    :href="`/orders/${order.id}`"
+                    :href="localePath(`/orders/${order.id}`)"
                     class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-3 text-base font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -189,7 +191,7 @@ onMounted(() => {
                     View Order Details
                 </Link>
                 <Link
-                    href="/products"
+                    :href="localePath('/products')"
                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-500 transition-colors"
                 >
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
