@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
+import { useLocale } from '@/Composables/useLocale';
 import { OrderStatus } from '@/types/models';
 
 interface OrderSummary {
@@ -36,6 +37,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const { localePath } = useLocale();
 
 const statusFilter = ref(props.filters?.status || '');
 const hoveredOrderId = ref<number | null>(null);
@@ -93,7 +95,7 @@ function applyFilters() {
     if (statusFilter.value) {
         params.status = statusFilter.value;
     }
-    router.get('/orders', params, { preserveState: true, preserveScroll: true });
+    router.get(localePath('/orders'), params, { preserveState: true, preserveScroll: true });
 }
 
 watch(statusFilter, () => {
@@ -158,7 +160,7 @@ const orderStats = computed(() => {
                         Clear Filter
                     </button>
                     <Link
-                        href="/products"
+                        :href="localePath('/products')"
                         class="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
                     >
                         Start Shopping
@@ -178,7 +180,7 @@ const orderStats = computed(() => {
                     <Link
                         v-for="order in orders.data"
                         :key="order.id"
-                        :href="`/orders/${order.id}`"
+                        :href="localePath(`/orders/${order.id}`)"
                         class="block rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md hover:border-indigo-300 dark:hover:border-indigo-700 transition-all"
                     >
                         <div class="flex items-start justify-between">

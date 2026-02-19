@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import { useLocale } from '@/Composables/useLocale';
 
 const page = usePage();
 const user = page.props.auth?.user;
+const { localePath } = useLocale();
 
 const isOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
@@ -18,7 +20,7 @@ function close() {
 
 function logout() {
     close();
-    router.post('/logout');
+    router.post(localePath('/logout'));
 }
 
 function handleClickOutside(event: MouseEvent) {
@@ -95,7 +97,7 @@ onUnmounted(() => {
                     <!-- Menu items -->
                     <div class="py-1">
                         <Link
-                            href="/orders"
+                            :href="localePath('/orders')"
                             class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                             @click="close"
                         >

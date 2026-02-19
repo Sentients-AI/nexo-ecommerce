@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Tenant\Models;
 
+use App\Domain\Product\Models\Product;
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
 use Database\Factories\TenantFactory;
@@ -24,6 +25,7 @@ final class Tenant extends BaseModel
         'slug',
         'domain',
         'email',
+        'description',
         'is_active',
         'settings',
         'trial_ends_at',
@@ -72,6 +74,14 @@ final class Tenant extends BaseModel
     public function users(): HasMany
     {
         return $this->hasMany(User::class)->withoutGlobalScopes();
+    }
+
+    /**
+     * Get the products belonging to this tenant.
+     */
+    public function products(): HasMany
+    {
+        return $this->hasMany(Product::class)->withoutGlobalScopes();
     }
 
     /**

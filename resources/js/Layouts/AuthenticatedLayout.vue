@@ -4,9 +4,13 @@ import { Link, usePage } from '@inertiajs/vue3';
 import MobileNav from '@/Components/Layout/MobileNav.vue';
 import CartBadge from '@/Components/Layout/CartBadge.vue';
 import UserDropdown from '@/Components/Layout/UserDropdown.vue';
+import { useLocale } from '@/Composables/useLocale';
+import { useWishlist } from '@/Composables/useWishlist';
 
 const page = usePage();
 const flash = computed(() => page.props.flash);
+const { t, localePath } = useLocale();
+const { count: wishlistCount } = useWishlist();
 
 const mobileNavOpen = ref(false);
 const isScrolled = ref(false);
@@ -52,23 +56,35 @@ onUnmounted(() => {
                         </button>
 
                         <!-- Logo -->
-                        <Link href="/" class="flex items-center gap-2">
+                        <Link :href="localePath('/')" class="flex items-center gap-2">
                             <span class="text-xl font-bold text-gray-900 dark:text-white">Store</span>
                         </Link>
 
                         <!-- Desktop nav links -->
                         <div class="hidden sm:flex sm:items-center sm:gap-1 sm:ml-6">
                             <Link
-                                href="/products"
+                                :href="localePath('/products')"
                                 class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
                             >
-                                Products
+                                {{ t('nav.products') }}
                             </Link>
                             <Link
-                                href="/orders"
+                                :href="localePath('/orders')"
                                 class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
                             >
-                                Orders
+                                {{ t('nav.orders') }}
+                            </Link>
+                            <Link
+                                :href="localePath('/wishlist')"
+                                class="relative px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700 transition-colors"
+                            >
+                                {{ t('nav.wishlist') }}
+                                <span
+                                    v-if="wishlistCount > 0"
+                                    class="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white"
+                                >
+                                    {{ wishlistCount }}
+                                </span>
                             </Link>
                         </div>
                     </div>
@@ -146,26 +162,26 @@ onUnmounted(() => {
                 <div class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
                     <!-- Brand -->
                     <div class="lg:col-span-1">
-                        <Link href="/" class="text-xl font-bold text-gray-900 dark:text-white">
+                        <Link :href="localePath('/')" class="text-xl font-bold text-gray-900 dark:text-white">
                             Store
                         </Link>
                         <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">
-                            Discover amazing products at great prices. Quality guaranteed.
+                            {{ t('footer.tagline') }}
                         </p>
                     </div>
 
                     <!-- Shop -->
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Shop</h3>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('footer.shop') }}</h3>
                         <ul class="mt-4 space-y-3">
                             <li>
-                                <Link href="/products" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    All Products
+                                <Link :href="localePath('/products')" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    {{ t('footer.all_products') }}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/products?featured=1" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    Featured
+                                <Link :href="localePath('/products?featured=1')" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    {{ t('footer.featured') }}
                                 </Link>
                             </li>
                         </ul>
@@ -173,16 +189,21 @@ onUnmounted(() => {
 
                     <!-- Account -->
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Account</h3>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('footer.account') }}</h3>
                         <ul class="mt-4 space-y-3">
                             <li>
-                                <Link href="/orders" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    My Orders
+                                <Link :href="localePath('/orders')" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    {{ t('footer.my_orders') }}
                                 </Link>
                             </li>
                             <li>
-                                <Link href="/cart" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                                    Cart
+                                <Link :href="localePath('/cart')" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    {{ t('nav.cart') }}
+                                </Link>
+                            </li>
+                            <li>
+                                <Link :href="localePath('/wishlist')" class="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                                    {{ t('nav.wishlist') }}
                                 </Link>
                             </li>
                         </ul>
@@ -190,21 +211,21 @@ onUnmounted(() => {
 
                     <!-- Support -->
                     <div>
-                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Support</h3>
+                        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('footer.support') }}</h3>
                         <ul class="mt-4 space-y-3">
                             <li>
                                 <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    Contact Us
+                                    {{ t('footer.contact') }}
                                 </span>
                             </li>
                             <li>
                                 <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    Shipping Info
+                                    {{ t('footer.shipping') }}
                                 </span>
                             </li>
                             <li>
                                 <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    Returns
+                                    {{ t('footer.returns') }}
                                 </span>
                             </li>
                         </ul>
@@ -214,7 +235,7 @@ onUnmounted(() => {
                 <!-- Bottom bar -->
                 <div class="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
                     <p class="text-center text-sm text-gray-500 dark:text-gray-400">
-                        &copy; {{ new Date().getFullYear() }} Store. All rights reserved.
+                        &copy; {{ new Date().getFullYear() }} Store. {{ t('footer.rights') }}
                     </p>
                 </div>
             </div>

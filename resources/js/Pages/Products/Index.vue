@@ -8,6 +8,7 @@ import FilterSidebar from '@/Components/Filters/FilterSidebar.vue';
 import QuickViewModal from '@/Components/Products/QuickViewModal.vue';
 import { useWishlist } from '@/Composables/useWishlist';
 import { useRecentlyViewed } from '@/Composables/useRecentlyViewed';
+import { useLocale } from '@/Composables/useLocale';
 import type { ProductApiResource, CategoryApiResource } from '@/types/api';
 
 interface LaravelPaginator<T> {
@@ -47,6 +48,7 @@ const Layout = computed(() => isAuthenticated.value ? AuthenticatedLayout : Gues
 
 const { count: wishlistCount } = useWishlist();
 const { getRecentProductIds } = useRecentlyViewed();
+const { localePath } = useLocale();
 
 // Filter state
 const search = ref(props.filters.search || '');
@@ -94,7 +96,7 @@ function applyFilters() {
         params.on_sale = true;
     }
 
-    router.get('/products', params, {
+    router.get(localePath('/products'), params, {
         preserveState: true,
         preserveScroll: true,
     });
@@ -108,7 +110,7 @@ function clearFilters() {
     maxPrice.value = 100000;
     inStockOnly.value = false;
     onSaleOnly.value = false;
-    router.get('/products', {}, {
+    router.get(localePath('/products'), {}, {
         preserveState: true,
         preserveScroll: true,
     });
@@ -171,7 +173,7 @@ const recentlyViewedProducts = computed(() => {
                     <!-- Wishlist link (if has items) -->
                     <Link
                         v-if="wishlistCount > 0"
-                        href="/wishlist"
+                        :href="localePath('/wishlist')"
                         class="inline-flex items-center gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                     >
                         <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">

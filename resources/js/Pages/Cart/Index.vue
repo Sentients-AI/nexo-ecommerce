@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import QuantityStepper from '@/Components/UI/QuantityStepper.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import { useCart } from '@/Composables/useCart';
+import { useLocale } from '@/Composables/useLocale';
 import type { CartApiResource } from '@/types/api';
 
 function normalizeImages(images: string | string[] | null | undefined): string[] {
@@ -26,6 +27,7 @@ const { updateItem, removeItem, loading, error, clearError, formatPrice } = useC
 
 const isAuthenticated = computed(() => page.props.auth?.user !== null);
 const Layout = computed(() => isAuthenticated.value ? AuthenticatedLayout : GuestLayout);
+const { localePath } = useLocale();
 
 const promoCode = ref('');
 const promoError = ref('');
@@ -108,7 +110,7 @@ function handleApplyPromo() {
                 <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">Your cart is empty</h2>
                 <p class="mt-2 text-gray-500 dark:text-gray-400">Looks like you haven't added any items yet.</p>
                 <Link
-                    href="/products"
+                    :href="localePath('/products')"
                     class="mt-8 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
                 >
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -132,7 +134,7 @@ function handleApplyPromo() {
                                 <!-- Product image -->
                                 <Link
                                     v-if="item.product"
-                                    :href="`/products/${item.product.slug}`"
+                                    :href="localePath(`/products/${item.product.slug}`)"
                                     class="h-24 w-24 sm:h-32 sm:w-32 shrink-0 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800"
                                 >
                                     <img
@@ -158,7 +160,7 @@ function handleApplyPromo() {
                                             <h3 class="text-base font-semibold text-gray-900 dark:text-white">
                                                 <Link
                                                     v-if="item.product"
-                                                    :href="`/products/${item.product.slug}`"
+                                                    :href="localePath(`/products/${item.product.slug}`)"
                                                     class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                                                 >
                                                     {{ item.product.name }}
@@ -252,7 +254,7 @@ function handleApplyPromo() {
                         <div class="mt-6 space-y-3">
                             <Link
                                 v-if="isAuthenticated"
-                                href="/checkout"
+                                :href="localePath('/checkout')"
                                 class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-lg hover:bg-indigo-500 transition-colors"
                             >
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -262,13 +264,13 @@ function handleApplyPromo() {
                             </Link>
                             <Link
                                 v-else
-                                href="/login"
+                                :href="localePath('/login')"
                                 class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-lg hover:bg-indigo-500 transition-colors"
                             >
                                 Sign in to Checkout
                             </Link>
                             <Link
-                                href="/products"
+                                :href="localePath('/products')"
                                 class="flex w-full items-center justify-center rounded-xl border border-gray-300 dark:border-gray-600 px-6 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                             >
                                 Continue Shopping

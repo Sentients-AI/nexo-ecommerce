@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Context;
  * When a super admin has no tenant selected, queries bypass tenant scoping
  * to show all records across all tenants. When a tenant is selected (either
  * by a super admin or for regular tenant users), normal tenant scoping applies.
+ *
+ * For record resolution (view/edit pages), super admins can always find any
+ * record by ID regardless of which tenant is currently selected.
  */
 trait HasTenantAwareness
 {
@@ -24,6 +27,18 @@ trait HasTenantAwareness
 
         // Super admin with no tenant selected - show all tenants' data
         if ($user?->isSuperAdmin() && ! Context::has('tenant_id')) {
+            return $query->withoutTenancy();
+        }
+
+        return $query;
+    }
+
+    public static function getRecordRouteBindingEloquentQuery(): Builder
+    {
+        $query = parent::getRecordRouteBindingEloquentQuery();
+
+        // Super admins can always find any record by ID regardless of selected tenant
+        if (auth()->user()?->isSuperAdmin()) {
             return $query->withoutTenancy();
         }
 

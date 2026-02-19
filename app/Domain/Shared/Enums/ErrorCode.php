@@ -31,6 +31,9 @@ enum ErrorCode: string
     case RefundAmountExceedsLimit = 'REFUND_AMOUNT_EXCEEDS_LIMIT';
     case RefundAlreadyProcessed = 'REFUND_ALREADY_PROCESSED';
 
+    // Review errors
+    case ReviewAlreadySubmitted = 'REVIEW_ALREADY_SUBMITTED';
+
     // Idempotency errors
     case IdempotencyConflict = 'IDEMPOTENCY_CONFLICT';
 
@@ -57,6 +60,7 @@ enum ErrorCode: string
             self::InsufficientStock,
             self::RefundAmountExceedsLimit,
             self::RefundAlreadyProcessed,
+            self::ReviewAlreadySubmitted,
             self::ValidationFailed => 422,
 
             self::CartNotFound,

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\Api\V1\RefundController;
+use App\Http\Controllers\Api\V1\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 // Cart (works with session, no auth required)
@@ -18,7 +19,14 @@ Route::prefix('v1')->middleware(['web'])->group(function () {
     Route::delete('/cart', [CartController::class, 'clear'])->name('api.v1.cart.clear');
 });
 
+// Reviews (public listing)
+Route::prefix('v1')->group(function () {
+    Route::get('/products/{product:slug}/reviews', [ReviewController::class, 'index'])->name('api.v1.products.reviews.index');
+});
+
 Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
+    // Reviews (authenticated)
+    Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store'])->name('api.v1.products.reviews.store');
     // Checkout
     Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('api.v1.checkout');
     Route::post('/checkout/confirm-payment', [CheckoutController::class, 'confirmPayment'])->name('api.v1.checkout.confirm-payment');

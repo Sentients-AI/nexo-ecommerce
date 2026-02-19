@@ -4,6 +4,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ProductCard from '@/Components/Products/ProductCard.vue';
+import { useLocale } from '@/Composables/useLocale';
 import type { ProductApiResource, CategoryApiResource } from '@/types/api';
 
 interface Props {
@@ -19,6 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
 const page = usePage();
 const isAuthenticated = computed(() => page.props.auth?.user !== null);
 const Layout = computed(() => isAuthenticated.value ? AuthenticatedLayout : GuestLayout);
+const { localePath } = useLocale();
 
 const email = ref('');
 const isSubscribed = ref(false);
@@ -84,7 +86,7 @@ const benefits = [
                     </p>
                     <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                         <Link
-                            href="/products"
+                            :href="localePath('/products')"
                             class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-white px-8 py-3.5 text-base font-semibold text-indigo-600 shadow-lg hover:bg-indigo-50 transition-colors"
                         >
                             Shop Now
@@ -94,7 +96,7 @@ const benefits = [
                         </Link>
                         <Link
                             v-if="!isAuthenticated"
-                            href="/register"
+                            :href="localePath('/register')"
                             class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg border-2 border-white/30 px-8 py-3.5 text-base font-semibold text-white hover:bg-white/10 transition-colors"
                         >
                             Create Account
@@ -160,7 +162,7 @@ const benefits = [
                         </p>
                     </div>
                     <Link
-                        href="/products?featured=1"
+                        :href="localePath('/products?featured=1')"
                         class="hidden sm:inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
                     >
                         View all
@@ -180,7 +182,7 @@ const benefits = [
 
                 <div class="mt-8 text-center sm:hidden">
                     <Link
-                        href="/products?featured=1"
+                        :href="localePath('/products?featured=1')"
                         class="inline-flex items-center gap-1 text-sm font-semibold text-indigo-600 dark:text-indigo-400"
                     >
                         View all featured products
@@ -208,7 +210,7 @@ const benefits = [
                     <Link
                         v-for="category in categories"
                         :key="category.id"
-                        :href="`/products?category=${category.slug}`"
+                        :href="localePath(`/products?category=${category.slug}`)"
                         class="group relative flex flex-col items-center justify-center rounded-xl bg-white dark:bg-gray-800 p-6 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-gray-700"
                     >
                         <div class="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/50 transition-colors">
@@ -235,7 +237,7 @@ const benefits = [
                         Browse our complete collection of products and find exactly what you're looking for.
                     </p>
                     <Link
-                        href="/products"
+                        :href="localePath('/products')"
                         class="mt-8 inline-flex items-center justify-center rounded-lg bg-white px-8 py-3 text-base font-semibold text-indigo-600 shadow-lg hover:bg-indigo-50 transition-colors"
                     >
                         Browse Products

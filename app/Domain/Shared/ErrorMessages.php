@@ -36,6 +36,7 @@ final class ErrorMessages
             ErrorCode::InternalError => 'Something went wrong. Please try again later.',
             ErrorCode::ServiceUnavailable => 'The service is temporarily unavailable. Please try again later.',
             ErrorCode::RateLimitExceeded => 'Too many requests. Please wait a moment before trying again.',
+            ErrorCode::ReviewAlreadySubmitted => 'You have already reviewed this product.',
             ErrorCode::IdempotencyConflict => 'This request is already being processed.',
         };
     }
@@ -67,6 +68,7 @@ final class ErrorMessages
             ErrorCode::InternalError => 'Unhandled exception occurred',
             ErrorCode::ServiceUnavailable => 'Service dependency unavailable',
             ErrorCode::RateLimitExceeded => 'Rate limit threshold exceeded',
+            ErrorCode::ReviewAlreadySubmitted => 'Duplicate review submission attempted',
             ErrorCode::IdempotencyConflict => 'Idempotency key already in use with different payload',
         };
     }

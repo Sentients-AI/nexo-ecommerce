@@ -6,6 +6,7 @@ namespace App\Domain\Product\Models;
 
 use App\Domain\Category\Models\Category;
 use App\Domain\Inventory\Models\Stock;
+use App\Domain\Review\Models\Review;
 use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\ProductFactory;
@@ -34,6 +35,7 @@ final class Product extends BaseModel
         'category_id',
         'is_active',
         'is_featured',
+        'view_count',
         'images',
         'meta_title',
         'meta_description',
@@ -62,6 +64,30 @@ final class Product extends BaseModel
     public function priceHistories(): HasMany
     {
         return $this->hasMany(PriceHistory::class)->orderByDesc('created_at');
+    }
+
+    /**
+     * Get the reviews for the product.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * Get the average rating from approved reviews.
+     */
+    public function getAverageRatingAttribute(): ?float
+    {
+        return $this->reviews()->approved()->avg('rating');
+    }
+
+    /**
+     * Get the count of approved reviews.
+     */
+    public function getReviewCountAttribute(): int
+    {
+        return $this->reviews()->approved()->count();
     }
 
     /**
@@ -112,6 +138,7 @@ final class Product extends BaseModel
             'sale_price' => 'decimal:2',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'view_count' => 'integer',
             'images' => 'array',
             'meta_description' => 'json',
         ];

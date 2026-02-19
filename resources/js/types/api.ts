@@ -135,11 +135,21 @@ export interface ProductApiResource {
     currency: string;
     is_active: boolean;
     is_featured: boolean;
+    view_count?: number;
     images: string[];
     category?: CategoryApiResource;
     stock?: {
         quantity: number;
         available: number;
+    };
+    reviews_count?: number;
+    reviews_avg_rating?: number | null;
+    average_rating?: number | null;
+    review_count?: number;
+    tenant?: {
+        id: number;
+        name: string;
+        slug: string;
     };
 }
 
@@ -148,6 +158,21 @@ export interface CategoryApiResource {
     name: string;
     slug: string;
     description: string | null;
+}
+
+// ========================================
+// Review API
+// ========================================
+
+export interface ReviewApiResource {
+    id: number;
+    product_id: number;
+    user_id: number;
+    user_name?: string;
+    rating: number;
+    title: string;
+    body: string;
+    created_at: string;
 }
 
 // ========================================

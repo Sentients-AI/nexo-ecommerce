@@ -9,6 +9,10 @@ declare module '@inertiajs/core' {
             success: string | null;
             error: string | null;
         };
+        locale: string;
+        supportedLocales: string[];
+        isRtl: boolean;
+        translations: Record<string, string>;
     }
 }
 

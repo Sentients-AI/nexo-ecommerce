@@ -7,13 +7,23 @@ import ProductCard from '@/Components/Products/ProductCard.vue';
 import ImageLightbox from '@/Components/Products/ImageLightbox.vue';
 import QuantityStepper from '@/Components/UI/QuantityStepper.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
+import StarRating from '@/Components/Reviews/StarRating.vue';
+import ReviewForm from '@/Components/Reviews/ReviewForm.vue';
 import { useCart } from '@/Composables/useCart';
 import { useWishlist } from '@/Composables/useWishlist';
 import { useRecentlyViewed } from '@/Composables/useRecentlyViewed';
-import type { ProductApiResource } from '@/types/api';
+import { useLocale } from '@/Composables/useLocale';
+import { useApi } from '@/Composables/useApi';
+import type { ProductApiResource, ReviewApiResource } from '@/types/api';
+
+interface ReviewStats {
+    average_rating: number | null;
+    review_count: number;
+}
 
 interface Props {
     product: ProductApiResource;
+    reviewStats: ReviewStats;
     relatedProducts: ProductApiResource[];
 }
 
@@ -23,6 +33,8 @@ const page = usePage();
 const { addToCart, loading: cartLoading, error: cartError } = useCart();
 const { isInWishlist, toggleWishlist } = useWishlist();
 const { addToRecentlyViewed } = useRecentlyViewed();
+const { t, localePath } = useLocale();
+const { get: apiGet } = useApi();
 
 // Track product view on mount
 onMounted(() => {
@@ -34,6 +46,12 @@ const selectedImage = ref(0);
 const addedToCart = ref(false);
 const lightboxOpen = ref(false);
 const activeTab = ref<'description' | 'specifications' | 'reviews'>('description');
+
+// Reviews state
+const reviews = ref<ReviewApiResource[]>([]);
+const reviewsLoading = ref(false);
+const reviewsNextPage = ref<string | null>(null);
+const reviewsLoaded = ref(false);
 
 const isAuthenticated = computed(() => page.props.auth?.user !== null);
 const Layout = computed(() => isAuthenticated.value ? AuthenticatedLayout : GuestLayout);
@@ -67,16 +85,16 @@ const discountPercentage = computed(() => {
 
 const stockStatus = computed(() => {
     if (!props.product.stock) {
-        return { text: 'Check availability', class: 'text-gray-500 dark:text-gray-400', available: true };
+        return { text: t('products.in_stock'), class: 'text-gray-500 dark:text-gray-400', available: true };
     }
     const available = props.product.stock.available ?? props.product.stock.quantity;
     if (available <= 0) {
-        return { text: 'Out of stock', class: 'text-red-600 dark:text-red-400', available: false };
+        return { text: t('products.out_of_stock'), class: 'text-red-600 dark:text-red-400', available: false };
     }
     if (available <= 5) {
-        return { text: `Only ${available} left in stock - order soon`, class: 'text-yellow-600 dark:text-yellow-400', available: true };
+        return { text: `Only ${available} left in stock`, class: 'text-yellow-600 dark:text-yellow-400', available: true };
     }
-    return { text: 'In stock', class: 'text-green-600 dark:text-green-400', available: true };
+    return { text: t('products.in_stock'), class: 'text-green-600 dark:text-green-400', available: true };
 });
 
 const maxQuantity = computed(() => {
@@ -103,11 +121,60 @@ function openLightbox(index: number) {
     lightboxOpen.value = true;
 }
 
-const trustBadges = [
-    { icon: 'shield', text: 'Secure Checkout' },
-    { icon: 'truck', text: 'Free Shipping Over $50' },
-    { icon: 'refresh', text: '30-Day Returns' },
-];
+// Load reviews when reviews tab is activated
+async function loadReviews() {
+    if (reviewsLoaded.value || reviewsLoading.value) return;
+
+    reviewsLoading.value = true;
+    const result = await apiGet<{ data: ReviewApiResource[]; next_page_url: string | null }>(
+        `/api/v1/products/${props.product.slug}/reviews`
+    );
+
+    if (result) {
+        reviews.value = result.data || [];
+        reviewsNextPage.value = result.next_page_url || null;
+    }
+    reviewsLoaded.value = true;
+    reviewsLoading.value = false;
+}
+
+async function loadMoreReviews() {
+    if (!reviewsNextPage.value || reviewsLoading.value) return;
+
+    reviewsLoading.value = true;
+    const result = await apiGet<{ data: ReviewApiResource[]; next_page_url: string | null }>(
+        reviewsNextPage.value
+    );
+
+    if (result) {
+        reviews.value.push(...(result.data || []));
+        reviewsNextPage.value = result.next_page_url || null;
+    }
+    reviewsLoading.value = false;
+}
+
+function handleReviewSubmitted(review: ReviewApiResource) {
+    reviews.value.unshift(review);
+}
+
+function switchToReviews() {
+    activeTab.value = 'reviews';
+    loadReviews();
+}
+
+function formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+    });
+}
+
+const trustBadges = computed(() => [
+    { icon: 'shield', text: t('products.secure_checkout') || 'Secure Checkout' },
+    { icon: 'truck', text: t('products.free_shipping') || 'Free Shipping Over $50' },
+    { icon: 'refresh', text: t('products.returns_policy') || '30-Day Returns' },
+]);
 </script>
 
 <template>
@@ -119,19 +186,19 @@ const trustBadges = [
             <nav class="mb-8">
                 <ol class="flex flex-wrap items-center gap-2 text-sm">
                     <li>
-                        <Link href="/" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                            Home
+                        <Link :href="localePath('/')" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                            {{ t('nav.home') }}
                         </Link>
                     </li>
                     <li class="text-gray-400">/</li>
                     <li>
-                        <Link href="/products" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
-                            Products
+                        <Link :href="localePath('/products')" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                            {{ t('nav.products') }}
                         </Link>
                     </li>
                     <li v-if="product.category" class="text-gray-400">/</li>
                     <li v-if="product.category">
-                        <Link :href="`/products?category=${product.category.slug}`" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                        <Link :href="localePath(`/products?category=${product.category.slug}`)" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                             {{ product.category.name }}
                         </Link>
                     </li>
@@ -213,10 +280,50 @@ const trustBadges = [
                         {{ product.name }}
                     </h1>
 
+                    <!-- Rating summary + view count -->
+                    <div class="mt-3 flex flex-wrap items-center gap-4">
+                        <button
+                            v-if="reviewStats.review_count > 0"
+                            @click="switchToReviews"
+                            class="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                        >
+                            <StarRating :rating="Math.round(reviewStats.average_rating ?? 0)" size="sm" />
+                            <span class="text-sm text-gray-600 dark:text-gray-400">
+                                {{ reviewStats.average_rating?.toFixed(1) }}
+                                ({{ reviewStats.review_count }})
+                            </span>
+                        </button>
+                        <span v-else class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ t('reviews.no_reviews') }}
+                        </span>
+
+                        <span v-if="product.view_count" class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {{ product.view_count }} {{ t('products.views') }}
+                        </span>
+                    </div>
+
                     <!-- SKU -->
                     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
                         SKU: {{ product.sku }}
                     </p>
+
+                    <!-- Sold by (store/tenant) -->
+                    <div v-if="product.tenant" class="mt-3">
+                        <Link
+                            :href="localePath(`/stores/${product.tenant.slug}`)"
+                            class="inline-flex items-center gap-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                            <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
+                            </svg>
+                            <span class="text-gray-500 dark:text-gray-400">{{ t('products.sold_by') }}</span>
+                            <span class="font-medium text-indigo-600 dark:text-indigo-400">{{ product.tenant.name }}</span>
+                        </Link>
+                    </div>
 
                     <!-- Price -->
                     <div class="mt-6 flex items-baseline gap-4">
@@ -259,7 +366,7 @@ const trustBadges = [
                     <div v-if="stockStatus.available" class="mt-8 space-y-4">
                         <div class="flex items-center gap-4">
                             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                Quantity
+                                {{ t('products.quantity') }}
                             </label>
                             <QuantityStepper
                                 v-model="quantity"
@@ -288,9 +395,9 @@ const trustBadges = [
                                     <svg class="h-5 w-5 text-green-500" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
                                     </svg>
-                                    <p class="text-sm font-medium text-green-700 dark:text-green-200">Added to cart!</p>
-                                    <Link href="/cart" class="ml-auto text-sm font-medium text-green-600 dark:text-green-400 hover:underline">
-                                        View cart
+                                    <p class="text-sm font-medium text-green-700 dark:text-green-200">{{ t('products.added') }}</p>
+                                    <Link :href="localePath('/cart')" class="ml-auto text-sm font-medium text-green-600 dark:text-green-400 hover:underline">
+                                        {{ t('products.view_cart') }}
                                     </Link>
                                 </div>
                             </div>
@@ -306,7 +413,7 @@ const trustBadges = [
                                 <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                                 </svg>
-                                {{ cartLoading ? 'Adding...' : 'Add to Cart' }}
+                                {{ cartLoading ? t('common.loading') : t('products.add_to_cart') }}
                             </button>
 
                             <!-- Wishlist button -->
@@ -336,7 +443,7 @@ const trustBadges = [
                             disabled
                             class="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-300 dark:bg-gray-700 px-8 py-4 text-base font-semibold text-gray-500 dark:text-gray-400 cursor-not-allowed"
                         >
-                            Out of Stock
+                            {{ t('products.out_of_stock') }}
                         </button>
                     </div>
 
@@ -371,7 +478,7 @@ const trustBadges = [
                                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'"
                         >
-                            Description
+                            {{ t('products.description') }}
                         </button>
                         <button
                             @click="activeTab = 'specifications'"
@@ -380,16 +487,22 @@ const trustBadges = [
                                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'"
                         >
-                            Specifications
+                            {{ t('products.specifications') }}
                         </button>
                         <button
-                            @click="activeTab = 'reviews'"
-                            class="py-4 text-sm font-medium border-b-2 transition-colors"
+                            @click="switchToReviews"
+                            class="py-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
                             :class="activeTab === 'reviews'
                                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
                                 : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'"
                         >
-                            Reviews
+                            {{ t('reviews.title') }}
+                            <span
+                                v-if="reviewStats.review_count > 0"
+                                class="rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium"
+                            >
+                                {{ reviewStats.review_count }}
+                            </span>
                         </button>
                     </nav>
                 </div>
@@ -412,11 +525,11 @@ const trustBadges = [
                                 <dd class="col-span-2 text-sm text-gray-900 dark:text-white">{{ product.sku }}</dd>
                             </div>
                             <div v-if="product.category" class="py-4 grid grid-cols-3 gap-4">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Category</dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('products.specifications') === 'Specifications' ? 'Category' : t('products.specifications') }}</dt>
                                 <dd class="col-span-2 text-sm text-gray-900 dark:text-white">{{ product.category.name }}</dd>
                             </div>
                             <div class="py-4 grid grid-cols-3 gap-4">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Availability</dt>
+                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('products.in_stock') }}</dt>
                                 <dd class="col-span-2 text-sm" :class="stockStatus.class">{{ stockStatus.text }}</dd>
                             </div>
                         </dl>
@@ -424,12 +537,122 @@ const trustBadges = [
 
                     <!-- Reviews tab -->
                     <div v-if="activeTab === 'reviews'">
-                        <div class="text-center py-12">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
-                            </svg>
-                            <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">No reviews yet</h3>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Be the first to review this product!</p>
+                        <div class="lg:grid lg:grid-cols-3 lg:gap-8">
+                            <!-- Left: Rating summary -->
+                            <div class="mb-8 lg:mb-0">
+                                <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6">
+                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                        {{ t('reviews.average') }}
+                                    </h3>
+
+                                    <div v-if="reviewStats.review_count > 0" class="text-center">
+                                        <p class="text-5xl font-bold text-gray-900 dark:text-white">
+                                            {{ reviewStats.average_rating?.toFixed(1) }}
+                                        </p>
+                                        <StarRating
+                                            :rating="Math.round(reviewStats.average_rating ?? 0)"
+                                            size="lg"
+                                            class="mt-2 justify-center"
+                                        />
+                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                            {{ reviewStats.review_count }} {{ reviewStats.review_count === 1 ? 'review' : 'reviews' }}
+                                        </p>
+                                    </div>
+                                    <div v-else class="text-center py-4">
+                                        <p class="text-gray-500 dark:text-gray-400 text-sm">
+                                            {{ t('reviews.no_reviews') }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Write review form or sign-in prompt -->
+                                <div class="mt-6">
+                                    <ReviewForm
+                                        v-if="isAuthenticated"
+                                        :product-slug="product.slug"
+                                        @submitted="handleReviewSubmitted"
+                                    />
+                                    <div v-else class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 text-center">
+                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                            {{ t('reviews.sign_in_to_review') }}
+                                        </p>
+                                        <Link
+                                            :href="localePath('/login')"
+                                            class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+                                        >
+                                            {{ t('auth.sign_in') }}
+                                        </Link>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Reviews list -->
+                            <div class="lg:col-span-2">
+                                <!-- Loading state -->
+                                <div v-if="reviewsLoading && !reviewsLoaded" class="flex justify-center py-12">
+                                    <Spinner size="lg" />
+                                </div>
+
+                                <!-- Reviews list -->
+                                <div v-else-if="reviews.length > 0" class="space-y-6">
+                                    <div
+                                        v-for="review in reviews"
+                                        :key="review.id"
+                                        class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6"
+                                    >
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <div class="flex items-center gap-3">
+                                                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
+                                                        {{ (review.user_name || 'U').charAt(0).toUpperCase() }}
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-medium text-gray-900 dark:text-white">
+                                                            {{ review.user_name || 'Anonymous' }}
+                                                        </p>
+                                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                                            {{ formatDate(review.created_at) }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <StarRating :rating="review.rating" size="sm" />
+                                        </div>
+
+                                        <h4 class="mt-4 font-semibold text-gray-900 dark:text-white">
+                                            {{ review.title }}
+                                        </h4>
+                                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                                            {{ review.body }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Load more -->
+                                    <div v-if="reviewsNextPage" class="text-center pt-4">
+                                        <button
+                                            @click="loadMoreReviews"
+                                            :disabled="reviewsLoading"
+                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                                        >
+                                            <Spinner v-if="reviewsLoading" size="sm" />
+                                            {{ t('reviews.load_more') }}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Empty reviews state -->
+                                <div v-else class="text-center py-12">
+                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+                                    </svg>
+                                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
+                                        {{ t('reviews.no_reviews') }}
+                                    </h3>
+                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                        {{ t('reviews.be_first') }}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -437,7 +660,7 @@ const trustBadges = [
 
             <!-- Related products -->
             <div v-if="relatedProducts.length > 0" class="mt-16">
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Related Products</h2>
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('products.related') }}</h2>
                 <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <ProductCard
                         v-for="related in relatedProducts.slice(0, 4)"
@@ -464,7 +687,7 @@ const trustBadges = [
                     class="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Spinner v-if="cartLoading" size="sm" color="white" />
-                    <span>{{ cartLoading ? 'Adding...' : 'Add to Cart' }}</span>
+                    <span>{{ cartLoading ? t('common.loading') : t('products.add_to_cart') }}</span>
                 </button>
             </div>
         </div>
