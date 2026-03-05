@@ -43,6 +43,7 @@ final class UserFactory extends Factory
             'password' => self::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
+            'role_id' => null,
         ];
     }
 
