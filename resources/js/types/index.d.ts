@@ -19,6 +19,8 @@ declare module '@inertiajs/core' {
 declare global {
     interface Window {
         axios: import('axios').AxiosInstance;
+        Echo: import('laravel-echo').default;
+        Pusher: unknown;
     }
 }
 

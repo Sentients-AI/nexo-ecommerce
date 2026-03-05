@@ -206,6 +206,44 @@ export interface UpdateCartItemRequest {
 export type CartResponse = ApiResponse<{ cart: CartApiResource }>;
 
 // ========================================
+// Chat API
+// ========================================
+
+export type ConversationStatus = 'open' | 'closed';
+export type ConversationType = 'store' | 'support';
+
+export interface ChatMessageApiResource {
+    id: number;
+    conversation_id: number;
+    sender_id: number;
+    sender_name: string;
+    body: string;
+    read_at: string | null;
+    created_at: string;
+}
+
+export interface ConversationApiResource {
+    id: number;
+    type: ConversationType;
+    status: ConversationStatus;
+    subject: string | null;
+    tenant_id: number | null;
+    user: { id: number; name: string };
+    latest_message?: ChatMessageApiResource;
+    messages?: ChatMessageApiResource[];
+    unread_count?: number;
+    last_message_at: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface StoreConversationRequest {
+    type: ConversationType;
+    subject?: string;
+    initial_message: string;
+}
+
+// ========================================
 // Pagination
 // ========================================
 
