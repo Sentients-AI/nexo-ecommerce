@@ -1,18 +1,19 @@
 # Database Schema — E-Commerce System
 
-## Design principles
+## Design Principles
 
-* **Correctness over convenience**
-* **Immutable history for financial data**
-* **Explicit handling of concurrency**
-* **Separation of operational data vs audit data**
-* **Tenant isolation via shared database with tenant_id**
+- **Correctness over convenience**
+- **Immutable history for financial data**
+- **Explicit handling of concurrency**
+- **Separation of operational data vs audit data**
+- **Tenant isolation via shared database with tenant_id**
+- **Monetary values stored as integers (cents)**
 
-Key invariants *(invariant — a condition that must always remain true)* are documented per domain.
+Key invariants *(a condition that must always remain true)* are documented per domain.
 
 ---
 
-## 0️⃣ Multi-Tenancy
+## 0. Multi-Tenancy
 
 ### tenants
 
@@ -21,6 +22,7 @@ id                  BIGINT PK
 name                VARCHAR(255)
 slug                VARCHAR(100) UNIQUE INDEX
 email               VARCHAR(255)
+description         TEXT NULLABLE
 is_active           BOOLEAN INDEX DEFAULT true
 settings            JSON
 created_at          TIMESTAMP
@@ -29,9 +31,9 @@ updated_at          TIMESTAMP
 
 **Notes**
 
-* Slug is used for subdomain identification (e.g., `acme-store.yourdomain.com`)
-* Settings store tenant-specific configuration (e.g., currency, timezone)
-* Inactive tenants cannot access the platform
+- Slug is used for subdomain identification (e.g., `acme-store.yourdomain.com`)
+- Settings store tenant-specific configuration (e.g., currency, timezone)
+- Inactive tenants cannot access the platform
 
 **Tenant-Scoped Tables**
 
@@ -40,19 +42,21 @@ The following tables include a nullable `tenant_id` foreign key for data isolati
 - orders, order_items, carts, cart_items
 - payment_intents, refunds, refund_events
 - promotions, promotion_usages
+- reviews, conversations, chat_messages
 - feature_flags, system_configs, idempotency_keys
 - price_histories, order_financial_projections, refund_projections
 
 **Tables WITHOUT tenant_id**
 
-* `tenants` — The tenant table itself
-* `roles` — Shared across all tenants
-* Pivot tables (`category_product`, `promotion_product`, `promotion_category`) — Isolation via parent relationships
-* System tables (`jobs`, `failed_jobs`, `cache`, `sessions`, `migrations`)
+- `tenants` — The tenant table itself
+- `roles` — Shared across all tenants
+- Pivot tables (`category_product`, `promotion_product`, `promotion_category`) — Isolation via parent relationships
+- System tables (`jobs`, `failed_jobs`, `cache`, `sessions`, `migrations`)
+- Observability tables (`metrics`, `alert_definitions`, `alert_triggers`, `audit_logs`, `domain_events`)
 
 ---
 
-## 1️⃣ Users & Authorization
+## 1. Users & Authorization
 
 ### users
 
@@ -68,10 +72,9 @@ updated_at          TIMESTAMP
 
 **Notes**
 
-* Email is globally unique
-* Authentication mechanism is decoupled from roles
-* `tenant_id = NULL` indicates a super admin (platform-level access)
-* Regular users must belong to a tenant
+- Email is globally unique
+- `tenant_id = NULL` indicates a super admin (platform-level access)
+- Regular users must belong to a tenant
 
 ---
 
@@ -82,11 +85,7 @@ id                  BIGINT PK
 name                VARCHAR(50) UNIQUE
 ```
 
-**Examples**
-
-* admin
-* customer
-* staff
+**Examples:** admin, customer, staff
 
 ---
 
@@ -98,14 +97,15 @@ role_id             BIGINT FK → roles.id INDEX
 PRIMARY KEY (user_id, role_id)
 ```
 
-**Why**
+---
 
-* Explicit RBAC
-* Avoids hard-coded permission logic
+### personal_access_tokens
+
+Standard Laravel Sanctum table for API token management.
 
 ---
 
-## 2️⃣ Product Catalog
+## 2. Product Catalog
 
 ### products
 
@@ -114,10 +114,13 @@ id                  BIGINT PK
 tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
 sku                 VARCHAR(100) INDEX
 name                VARCHAR(255)
+slug                VARCHAR(255)
 description         TEXT
 price_cents         BIGINT
+sale_price_cents    BIGINT NULLABLE
 currency            CHAR(3)
 is_active           BOOLEAN INDEX
+view_count          INTEGER DEFAULT 0
 created_at          TIMESTAMP
 updated_at          TIMESTAMP
 UNIQUE (tenant_id, sku)
@@ -125,8 +128,9 @@ UNIQUE (tenant_id, sku)
 
 **Invariants**
 
-* `price_cents >= 0`
-* SKU must be unique within a tenant
+- `price_cents >= 0`
+- `sale_price_cents >= 0` when set
+- SKU must be unique within a tenant
 
 ---
 
@@ -134,8 +138,12 @@ UNIQUE (tenant_id, sku)
 
 ```sql
 id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
 name                VARCHAR(255)
 slug                VARCHAR(255) UNIQUE
+description         TEXT NULLABLE
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
 ```
 
 ---
@@ -148,19 +156,55 @@ product_id          BIGINT FK → products.id INDEX
 PRIMARY KEY (category_id, product_id)
 ```
 
+---
+
+### price_histories
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+product_id          BIGINT FK → products.id INDEX
+price_cents         BIGINT
+sale_price_cents    BIGINT NULLABLE
+changed_by          BIGINT FK → users.id NULLABLE
+created_at          TIMESTAMP
+```
+
 **Why**
 
-* Many-to-many classification
-* Supports flexible catalog structure
+- Immutable price change audit trail
+- Supports repricing analytics and dispute resolution
 
 ---
 
-## 3️⃣ Inventory (Critical Domain)
+### reviews
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+product_id          BIGINT FK → products.id INDEX
+user_id             BIGINT FK → users.id INDEX
+rating              TINYINT (1–5)
+body                TEXT NULLABLE
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+UNIQUE (product_id, user_id)
+```
+
+**Invariants**
+
+- One review per user per product
+- Rating must be between 1 and 5
+
+---
+
+## 3. Inventory (Critical Domain)
 
 ### stocks
 
 ```sql
 id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
 product_id          BIGINT FK → products.id UNIQUE
 quantity_available  INTEGER
 quantity_reserved   INTEGER
@@ -169,13 +213,9 @@ updated_at          TIMESTAMP
 
 **Invariants**
 
-* `quantity_available >= 0`
-* `quantity_reserved >= 0`
-* Stock row is locked during reservation
-
-**Concurrency**
-
-* Accessed using `SELECT … FOR UPDATE`
+- `quantity_available >= 0`
+- `quantity_reserved >= 0`
+- Stock row is locked during reservation via `SELECT ... FOR UPDATE`
 
 ---
 
@@ -183,36 +223,42 @@ updated_at          TIMESTAMP
 
 ```sql
 id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
 product_id          BIGINT FK → products.id INDEX
-type                ENUM('IN','OUT','RESERVE','RELEASE')
+type                ENUM('IN','OUT','RESERVE','RELEASE','ADJUSTMENT')
 quantity            INTEGER
 reference_type      VARCHAR(100)
 reference_id        BIGINT
+user_id             BIGINT FK → users.id NULLABLE
 created_at          TIMESTAMP
 ```
 
 **Why**
 
-* Full audit trail
-* Enables reconciliation and debugging
+- Full audit trail of all inventory changes
+- Enables reconciliation and debugging
+- `user_id` tracks who made manual adjustments
 
 ---
 
-## 4️⃣ Cart (Ephemeral State)
+## 4. Cart (Ephemeral State)
 
 ### carts
 
 ```sql
 id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
 user_id             BIGINT FK → users.id INDEX
 status              ENUM('active','converted')
+completed_at        TIMESTAMP NULLABLE
 created_at          TIMESTAMP
 updated_at          TIMESTAMP
 ```
 
 **Notes**
 
-* Only one active cart per user (enforced at application level)
+- Only one active cart per user (enforced at application level)
+- `completed_at` is set when cart converts to an order
 
 ---
 
@@ -220,6 +266,7 @@ updated_at          TIMESTAMP
 
 ```sql
 id                      BIGINT PK
+tenant_id               BIGINT FK → tenants.id NULLABLE INDEX
 cart_id                 BIGINT FK → carts.id INDEX
 product_id              BIGINT FK → products.id
 price_cents_snapshot    BIGINT
@@ -229,30 +276,35 @@ quantity                INTEGER
 
 **Invariant**
 
-* Prices never change once added to cart
+- Prices are snapshotted at time of addition and never change
 
 ---
 
-## 5️⃣ Orders (Immutable History)
+## 5. Orders (Immutable History)
 
 ### orders
 
 ```sql
-id                  BIGINT PK
-user_id             BIGINT FK → users.id INDEX
-status              ENUM('pending','paid','cancelled','shipped','completed')
-subtotal_cents      BIGINT
-tax_cents           BIGINT
-total_cents         BIGINT
-currency            CHAR(3)
-created_at          TIMESTAMP
-updated_at          TIMESTAMP
+id                      BIGINT PK
+tenant_id               BIGINT FK → tenants.id NULLABLE INDEX
+user_id                 BIGINT FK → users.id INDEX
+status                  ENUM('pending','paid','shipped','completed','cancelled')
+subtotal_cents          BIGINT
+tax_cents               BIGINT
+discount_cents          BIGINT DEFAULT 0
+total_cents             BIGINT
+currency                CHAR(3)
+refunded_amount_cents   BIGINT DEFAULT 0
+promotion_id            BIGINT FK → promotions.id NULLABLE
+created_at              TIMESTAMP
+updated_at              TIMESTAMP
 ```
 
 **Invariants**
 
-* Totals are immutable after `paid`
-* Currency cannot change
+- Totals are immutable after `paid`
+- Currency cannot change
+- `discount_cents` reflects promotion applied at checkout
 
 ---
 
@@ -260,84 +312,383 @@ updated_at          TIMESTAMP
 
 ```sql
 id                      BIGINT PK
-order_id               BIGINT FK → orders.id INDEX
-product_id             BIGINT FK → products.id
-price_cents_snapshot   BIGINT
-tax_cents_snapshot     BIGINT
-quantity               INTEGER
+tenant_id               BIGINT FK → tenants.id NULLABLE INDEX
+order_id                BIGINT FK → orders.id INDEX
+product_id              BIGINT FK → products.id
+price_cents_snapshot    BIGINT
+tax_cents_snapshot      BIGINT
+quantity                INTEGER
 ```
 
 **Why**
 
-* Preserves historical pricing
-* Orders survive product changes or deletion
+- Preserves historical pricing
+- Orders survive product changes or deletion
 
 ---
 
-## 6️⃣ Payments
+## 6. Payments
 
-### payments
+### payment_intents
 
 ```sql
 id                      BIGINT PK
-order_id               BIGINT FK → orders.id UNIQUE
+tenant_id               BIGINT FK → tenants.id NULLABLE INDEX
+order_id                BIGINT FK → orders.id UNIQUE
 provider                VARCHAR(50)
 provider_reference      VARCHAR(255) INDEX
-status                  ENUM('pending','succeeded','failed')
+client_secret           VARCHAR(255) NULLABLE
+status                  ENUM('processing','succeeded','failed','cancelled')
 amount_cents            BIGINT
 currency                CHAR(3)
+attempts                INTEGER DEFAULT 0
 created_at              TIMESTAMP
 updated_at              TIMESTAMP
 ```
 
 **Notes**
 
-* One payment per order (simplifies recovery logic)
-* Provider reference indexed for webhook lookups
+- One payment intent per order (simplifies recovery logic)
+- Provider reference indexed for webhook lookups
+- `attempts` tracks confirmation attempts for monitoring
 
 ---
 
-## 7️⃣ Idempotency (Advanced, High-Signal)
+## 7. Refunds
 
-### idempotency_keys
+### refunds
+
+```sql
+id                      BIGINT PK
+tenant_id               BIGINT FK → tenants.id NULLABLE INDEX
+order_id                BIGINT FK → orders.id INDEX
+amount_cents            BIGINT
+currency                CHAR(3)
+reason                  TEXT NULLABLE
+status                  ENUM('requested','approved','rejected','processing','succeeded','failed','cancelled')
+provider_reference      VARCHAR(255) NULLABLE INDEX
+approved_by             BIGINT FK → users.id NULLABLE
+approved_at             TIMESTAMP NULLABLE
+created_at              TIMESTAMP
+updated_at              TIMESTAMP
+```
+
+**Invariants**
+
+- Total refunded amount across all refunds must not exceed `orders.total_cents`
+- `provider_reference` required once status is `succeeded`
+
+---
+
+### refund_events
 
 ```sql
 id                  BIGINT PK
-key                 VARCHAR(255) UNIQUE
-user_id             BIGINT FK → users.id
-response_hash       VARCHAR(255)
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+refund_id           BIGINT FK → refunds.id INDEX
+event_type          VARCHAR(100)
+payload             JSON
 created_at          TIMESTAMP
 ```
 
 **Why**
 
-* Prevents duplicate orders
-* Required for safe retries in distributed systems
+- Immutable event log for refund lifecycle
+- Supports audit, debugging, and dispute resolution
+- Retention: 2 years
 
 ---
 
-## 8️⃣ Indexing Strategy (Explicit)
+## 8. Promotions
+
+### promotions
+
+```sql
+id                      BIGINT PK
+tenant_id               BIGINT FK → tenants.id NULLABLE INDEX
+code                    VARCHAR(100) INDEX
+description             TEXT NULLABLE
+discount_type           ENUM('fixed','percentage')
+discount_value          INTEGER
+minimum_order_cents     BIGINT DEFAULT 0
+usage_limit             INTEGER NULLABLE
+per_user_limit          INTEGER DEFAULT 1
+starts_at               TIMESTAMP NULLABLE
+expires_at              TIMESTAMP NULLABLE
+is_active               BOOLEAN DEFAULT true
+created_at              TIMESTAMP
+updated_at              TIMESTAMP
+```
+
+---
+
+### promotion_product
+
+```sql
+promotion_id        BIGINT FK → promotions.id
+product_id          BIGINT FK → products.id
+PRIMARY KEY (promotion_id, product_id)
+```
+
+---
+
+### promotion_category
+
+```sql
+promotion_id        BIGINT FK → promotions.id
+category_id         BIGINT FK → categories.id
+PRIMARY KEY (promotion_id, category_id)
+```
+
+---
+
+### promotion_usages
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+promotion_id        BIGINT FK → promotions.id INDEX
+user_id             BIGINT FK → users.id INDEX
+order_id            BIGINT FK → orders.id INDEX
+discount_cents      BIGINT
+created_at          TIMESTAMP
+```
+
+---
+
+## 9. Chat
+
+### conversations
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+user_id             BIGINT FK → users.id INDEX
+subject             VARCHAR(255)
+status              ENUM('open','closed') DEFAULT 'open'
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+---
+
+### chat_messages
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+conversation_id     BIGINT FK → conversations.id INDEX
+sender_id           BIGINT FK → users.id INDEX
+body                TEXT
+read_at             TIMESTAMP NULLABLE
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+**Notes**
+
+- Messages are broadcast in real-time via Laravel Reverb to `conversation.{id}`
+- `read_at` tracks when the recipient has seen the message
+
+---
+
+## 10. Idempotency
+
+### idempotency_keys
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+key                 VARCHAR(255)
+user_id             BIGINT FK → users.id
+operation           VARCHAR(100)
+fingerprint         VARCHAR(255)
+status_code         INTEGER
+response            JSON
+expires_at          TIMESTAMP
+created_at          TIMESTAMP
+UNIQUE (key, user_id, operation)
+```
+
+**Why**
+
+- Prevents duplicate orders and double-charges
+- Fingerprint detects payload changes on retry (returns 409)
+- Keys expire after 24 hours to prevent unbounded growth
+
+---
+
+## 11. Feature Flags & Configuration
+
+### feature_flags
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+name                VARCHAR(255)
+is_enabled          BOOLEAN DEFAULT false
+description         TEXT NULLABLE
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+---
+
+### system_configs
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+key                 VARCHAR(255)
+value               TEXT
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+---
+
+## 12. Projections (Read Models)
+
+### order_financial_projections
+
+```sql
+order_id            BIGINT PK FK → orders.id
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+total_amount        BIGINT
+paid_amount         BIGINT
+refunded_amount     BIGINT
+refund_status       ENUM('none','partial','full')
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+**Why**
+
+- Pre-calculated financial state avoids expensive aggregations
+- Updated via domain event listeners on refund lifecycle events
+
+---
+
+### refund_projections
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+refund_id           BIGINT FK → refunds.id UNIQUE INDEX
+order_id            BIGINT FK → orders.id INDEX
+status              VARCHAR(50)
+amount_cents        BIGINT
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+---
+
+## 13. Observability
+
+### domain_events
+
+```sql
+id                  BIGINT PK
+event_type          VARCHAR(255) INDEX
+payload             JSON
+occurred_at         TIMESTAMP INDEX
+processed_at        TIMESTAMP NULLABLE
+created_at          TIMESTAMP
+```
+
+**Why**
+
+- Full audit trail of all domain events
+- Enables projection rebuilding via `php artisan projections:replay`
+- Retention: 90 days
+
+---
+
+### audit_logs
+
+```sql
+id                  BIGINT PK
+user_id             BIGINT FK → users.id NULLABLE INDEX
+event               VARCHAR(255) INDEX
+auditable_type      VARCHAR(255)
+auditable_id        BIGINT
+old_values          JSON NULLABLE
+new_values          JSON NULLABLE
+ip_address          VARCHAR(45) NULLABLE
+user_agent          TEXT NULLABLE
+created_at          TIMESTAMP
+```
+
+---
+
+### metrics
+
+```sql
+id                  BIGINT PK
+name                VARCHAR(255) INDEX
+value               DOUBLE
+labels              JSON NULLABLE
+recorded_at         TIMESTAMP INDEX
+created_at          TIMESTAMP
+```
+
+---
+
+### alert_definitions
+
+```sql
+id                  BIGINT PK
+name                VARCHAR(255)
+metric_name         VARCHAR(255) INDEX
+condition           ENUM('gt','lt','gte','lte','eq')
+threshold           DOUBLE
+window_minutes      INTEGER
+notification_channels JSON
+is_active           BOOLEAN DEFAULT true
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+---
+
+### alert_triggers
+
+```sql
+id                  BIGINT PK
+alert_definition_id BIGINT FK → alert_definitions.id INDEX
+triggered_at        TIMESTAMP
+resolved_at         TIMESTAMP NULLABLE
+metric_value        DOUBLE
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+---
+
+## 14. Indexing Strategy
 
 Recommended composite indexes:
 
 ```sql
 orders (user_id, created_at)
+orders (tenant_id, status)
 stock_movements (product_id, created_at)
-payments (provider_reference)
+payment_intents (provider_reference)
+idempotency_keys (key, user_id, operation)
+chat_messages (conversation_id, created_at)
+reviews (product_id, created_at)
+domain_events (event_type, occurred_at)
+metrics (name, recorded_at)
 ```
-
-**Reason**
-
-* Optimised for common read paths
-* Improves operational diagnostics
 
 ---
 
-## 9️⃣ Things intentionally NOT in the database
+## 15. Things Intentionally NOT in the Database
 
-* Calculated totals (derived at order creation)
-* Cached catalog responses
-* Session state
+- Calculated totals (derived at order creation, snapshotted)
+- Cached catalog responses
+- Session state
+- Real-time presence data
 
-These belong to **cache or application layers**, not persistence.
-
+These belong to **cache, sessions, or application layers**, not persistence.

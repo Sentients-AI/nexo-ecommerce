@@ -203,6 +203,83 @@ Clear entire cart.
 
 ---
 
+## Promotions
+
+### POST /api/v1/cart/apply-promotion
+
+Apply a promotion code to the current cart.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Request:**
+
+```json
+{
+  "code": "SUMMER20"
+}
+```
+
+**Response 200:**
+
+```json
+{
+  "data": {
+    "promotion_id": 3,
+    "code": "SUMMER20",
+    "discount_cents": 600,
+    "cart_total_cents": 2700
+  }
+}
+```
+
+**Errors:**
+- 422 - Promotion invalid, expired, or not applicable to cart
+
+---
+
+### POST /api/v1/cart/validate-promotion
+
+Validate a promotion code without applying it.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Request:**
+
+```json
+{
+  "code": "SUMMER20"
+}
+```
+
+**Response 200:** Promotion details and discount preview
+
+---
+
+### GET /api/v1/promotions/active
+
+List currently active promotions for the tenant.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    {
+      "id": 3,
+      "code": "SUMMER20",
+      "description": "20% off summer items",
+      "discount_type": "percentage",
+      "discount_value": 20,
+      "expires_at": "2026-08-31T23:59:59Z"
+    }
+  ]
+}
+```
+
+---
+
 ## Checkout
 
 ### POST /api/v1/checkout
@@ -222,14 +299,15 @@ Initiate checkout process. Creates order from cart with stock reservation.
       "status": "pending",
       "subtotal_cents": 3000,
       "tax_cents": 300,
-      "total_cents": 3300,
+      "discount_cents": 600,
+      "total_cents": 2700,
       "items": [...]
     },
     "payment_intent": {
       "id": 1,
       "client_secret": "pi_xxx_secret_xxx",
       "status": "requires_payment_method",
-      "amount_cents": 3300
+      "amount_cents": 2700
     }
   }
 }
@@ -265,7 +343,7 @@ Confirm payment intent after client-side payment completion.
     "order": {
       "id": 1,
       "status": "paid",
-      "total_cents": 3300
+      "total_cents": 2700
     },
     "payment_intent": {
       "id": 1,
@@ -300,6 +378,7 @@ List authenticated user's orders.
       "status": "paid",
       "subtotal_cents": 3000,
       "tax_cents": 300,
+      "discount_cents": 0,
       "total_cents": 3300,
       "refunded_amount_cents": 0,
       "created_at": "2026-02-03T10:00:00Z"
@@ -330,6 +409,7 @@ Get order details with items, payment, and refunds.
     "status": "paid",
     "subtotal_cents": 3000,
     "tax_cents": 300,
+    "discount_cents": 0,
     "total_cents": 3300,
     "refunded_amount_cents": 0,
     "items": [
@@ -422,11 +502,14 @@ List products with optional filtering.
       "id": 42,
       "sku": "COF-001",
       "name": "Organic Coffee",
+      "slug": "organic-coffee",
       "price_cents": 1500,
       "sale_price_cents": null,
       "currency": "USD",
       "is_active": true,
-      "stock_available": 100
+      "stock_available": 100,
+      "average_rating": 4.5,
+      "review_count": 12
     }
   ],
   "meta": {
@@ -439,11 +522,11 @@ List products with optional filtering.
 
 ---
 
-### GET /api/v1/products/{id}
+### GET /api/v1/products/{slug}
 
 Get product details.
 
-**Response 200:** Product object with full details
+**Response 200:** Full product object including price history and review summary.
 
 ---
 
@@ -466,6 +549,215 @@ List all categories.
   ]
 }
 ```
+
+---
+
+## Reviews
+
+### GET /api/v1/products/{slug}/reviews
+
+List reviews for a product.
+
+**Query Parameters:**
+- `page` (optional)
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "rating": 5,
+      "body": "Excellent product, very fresh.",
+      "user": {
+        "name": "Jane D."
+      },
+      "created_at": "2026-02-10T08:30:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "per_page": 20,
+    "total": 12,
+    "average_rating": 4.5
+  }
+}
+```
+
+---
+
+### POST /api/v1/products/{slug}/reviews
+
+Submit a review for a product.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Request:**
+
+```json
+{
+  "rating": 5,
+  "body": "Excellent product, very fresh."
+}
+```
+
+**Response 201:**
+
+```json
+{
+  "data": {
+    "id": 1,
+    "rating": 5,
+    "body": "Excellent product, very fresh.",
+    "created_at": "2026-02-10T08:30:00Z"
+  }
+}
+```
+
+**Errors:**
+- 422 - Rating required (1–5), body required
+- 409 - User has already reviewed this product
+
+---
+
+## Chat / Conversations
+
+All chat endpoints require authentication.
+
+### GET /api/v1/conversations
+
+List the authenticated user's conversations.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "subject": "Order #123 issue",
+      "status": "open",
+      "unread_count": 2,
+      "last_message_at": "2026-02-20T14:00:00Z"
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/v1/conversations
+
+Start a new conversation.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Request:**
+
+```json
+{
+  "subject": "Order #123 issue",
+  "message": "My package arrived damaged."
+}
+```
+
+**Response 201:**
+
+```json
+{
+  "data": {
+    "id": 1,
+    "subject": "Order #123 issue",
+    "status": "open",
+    "created_at": "2026-02-20T13:00:00Z"
+  }
+}
+```
+
+---
+
+### GET /api/v1/conversations/{id}
+
+Get a conversation with its messages.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response 200:**
+
+```json
+{
+  "data": {
+    "id": 1,
+    "subject": "Order #123 issue",
+    "status": "open",
+    "messages": [
+      {
+        "id": 1,
+        "body": "My package arrived damaged.",
+        "sender": { "id": 5, "name": "Jane Doe" },
+        "created_at": "2026-02-20T13:00:00Z"
+      }
+    ]
+  }
+}
+```
+
+**Errors:**
+- 403 `FORBIDDEN` - Conversation belongs to another user
+
+---
+
+### POST /api/v1/conversations/{id}/messages
+
+Send a message in a conversation.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Request:**
+
+```json
+{
+  "body": "Can you please provide photos?"
+}
+```
+
+**Response 201:**
+
+```json
+{
+  "data": {
+    "id": 2,
+    "body": "Can you please provide photos?",
+    "sender": { "id": 5, "name": "Jane Doe" },
+    "created_at": "2026-02-20T13:05:00Z"
+  }
+}
+```
+
+New messages are broadcast in real-time via Laravel Reverb to the `conversation.{id}` channel.
+
+---
+
+### PATCH /api/v1/conversations/{id}/close
+
+Close a conversation.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response 200:** Updated conversation with `status: "closed"`
+
+---
+
+### POST /api/v1/conversations/{id}/read
+
+Mark all messages in a conversation as read.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response:** 204 No Content
 
 ---
 

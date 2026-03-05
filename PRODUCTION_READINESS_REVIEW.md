@@ -1,8 +1,8 @@
 # Production Readiness Review
 
 **System**: Modular E-Commerce System
-**Version**: 1.0
-**Review Date**: 2026-01-15
+**Version**: 1.2
+**Review Date**: 2026-03-05
 **Status**: Ready for Production with Monitoring
 
 ---
@@ -35,6 +35,9 @@ This document establishes the trust contract for the Modular E-Commerce System. 
 | No invalid state transitions | Enum-based state machines + Specification guards |
 | Type-safe IDs | Identity Value Objects prevent ID confusion |
 | Explicit business rules | Specification pattern with composable validators |
+| Tenant data isolation | Global TenantScope on all tenant-scoped models |
+| One review per user/product | Database unique constraint (product_id, user_id) |
+| Real-time message delivery | Laravel Reverb WebSocket broadcast with DB persistence |
 
 ### Risk Profile
 
