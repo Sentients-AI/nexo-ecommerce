@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CheckoutController;
+use App\Http\Controllers\Api\V1\ConversationController;
+use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\Api\V1\RefundController;
@@ -42,4 +44,12 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/cart/apply-promotion', [PromotionController::class, 'apply'])->name('api.v1.cart.apply-promotion');
     Route::post('/cart/validate-promotion', [PromotionController::class, 'validate'])->name('api.v1.cart.validate-promotion');
     Route::get('/promotions/active', [PromotionController::class, 'active'])->name('api.v1.promotions.active');
+
+    // Chat
+    Route::get('/conversations', [ConversationController::class, 'index'])->name('api.v1.conversations.index');
+    Route::post('/conversations', [ConversationController::class, 'store'])->name('api.v1.conversations.store');
+    Route::get('/conversations/{conversationId}', [ConversationController::class, 'show'])->name('api.v1.conversations.show');
+    Route::patch('/conversations/{conversationId}/close', [ConversationController::class, 'close'])->name('api.v1.conversations.close');
+    Route::post('/conversations/{conversationId}/messages', [MessageController::class, 'store'])->name('api.v1.conversations.messages.store');
+    Route::post('/conversations/{conversationId}/read', [MessageController::class, 'markRead'])->name('api.v1.conversations.read');
 });

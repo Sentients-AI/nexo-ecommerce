@@ -31,6 +31,10 @@ enum ErrorCode: string
     case RefundAmountExceedsLimit = 'REFUND_AMOUNT_EXCEEDS_LIMIT';
     case RefundAlreadyProcessed = 'REFUND_ALREADY_PROCESSED';
 
+    // Chat errors
+    case ConversationNotFound = 'CONVERSATION_NOT_FOUND';
+    case ConversationClosed = 'CONVERSATION_CLOSED';
+
     // Review errors
     case ReviewAlreadySubmitted = 'REVIEW_ALREADY_SUBMITTED';
 
@@ -61,13 +65,15 @@ enum ErrorCode: string
             self::RefundAmountExceedsLimit,
             self::RefundAlreadyProcessed,
             self::ReviewAlreadySubmitted,
+            self::ConversationClosed,
             self::ValidationFailed => 422,
 
             self::CartNotFound,
             self::OrderNotFound,
             self::PaymentIntentNotFound,
             self::ProductNotFound,
-            self::RefundNotFound => 404,
+            self::RefundNotFound,
+            self::ConversationNotFound => 404,
 
             self::IdempotencyConflict => 409,
 

@@ -4,6 +4,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import MobileNav from '@/Components/Layout/MobileNav.vue';
 import CartBadge from '@/Components/Layout/CartBadge.vue';
 import UserDropdown from '@/Components/Layout/UserDropdown.vue';
+import ChatWidget from '@/Components/Chat/ChatWidget.vue';
 import { useLocale } from '@/Composables/useLocale';
 import { useWishlist } from '@/Composables/useWishlist';
 
@@ -240,5 +241,8 @@ onUnmounted(() => {
                 </div>
             </div>
         </footer>
+
+        <!-- Chat widget -->
+        <ChatWidget />
     </div>
 </template>
