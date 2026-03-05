@@ -335,22 +335,19 @@ All guards implement:
 
 ---
 
-## Audit Findings (Requiring Fixes)
+## Known Gaps (Open Items)
 
-### Missing Guards
+### Incomplete Guards
 
-1. **`OrderStatus::canTransitionTo()`** is incomplete - does not handle all states (Packed, Delivered, PartiallyRefunded, Refunded)
-2. **`OrderStateGuard`** is incomplete - missing guards for:
-   - Refund transitions
-   - Ship/pack transitions
-   - Delivered → Refunded
-3. **`Refund` model** has no `canTransitionTo()` method for state machine enforcement
-4. **`HandleStripeEventJob::handleFailure()`** calls `ConfirmPaymentIntentAction` which expects `Processing` state - this is a bug
-5. ~~**`Order::markPartiallyRefunded()`** has no guard against being called on non-paid orders~~ (Addressed by `RefundAmountGuard`)
-6. ~~**`Order::markRefunded()`** has no guard against being called on non-paid orders~~ (Addressed by `RefundAmountGuard`)
-7. ~~**Missing guard**: Refund amount validation against order total~~ (Addressed by `RefundAmountGuard`)
+1. **`OrderStatus::canTransitionTo()`** does not handle all extended states (Packed, Delivered, PartiallyRefunded, Refunded)
+2. **`OrderStateGuard`** is missing guards for refund transitions, ship/pack transitions, and Delivered → Refunded
+3. **`Refund` model** has no `canTransitionTo()` method for explicit state machine enforcement
 
-### Missing Tests
+### Known Bug
+
+4. **`HandleStripeEventJob::handleFailure()`** calls `ConfirmPaymentIntentAction` which expects `Processing` state — this may fail for already-terminal payments
+
+### Test Gaps
 
 1. Order backward transition rejection
 2. Payment intent double-confirm protection
