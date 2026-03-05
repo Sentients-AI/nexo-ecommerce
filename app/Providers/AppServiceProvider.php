@@ -37,16 +37,10 @@ final class AppServiceProvider extends ServiceProvider
      */
     private function configureTenantContext(): void
     {
-        // Preserve tenant_id when serializing context for queued jobs
-        Context::dehydrating(fn (Context $context): array => [
+        // Preserve tenant_id when serializing context for queued jobs.
+        // The framework automatically restores the returned data via Context::hydrate().
+        Context::dehydrating(fn ($context): array => [
             'tenant_id' => $context->get('tenant_id'),
         ]);
-
-        // Restore tenant_id when hydrating context in queue workers
-        Context::hydrated(function (Context $context, array $data): void {
-            if (isset($data['tenant_id'])) {
-                $context->add('tenant_id', $data['tenant_id']);
-            }
-        });
     }
 }
