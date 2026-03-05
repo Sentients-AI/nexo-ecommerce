@@ -58,7 +58,8 @@ final class AdminPanelProvider extends PanelProvider
                     ->icon('heroicon-o-building-office-2')
                     ->collapsed(false),
                 NavigationGroup::make('Operations')
-                    ->icon('heroicon-o-chart-bar'),
+                    ->icon('heroicon-o-chart-bar')
+                    ->collapsed(false),
                 NavigationGroup::make('Catalog')
                     ->icon('heroicon-o-shopping-bag'),
                 NavigationGroup::make('System')
