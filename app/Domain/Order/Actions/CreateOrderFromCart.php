@@ -12,9 +12,11 @@ use App\Domain\Inventory\Exceptions\InsufficientStockException;
 use App\Domain\Inventory\Models\Stock;
 use App\Domain\Order\DTOs\CreateOrderData;
 use App\Domain\Order\Enums\OrderStatus;
+use App\Domain\Order\Events\OrderCreated;
 use App\Domain\Order\Models\Order;
 use App\Domain\Tax\Actions\CalculateTax;
 use App\Domain\Tax\DTOs\TaxCalculationData;
+use App\Events\OrderStatusUpdated;
 use App\Shared\Metrics\MetricsRecorder;
 use Exception;
 use Illuminate\Support\Facades\DB;
@@ -123,7 +125,24 @@ final readonly class CreateOrderFromCart
             // STEP 4: Archive the cart (mark as completed)
             $cart->markAsCompleted();
 
-            return $order->fresh(['items']);
+            $freshOrder = $order->fresh(['items']);
+
+            OrderCreated::dispatch(
+                $freshOrder->id,
+                $freshOrder->user_id,
+                $freshOrder->total_cents,
+                $freshOrder->currency,
+            );
+
+            OrderStatusUpdated::dispatch(
+                $freshOrder->id,
+                $freshOrder->user_id,
+                $freshOrder->tenant_id,
+                $freshOrder->order_number,
+                $freshOrder->status->value,
+            );
+
+            return $freshOrder;
         });
     }
 

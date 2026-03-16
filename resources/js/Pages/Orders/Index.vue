@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import { useLocale } from '@/Composables/useLocale';
+import { useOrderUpdates } from '@/Composables/useOrderUpdates';
 import { OrderStatus } from '@/types/models';
 
 interface OrderSummary {
@@ -38,6 +39,14 @@ interface Props {
 
 const props = defineProps<Props>();
 const { localePath } = useLocale();
+const page = usePage();
+
+const authUser = page.props.auth as { user?: { id: number } } | undefined;
+if (authUser?.user?.id) {
+    useOrderUpdates(authUser.user.id, () => {
+        router.reload({ only: ['orders'] });
+    });
+}
 
 const statusFilter = ref(props.filters?.status || '');
 const hoveredOrderId = ref<number | null>(null);

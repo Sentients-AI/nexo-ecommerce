@@ -15,6 +15,7 @@
         "laravel/reverb": "*",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
+        "nativephp/electron": "*",
         "nunomaduro/essentials": "^1.0"
     },
     "require-dev": {
