@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
+import { useStockUpdates, usePriceUpdates } from '@/Composables/useStockUpdates';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ProductCard from '@/Components/Products/ProductCard.vue';
@@ -47,6 +48,26 @@ const addedToCart = ref(false);
 const lightboxOpen = ref(false);
 const activeTab = ref<'description' | 'specifications' | 'reviews'>('description');
 
+// Live stock & price state
+const liveStock = ref(props.product.stock ?? null);
+const livePriceCents = ref(props.product.price_cents);
+const liveSalePrice = ref<number | null>(props.product.sale_price ?? null);
+
+useStockUpdates(props.product.id, (payload) => {
+    if (liveStock.value) {
+        liveStock.value = {
+            ...liveStock.value,
+            quantity_available: payload.quantity_available,
+            quantity_reserved: payload.quantity_reserved,
+        };
+    }
+});
+
+usePriceUpdates(props.product.id, (payload) => {
+    livePriceCents.value = payload.price_cents;
+    liveSalePrice.value = payload.sale_price;
+});
+
 // Reviews state
 const reviews = ref<ReviewApiResource[]>([]);
 const reviewsLoading = ref(false);
@@ -73,21 +94,21 @@ function formatPrice(cents: number): string {
 }
 
 const effectivePrice = computed(() => {
-    return props.product.sale_price ?? props.product.price_cents;
+    return liveSalePrice.value ?? livePriceCents.value;
 });
 
 const discountPercentage = computed(() => {
-    if (!props.product.sale_price || props.product.sale_price >= props.product.price_cents) {
+    if (!liveSalePrice.value || liveSalePrice.value >= livePriceCents.value) {
         return null;
     }
-    return Math.round(((props.product.price_cents - props.product.sale_price) / props.product.price_cents) * 100);
+    return Math.round(((livePriceCents.value - liveSalePrice.value) / livePriceCents.value) * 100);
 });
 
 const stockStatus = computed(() => {
-    if (!props.product.stock) {
+    if (!liveStock.value) {
         return { text: t('products.in_stock'), class: 'text-gray-500 dark:text-gray-400', available: true };
     }
-    const available = props.product.stock.available ?? props.product.stock.quantity;
+    const available = (liveStock.value.quantity_available ?? 0) - (liveStock.value.quantity_reserved ?? 0);
     if (available <= 0) {
         return { text: t('products.out_of_stock'), class: 'text-red-600 dark:text-red-400', available: false };
     }
@@ -98,10 +119,10 @@ const stockStatus = computed(() => {
 });
 
 const maxQuantity = computed(() => {
-    if (!props.product.stock) {
+    if (!liveStock.value) {
         return 10;
     }
-    const available = props.product.stock.available ?? props.product.stock.quantity ?? 10;
+    const available = (liveStock.value.quantity_available ?? 0) - (liveStock.value.quantity_reserved ?? 0);
     return Math.max(1, Math.min(available, 10));
 });
 

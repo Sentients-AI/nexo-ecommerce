@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Domain\Product\Actions;
 
 use App\Domain\Product\DTOs\ChangePriceData;
+use App\Domain\Product\Events\PriceChanged;
 use App\Domain\Product\Models\PriceHistory;
 use App\Domain\Product\Models\Product;
+use App\Events\ProductPriceUpdated;
 use App\Shared\Domain\AuditLog;
 use Illuminate\Support\Facades\DB;
 
@@ -54,7 +56,22 @@ final class ChangePriceAction
                 ],
             );
 
-            return $product->fresh();
+            $fresh = $product->fresh();
+
+            PriceChanged::dispatch(
+                $fresh->id,
+                $fresh->tenant_id,
+                (int) $fresh->price_cents,
+                $fresh->sale_price !== null ? (int) $fresh->sale_price : null,
+            );
+
+            ProductPriceUpdated::dispatch(
+                $fresh->id,
+                (int) $fresh->price_cents,
+                $fresh->sale_price !== null ? (int) $fresh->sale_price : null,
+            );
+
+            return $fresh;
         });
     }
 }

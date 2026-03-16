@@ -6,8 +6,10 @@ namespace App\Domain\Inventory\Actions;
 
 use App\Domain\Inventory\DTOs\AdjustStockData;
 use App\Domain\Inventory\Enums\StockMovementType;
+use App\Domain\Inventory\Events\StockUpdated;
 use App\Domain\Inventory\Models\Stock;
 use App\Domain\Inventory\Models\StockMovement;
+use App\Events\InventoryStockUpdated;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -41,7 +43,26 @@ final class AdjustStockAction
                 'user_id' => $data->userId,
             ]);
 
-            return $stock->fresh();
+            $fresh = $stock->fresh();
+
+            StockUpdated::dispatch(
+                (int) $data->productId,
+                $fresh->id,
+                $fresh->tenant_id,
+                $fresh->quantity_available,
+                $fresh->quantity_reserved,
+                'adjusted',
+            );
+
+            InventoryStockUpdated::dispatch(
+                (int) $data->productId,
+                $fresh->tenant_id,
+                $fresh->quantity_available,
+                $fresh->quantity_reserved,
+                'adjusted',
+            );
+
+            return $fresh;
         });
     }
 }

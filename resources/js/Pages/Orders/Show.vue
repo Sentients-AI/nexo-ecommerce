@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import { useLocale } from '@/Composables/useLocale';
+import { useOrderUpdates } from '@/Composables/useOrderUpdates';
 import { OrderStatus, RefundStatus } from '@/types/models';
 
 interface OrderItem {
@@ -55,8 +56,20 @@ interface Props {
 
 const props = defineProps<Props>();
 const { localePath } = useLocale();
+const page = usePage();
 
 const isReordering = ref(false);
+const liveStatus = ref(props.order.status);
+
+const authUser = page.props.auth as { user?: { id: number } } | undefined;
+if (authUser?.user?.id) {
+    useOrderUpdates(authUser.user.id, (payload) => {
+        if (payload.order_id === props.order.id) {
+            liveStatus.value = payload.status;
+            router.reload({ only: ['order'] });
+        }
+    });
+}
 
 function formatPrice(cents: number): string {
     return new Intl.NumberFormat('en-US', {
@@ -218,7 +231,7 @@ const netTotal = computed(() => {
                     </p>
                 </div>
                 <div class="flex flex-wrap items-center gap-3">
-                    <StatusBadge type="order" :status="order.status" size="lg" />
+                    <StatusBadge type="order" :status="liveStatus" size="lg" />
                 </div>
             </div>
 
