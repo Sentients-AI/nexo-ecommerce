@@ -63,8 +63,6 @@ describe('SendMessageAction', function () {
             body: 'Event test',
         ));
 
-        Event::assertDispatched(MessageSent::class, function (MessageSent $event) {
-            return $event->message->body === 'Event test';
-        });
+        Event::assertDispatched(MessageSent::class, fn (MessageSent $event) => $event->message->body === 'Event test');
     });
 });

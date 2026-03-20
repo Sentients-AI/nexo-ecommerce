@@ -21,16 +21,10 @@ Broadcast::channel('conversation.{conversationId}', function ($user, string $con
         return true;
     }
 
-    if ($user->isAdmin() && $conversation->tenant_id === $user->tenant_id) {
-        return true;
-    }
-
-    return false;
+    return $user->isAdmin() && $conversation->tenant_id === $user->tenant_id;
 });
 
-Broadcast::channel('orders.{userId}', function (User $user, int $userId): bool {
-    return $user->id === $userId;
-});
+Broadcast::channel('orders.{userId}', fn (User $user, int $userId): bool => $user->id === $userId);
 
 Broadcast::channel('tenant.{tenantId}.orders', function (User $user, int $tenantId): bool {
     if ($user->isSuperAdmin()) {
