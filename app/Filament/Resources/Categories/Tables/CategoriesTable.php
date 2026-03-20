@@ -13,12 +13,16 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 final class CategoriesTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->searchUsing(fn (Builder $query, string $search) => $query->whereKey(
+                Category::search($search)->keys()
+            ))
             ->columns([
                 TextColumn::make('name')
                     ->label('Name')

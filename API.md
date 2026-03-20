@@ -46,6 +46,14 @@ All errors follow a standardized schema:
 | `PAYMENT_ALREADY_CONFIRMED` | 422 | No | Payment already processed |
 | `REFUND_EXCEEDS_TOTAL` | 422 | No | Refund amount exceeds order total |
 | `INVALID_IDEMPOTENCY_KEY` | 409 | No | Idempotency key conflict |
+| `LOYALTY_ACCOUNT_NOT_FOUND` | 404 | No | No loyalty account for this user |
+| `INSUFFICIENT_POINTS` | 400 | No | Not enough points to redeem |
+| `BELOW_MINIMUM_REDEMPTION` | 400 | No | Redemption amount below minimum |
+| `REFERRAL_CODE_INVALID` | 400 | No | Code does not exist |
+| `REFERRAL_CODE_EXPIRED` | 400 | No | Code has passed its expiry date |
+| `REFERRAL_CODE_EXHAUSTED` | 400 | No | Code has reached its usage limit |
+| `REFERRAL_ALREADY_USED` | 400 | No | This user already used the code |
+| `SELF_REFERRAL` | 400 | No | Cannot use your own referral code |
 | `UNAUTHORIZED` | 401 | No | Authentication required |
 | `FORBIDDEN` | 403 | No | Access denied |
 | `RATE_LIMITED` | 429 | Yes | Too many requests |
@@ -61,6 +69,22 @@ All responses include:
 ---
 
 ## Authentication
+
+### GET /auth/google/redirect
+
+Redirect user to Google OAuth consent screen.
+
+**Response:** 302 redirect to Google
+
+---
+
+### GET /auth/google/callback
+
+Handle Google OAuth callback. Creates user account if first-time login, or links Google account to existing user.
+
+**Response:** Redirect to dashboard with authenticated session
+
+---
 
 ### POST /api/v1/login
 
@@ -479,6 +503,238 @@ Request a refund for an order.
 - 422 `ORDER_NOT_REFUNDABLE` - Order already fully refunded
 - 422 `REFUND_EXCEEDS_TOTAL` - Refund amount exceeds remaining refundable amount
 - 403 `FORBIDDEN` - Order belongs to another user
+
+---
+
+## Loyalty Points
+
+All loyalty endpoints require authentication.
+
+### GET /api/v1/loyalty
+
+Get the authenticated user's loyalty account — balance and lifetime totals. Creates the account automatically on first access.
+
+**Response 200:**
+
+```json
+{
+  "data": {
+    "points_balance": 1250,
+    "total_points_earned": 1750,
+    "total_points_redeemed": 500
+  }
+}
+```
+
+---
+
+### GET /api/v1/loyalty/transactions
+
+Paginated history of point transactions.
+
+**Query:** `page` (optional)
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "type": "earned",
+      "points": 500,
+      "balance_after": 500,
+      "description": "Order #ORD-001 reward",
+      "created_at": "2026-03-20T10:00:00Z"
+    }
+  ],
+  "meta": { "current_page": 1, "per_page": 15, "total": 4 }
+}
+```
+
+---
+
+### POST /api/v1/loyalty/redeem
+
+Redeem points (minimum 100 points).
+
+**Request:**
+
+```json
+{ "points": 200 }
+```
+
+**Response 201:**
+
+```json
+{
+  "data": {
+    "points_redeemed": 200,
+    "new_balance": 1050
+  }
+}
+```
+
+**Errors:**
+- 400 `INSUFFICIENT_POINTS` — Not enough points
+- 400 `BELOW_MINIMUM_REDEMPTION` — Below the 100-point minimum
+
+---
+
+## Referral Links
+
+All referral endpoints require authentication.
+
+### GET /api/v1/referral
+
+Get current user's referral code. Auto-generates one if none exists.
+
+**Response 200:**
+
+```json
+{
+  "data": {
+    "code": "ABCDEF123456",
+    "shareable_url": "https://yourdomain.com/r/ABCDEF123456",
+    "status": "active",
+    "referrer_reward_points": 500,
+    "referee_discount_percent": 10,
+    "max_uses": 10,
+    "used_count": 3,
+    "expires_at": "2026-04-19T00:00:00Z",
+    "is_active": true
+  }
+}
+```
+
+---
+
+### GET /api/v1/referral/stats
+
+Referral usage statistics with masked referee details.
+
+**Response 200:**
+
+```json
+{
+  "data": {
+    "total_usages": 3,
+    "total_points_earned": 1500,
+    "usages": [
+      { "referee_email": "j***@example.com", "used_at": "2026-03-21T08:00:00Z" }
+    ]
+  }
+}
+```
+
+---
+
+### POST /api/v1/referral/apply
+
+Apply a referral code. Referrer earns loyalty points; referee receives a discount coupon code.
+
+**Request:**
+
+```json
+{ "code": "ABCDEF123456" }
+```
+
+**Response 201:**
+
+```json
+{
+  "data": {
+    "referee_coupon_code": "REF-XXXXXXXX",
+    "referee_discount_percent": 10,
+    "message": "Code applied! You've received a 10% discount coupon."
+  }
+}
+```
+
+**Errors:**
+- 400 `REFERRAL_CODE_EXPIRED` — Code has passed expiry
+- 400 `REFERRAL_CODE_EXHAUSTED` — Code reached max uses
+- 400 `REFERRAL_CODE_INVALID` — Code not found
+- 400 `SELF_REFERRAL` — Cannot use your own code
+- 400 `REFERRAL_ALREADY_USED` — Already used this code
+
+---
+
+### POST /api/v1/referral/regenerate
+
+Deactivate the current code and issue a fresh one with the same reward settings.
+
+**Response 201:** New referral code object (same shape as `GET /api/v1/referral`)
+
+---
+
+## Search
+
+Search endpoints use Typesense for full-text, typo-tolerant search. Fall back to database query when no `q` parameter is supplied.
+
+### GET /api/v1/search/products
+
+Search products. Public — no authentication required.
+
+**Query Parameters:**
+- `q` — search term (triggers Typesense; omit for full listing)
+- `category` — filter by category slug
+- `min_price` — minimum price in cents
+- `max_price` — maximum price in cents
+- `per_page` (default: 15)
+- `page`
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    {
+      "id": 42,
+      "name": "Organic Coffee",
+      "slug": "organic-coffee",
+      "sku": "COF-001",
+      "price_cents": 1500,
+      "sale_price": null,
+      "currency": "USD",
+      "is_featured": false,
+      "category_name": "Beverages",
+      "image": "https://..."
+    }
+  ],
+  "meta": { "current_page": 1, "per_page": 15, "total": 42 }
+}
+```
+
+---
+
+### GET /api/v1/search/categories
+
+Search categories. Public — no authentication required.
+
+**Query:** `q`, `per_page`
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    { "id": 1, "name": "Beverages", "slug": "beverages", "description": "Hot and cold drinks" }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/search/orders
+
+Search the authenticated user's orders.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Query:** `q` (searches order number), `status`, `per_page`
+
+**Response 200:** Paginated order summaries (same shape as `GET /api/v1/orders`)
 
 ---
 

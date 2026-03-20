@@ -12,10 +12,14 @@ A Domain-Driven Design (DDD) **multi-tenant** e-commerce platform built with Lar
 - **Order Processing** — Full lifecycle (pending → paid → shipped → fulfilled)
 - **Refund Workflow** — Approval-gated refund processing with compensation actions
 - **Promotions & Discounts** — Code-based and rule-based promotion system
+- **Loyalty Points** — Earn points on orders, redeem for discounts; full transaction ledger
+- **Referral Links** — Time-limited, usage-capped shareable codes; both sides rewarded
 - **Product Reviews** — Customer ratings and reviews per tenant
 - **Wishlist** — Per-user product wishlists
 - **Store Browsing** — Public tenant store pages
+- **Full-text Search** — Typesense-powered search via Laravel Scout (Products, Categories, Orders)
 - **Real-time Chat** — WebSocket-powered customer-support conversations (Laravel Reverb)
+- **Social Login** — Google OAuth via Laravel Socialite
 - **Internationalization** — English, Arabic (RTL), and Malay locales
 - **Admin Control Plane** — Filament 5 panel with tenant management, dashboards, and operations
 - **Observability** — Metrics, alerting, audit logs, correlation IDs, performance budgets
@@ -30,7 +34,8 @@ A Domain-Driven Design (DDD) **multi-tenant** e-commerce platform built with Lar
 | Styling | Tailwind CSS v4 |
 | Real-time | Laravel Reverb (WebSockets) |
 | Payments | Stripe (via Laravel Cashier) |
-| Auth | Laravel Sanctum |
+| Auth | Laravel Sanctum + Google OAuth (Socialite) |
+| Search | Typesense via Laravel Scout |
 | Testing | Pest 4 |
 | Queue | Laravel Queue |
 
@@ -57,7 +62,9 @@ app/
 │   ├── Payment/             # Payment handling & Stripe integration
 │   ├── Product/             # Product catalog
 │   ├── Projections/         # Read-optimized event projections
+│   ├── Loyalty/             # Loyalty points — earn, redeem, ledger
 │   ├── Promotion/           # Discounts and promotional codes
+│   ├── Referral/            # Referral links & reward distribution
 │   ├── Refund/              # Refund management & approval workflow
 │   ├── Review/              # Product reviews & ratings
 │   ├── Role/                # RBAC roles
@@ -208,6 +215,17 @@ TENANCY_BASE_DOMAIN=localhost
 REVERB_APP_ID=xxx
 REVERB_APP_KEY=xxx
 REVERB_APP_SECRET=xxx
+
+# Search (Typesense)
+SCOUT_DRIVER=typesense
+TYPESENSE_API_KEY=masterKey
+TYPESENSE_HOST=localhost
+TYPESENSE_PORT=8108
+
+# Google OAuth
+GOOGLE_CLIENT_ID=xxx
+GOOGLE_CLIENT_SECRET=xxx
+GOOGLE_REDIRECT_URI=http://localhost/auth/google/callback
 ```
 
 ### Demo Tenants (after seeding)

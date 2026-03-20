@@ -45,6 +45,8 @@ The following tables include a nullable `tenant_id` foreign key for data isolati
 - reviews, conversations, chat_messages
 - feature_flags, system_configs, idempotency_keys
 - price_histories, order_financial_projections, refund_projections
+- loyalty_accounts, loyalty_transactions
+- referral_codes, referral_usages
 
 **Tables WITHOUT tenant_id**
 
@@ -66,6 +68,7 @@ tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
 email               VARCHAR(255) UNIQUE INDEX
 password            VARCHAR(255)
 name                VARCHAR(255)
+google_id           VARCHAR(255) NULLABLE UNIQUE INDEX
 created_at          TIMESTAMP
 updated_at          TIMESTAMP
 ```
@@ -75,6 +78,7 @@ updated_at          TIMESTAMP
 - Email is globally unique
 - `tenant_id = NULL` indicates a super admin (platform-level access)
 - Regular users must belong to a tenant
+- `google_id` is populated on first Google OAuth login; `password` may be null for OAuth-only accounts
 
 ---
 
@@ -399,7 +403,107 @@ created_at          TIMESTAMP
 
 ---
 
-## 8. Promotions
+## 8. Loyalty Points
+
+### loyalty_accounts
+
+```sql
+id                      BIGINT PK
+tenant_id               BIGINT FK → tenants.id INDEX
+user_id                 BIGINT FK → users.id
+points_balance          INT UNSIGNED DEFAULT 0
+total_points_earned     INT UNSIGNED DEFAULT 0
+total_points_redeemed   INT UNSIGNED DEFAULT 0
+created_at              TIMESTAMP
+updated_at              TIMESTAMP
+UNIQUE (tenant_id, user_id)
+```
+
+**Notes**
+
+- One account per user per tenant; auto-created on first point award
+- `points_balance` is the spendable balance; never goes negative
+
+---
+
+### loyalty_transactions
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id INDEX
+user_id             BIGINT FK → users.id
+loyalty_account_id  BIGINT FK → loyalty_accounts.id
+type                ENUM('earned','redeemed','expired','adjustment','refunded')
+points              INT (positive = credit, negative = debit)
+balance_after       INT UNSIGNED
+description         VARCHAR(255) NULLABLE
+reference_type      VARCHAR(255) NULLABLE
+reference_id        BIGINT UNSIGNED NULLABLE
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+INDEX (reference_type, reference_id)
+```
+
+**Why**
+
+- Immutable ledger — never update, only append
+- `reference_type/id` polymorphic link to originating entity (order, referral_usage, etc.)
+
+---
+
+## 8a. Referral Links
+
+### referral_codes
+
+```sql
+id                      BIGINT PK
+tenant_id               BIGINT FK → tenants.id INDEX
+user_id                 BIGINT FK → users.id
+code                    VARCHAR(12)
+referrer_reward_points  INT UNSIGNED DEFAULT 500
+referee_discount_percent TINYINT UNSIGNED DEFAULT 10
+max_uses                INT UNSIGNED NULLABLE
+used_count              INT UNSIGNED DEFAULT 0
+expires_at              TIMESTAMP NULLABLE
+is_active               BOOLEAN DEFAULT true
+created_at              TIMESTAMP
+updated_at              TIMESTAMP
+UNIQUE (tenant_id, code)
+INDEX (tenant_id, user_id)
+```
+
+**Invariants**
+
+- `used_count <= max_uses` (when max_uses is not null)
+- `expires_at` null means the code never expires
+- `max_uses` null means unlimited uses
+
+---
+
+### referral_usages
+
+```sql
+id                          BIGINT PK
+tenant_id                   BIGINT FK → tenants.id
+referral_code_id            BIGINT FK → referral_codes.id
+referrer_user_id            BIGINT FK → users.id
+referee_user_id             BIGINT FK → users.id
+referrer_points_awarded     INT UNSIGNED
+referee_discount_percent    TINYINT UNSIGNED
+referee_coupon_code         VARCHAR(20) NULLABLE
+created_at                  TIMESTAMP
+updated_at                  TIMESTAMP
+UNIQUE referral_usages_unique (tenant_id, referral_code_id, referee_user_id)
+```
+
+**Invariants**
+
+- One usage per `(referee_user_id, referral_code_id)` — prevents double-dipping
+- `referrer_user_id != referee_user_id` — self-referral is blocked at application level
+
+---
+
+## 9. Promotions
 
 ### promotions
 

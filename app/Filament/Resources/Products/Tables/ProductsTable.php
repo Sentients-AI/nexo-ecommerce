@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Products\Tables;
 
 use App\Domain\Category\Models\Category;
+use App\Domain\Product\Models\Product;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
@@ -12,12 +13,16 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 final class ProductsTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->searchUsing(fn (Builder $query, string $search) => $query->whereKey(
+                Product::search($search)->keys()
+            ))
             ->columns([
                 TextColumn::make('sku')
                     ->label('SKU')
