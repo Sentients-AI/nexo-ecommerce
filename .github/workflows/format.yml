@@ -1,0 +1,56 @@
+name: Auto Format
+
+# Automatically runs Pint + Rector on feature branches and commits
+# the fixes back. Does NOT run on main (CI enforces style there).
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  auto-format:
+    name: Pint + Rector (auto-fix)
+    runs-on: ubuntu-latest
+
+    # Skip commits already made by this workflow to avoid loops
+    if: "!contains(github.event.head_commit.message, 'chore: auto-format')"
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, xml, ctype, json, bcmath
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run Pint
+        run: vendor/bin/pint
+
+      - name: Run Rector
+        run: vendor/bin/rector --no-progress-bar
+
+      - name: Commit fixes (if any)
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-format [skip ci]"
+          commit_author: "GitHub Actions <actions@github.com>"
