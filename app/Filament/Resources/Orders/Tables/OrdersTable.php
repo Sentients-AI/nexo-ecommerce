@@ -5,16 +5,21 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Orders\Tables;
 
 use App\Domain\Order\Enums\OrderStatus;
+use App\Domain\Order\Models\Order;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 final class OrdersTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            ->searchUsing(fn (Builder $query, string $search) => $query->whereKey(
+                Order::search($search)->keys()
+            ))
             ->columns([
                 TextColumn::make('id')
                     ->label('ID')

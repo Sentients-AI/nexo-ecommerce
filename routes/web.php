@@ -7,13 +7,24 @@ use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\ProductController;
+use App\Http\Controllers\Web\ReferralWebController;
 use App\Http\Controllers\Web\RefundController;
+use App\Http\Controllers\Web\SocialiteController;
 use App\Http\Controllers\Web\StoreController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Root redirects to default locale
 Route::get('/', fn () => redirect('/en'));
+
+// Referral links (global, no locale prefix needed)
+Route::get('/r/{code}', [ReferralWebController::class, 'show'])->name('referral.use');
+
+// Google OAuth (fixed URLs, outside locale prefix)
+Route::middleware('guest')->group(function () {
+    Route::get('/auth/google/redirect', [SocialiteController::class, 'redirectToGoogle'])->name('auth.google.redirect');
+    Route::get('/auth/google/callback', [SocialiteController::class, 'handleGoogleCallback'])->name('auth.google.callback');
+});
 
 // Locale-prefixed routes
 Route::prefix('{locale}')

@@ -8,6 +8,7 @@ use App\Domain\Category\Models\Category;
 use App\Domain\Product\Models\Product;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,13 +16,22 @@ final class ProductController extends Controller
 {
     public function index(Request $request): Response
     {
-        $products = Product::query()
+        $query = Product::query()
             ->where('is_active', true)
             ->with(['category', 'stock'])
             ->withCount(['reviews' => fn ($q) => $q->where('is_approved', true)])
-            ->withAvg(['reviews' => fn ($q) => $q->where('is_approved', true)], 'rating')
+            ->withAvg(['reviews' => fn ($q) => $q->where('is_approved', true)], 'rating');
+
+        if ($request->filled('search')) {
+            $productIds = Product::search($request->search)
+                ->where('tenant_id', Context::get('tenant_id'))
+                ->where('is_active', true)
+                ->keys();
+            $query->whereKey($productIds);
+        }
+
+        $products = $query
             ->when($request->filled('category'), fn ($q) => $q->whereHas('category', fn ($q) => $q->where('slug', $request->category)))
-            ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->search.'%'))
             ->when($request->boolean('featured'), fn ($q) => $q->where('is_featured', true))
             // Price filters
             ->when($request->filled('min_price'), fn ($q) => $q->where(function ($q) use ($request) {
