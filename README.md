@@ -277,10 +277,10 @@ vendor/bin/rector
 |----------|---------|
 | [API.md](API.md) | REST API reference for all endpoints |
 | [DATABASE_SCHEMA.md](DATABASE_SCHEMA.md) | Database schema with design rationale |
-| [DECISIONS.md](DECISIONS.md) | Architectural decision log with rationale |
 | [INVARIANTS.md](INVARIANTS.md) | System invariants, guards, and state machines |
 | [PRODUCTION_READINESS_REVIEW.md](PRODUCTION_READINESS_REVIEW.md) | Production checklist and failure modes |
 | [Check.md](Check.md) | Frontend UX/architecture specification |
-| [docs/ARCHITECTURE_DECISIONS.md](docs/ARCHITECTURE_DECISIONS.md) | Deep-dive architecture decisions |
+| [docs/DECISIONS.md](docs/DECISIONS.md) | Chronological architectural decision log |
+| [docs/ARCHITECTURE_DECISIONS.md](docs/ARCHITECTURE_DECISIONS.md) | Deep-dive architecture decisions with rationale |
 | [docs/COMPREHENSIVE_CODEBASE_GUIDE.md](docs/COMPREHENSIVE_CODEBASE_GUIDE.md) | Full codebase walkthrough |
 | [docs/QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) | Fast lookup for common patterns and file locations |

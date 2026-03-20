@@ -2,6 +2,8 @@
 
 Decisions are recorded chronologically. Each entry describes the decision, the reason, trade-offs accepted, and consequences.
 
+> For deep-dive explanations with code examples and diagrams, see [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md).
+
 ---
 
 ## 2026-01-03 — Domain-driven folder boundaries
