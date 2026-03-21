@@ -31,9 +31,21 @@ enum ErrorCode: string
     case RefundAmountExceedsLimit = 'REFUND_AMOUNT_EXCEEDS_LIMIT';
     case RefundAlreadyProcessed = 'REFUND_ALREADY_PROCESSED';
 
+    // Loyalty errors
+    case LoyaltyAccountNotFound = 'LOYALTY_ACCOUNT_NOT_FOUND';
+    case InsufficientPoints = 'INSUFFICIENT_POINTS';
+    case BelowMinimumRedemption = 'BELOW_MINIMUM_REDEMPTION';
+
     // Chat errors
     case ConversationNotFound = 'CONVERSATION_NOT_FOUND';
     case ConversationClosed = 'CONVERSATION_CLOSED';
+
+    // Referral errors
+    case ReferralCodeInvalid = 'REFERRAL_CODE_INVALID';
+    case ReferralCodeExpired = 'REFERRAL_CODE_EXPIRED';
+    case ReferralCodeExhausted = 'REFERRAL_CODE_EXHAUSTED';
+    case ReferralAlreadyUsed = 'REFERRAL_ALREADY_USED';
+    case SelfReferral = 'SELF_REFERRAL';
 
     // Review errors
     case ReviewAlreadySubmitted = 'REVIEW_ALREADY_SUBMITTED';
@@ -66,14 +78,23 @@ enum ErrorCode: string
             self::RefundAlreadyProcessed,
             self::ReviewAlreadySubmitted,
             self::ConversationClosed,
+            self::InsufficientPoints,
+            self::BelowMinimumRedemption,
             self::ValidationFailed => 422,
+
+            self::ReferralCodeInvalid,
+            self::ReferralCodeExpired,
+            self::ReferralCodeExhausted,
+            self::ReferralAlreadyUsed,
+            self::SelfReferral => 400,
 
             self::CartNotFound,
             self::OrderNotFound,
             self::PaymentIntentNotFound,
             self::ProductNotFound,
             self::RefundNotFound,
-            self::ConversationNotFound => 404,
+            self::ConversationNotFound,
+            self::LoyaltyAccountNotFound => 404,
 
             self::IdempotencyConflict => 409,
 

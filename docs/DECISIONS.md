@@ -2,6 +2,8 @@
 
 Decisions are recorded chronologically. Each entry describes the decision, the reason, trade-offs accepted, and consequences.
 
+> For deep-dive explanations with code examples and diagrams, see [ARCHITECTURE_DECISIONS.md](ARCHITECTURE_DECISIONS.md).
+
 ---
 
 ## 2026-01-03 — Domain-driven folder boundaries
@@ -456,3 +458,60 @@ URL-based locale is bookmarkable, shareable, and SEO-friendly. It avoids session
 - Three supported locales: English, Arabic, Malay
 - Translation strings live in `lang/{locale}/` directories
 - Laravel's `__()` helper and Vue i18n work off the same locale
+
+---
+
+## 2026-03-20 — Loyalty points stored as an append-only ledger
+
+**Decision**
+Loyalty points are tracked via two tables: `loyalty_accounts` (current balance snapshot) and `loyalty_transactions` (immutable ledger of every change). Balances are never recalculated from the ledger at query time.
+
+**Reason**
+An append-only ledger is auditable, debuggable, and safe for concurrent writes. Snapshotting the balance on the account avoids expensive full-ledger aggregations on every page load. The pattern mirrors how financial systems (double-entry bookkeeping) work.
+
+**Trade-offs**
+- Balance can theoretically drift from the ledger if a write partially fails — mitigated by wrapping all mutations in DB transactions
+- Two writes per point event instead of one
+
+**Consequences**
+- `AwardPointsAction` and `RedeemPointsAction` always run inside a transaction
+- `RedeemPointsAction` uses `lockForUpdate` to prevent over-redemption under concurrency
+- All redemptions require minimum 100 points (configurable in `config/loyalty.php`)
+
+---
+
+## 2026-03-20 — Referral codes as tenant-scoped, time-limited, capped tokens
+
+**Decision**
+Each user gets one active referral code per tenant. Codes are 12-character uppercase alphanumeric strings. They support optional `expires_at` and `max_uses` limits. Applying a code is atomic — increment, award points, and record usage all happen in a single DB transaction.
+
+**Reason**
+Time and usage limits prevent long-lived abuse (e.g., a code shared publicly to thousands of strangers). Atomicity prevents split-brain between point award and usage record.
+
+**Trade-offs**
+- `GenerateReferralCodeAction` is idempotent (returns existing active code) — new expiry/limits can only be set via `regenerate`
+- Discount is recorded as a coupon code string; it is not yet wired to the Promotion engine
+
+**Consequences**
+- `SelfReferralException` and `ReferralAlreadyUsedException` are enforced at the action layer, not just the DB constraint
+- Future work: wire `referee_coupon_code` to a real Promotion record
+
+---
+
+## 2026-03-20 — Full-text search via Typesense + Laravel Scout
+
+**Decision**
+Replace `LIKE '%query%'` searches with Typesense via Laravel Scout. Product, Category, and Order models implement `Searchable`. The web `ProductController` and the new API `SearchController` both use Scout when a `q` parameter is present.
+
+**Reason**
+`LIKE '%query%'` scans every row and cannot do typo tolerance, relevance ranking, or faceted filtering. Typesense provides sub-50ms search, typo correction, and scales independently of the primary database.
+
+**Trade-offs**
+- Requires running a Typesense server (self-hosted or cloud)
+- Search index can lag behind the database by a queue processing delay (mitigated by `queue = true` in `config/scout.php`)
+- Typesense bypasses Eloquent's global scopes — every Scout call must explicitly pass `.where('tenant_id', ...)` for tenant isolation
+
+**Consequences**
+- Tests use `SCOUT_DRIVER=collection` (in-memory) — no real Typesense needed in CI
+- After deploy, run `php artisan scout:import` for each model to seed the index
+- All three searchable models include `tenant_id` in `toSearchableArray()` for safe filtering

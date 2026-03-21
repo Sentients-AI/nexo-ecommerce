@@ -15,6 +15,10 @@ Fast lookup for common tasks and code locations.
 | Process payment | `app/Domain/Payment/Actions/CreatePaymentIntentAction.php` | Creates Stripe PaymentIntent |
 | Apply promotion | `app/Domain/Promotion/Actions/FindBestPromotionAction.php` | Find best discount |
 | Request refund | `app/Domain/Refund/Actions/RequestRefundAction.php` | Creates refund request |
+| Award loyalty points | `app/Domain/Loyalty/Actions/AwardPointsAction.php` | `$action->execute($data)` |
+| Redeem loyalty points | `app/Domain/Loyalty/Actions/RedeemPointsAction.php` | Throws `InsufficientPointsException` |
+| Generate referral code | `app/Domain/Referral/Actions/GenerateReferralCodeAction.php` | Idempotent — returns existing if active |
+| Apply referral code | `app/Domain/Referral/Actions/ApplyReferralCodeAction.php` | Awards points + coupon in one transaction |
 | Start conversation | `app/Domain/Chat/Actions/` | Real-time chat actions |
 | Submit review | `app/Domain/Review/Models/Review.php` | Product rating/body |
 | Calculate tax | `app/Domain/Tax/Actions/CalculateTax.php` | `$action->execute($data)` |
@@ -45,6 +49,10 @@ Fast lookup for common tasks and code locations.
 | Review model | `app/Domain/Review/Models/Review.php` | product_id, user_id, rating, body |
 | Conversation | `app/Domain/Chat/Models/Conversation.php` | user_id, subject, status |
 | ChatMessage | `app/Domain/Chat/Models/ChatMessage.php` | conversation_id, sender_id, body, read_at |
+| LoyaltyAccount | `app/Domain/Loyalty/Models/LoyaltyAccount.php` | tenant_id, user_id, points_balance, total_points_earned |
+| LoyaltyTransaction | `app/Domain/Loyalty/Models/LoyaltyTransaction.php` | type, points, balance_after, reference_type/id |
+| ReferralCode | `app/Domain/Referral/Models/ReferralCode.php` | code, max_uses, used_count, expires_at, is_active |
+| ReferralUsage | `app/Domain/Referral/Models/ReferralUsage.php` | referrer_user_id, referee_user_id, coupon_code |
 
 ### Validation Rules
 
@@ -68,6 +76,16 @@ Fast lookup for common tasks and code locations.
 | GET /api/v1/conversations | `ConversationController@index` | List conversations |
 | POST /api/v1/conversations | `ConversationController@store` | Start conversation |
 | POST /api/v1/conversations/{id}/messages | `MessageController@store` | Send message |
+| GET /api/v1/loyalty | `LoyaltyController@index` | Get points balance |
+| GET /api/v1/loyalty/transactions | `LoyaltyController@transactions` | Transaction history |
+| POST /api/v1/loyalty/redeem | `LoyaltyController@redeem` | Redeem points |
+| GET /api/v1/referral | `ReferralController@show` | Get / auto-create referral code |
+| GET /api/v1/referral/stats | `ReferralController@stats` | Referral usage stats |
+| POST /api/v1/referral/apply | `ReferralController@apply` | Apply a referral code |
+| POST /api/v1/referral/regenerate | `ReferralController@regenerate` | Fresh code, same settings |
+| GET /api/v1/search/products | `SearchController@products` | Typesense product search (public) |
+| GET /api/v1/search/categories | `SearchController@categories` | Typesense category search (public) |
+| GET /api/v1/search/orders | `SearchController@orders` | Typesense order search (auth) |
 
 ### Web Routes (Inertia)
 
@@ -363,6 +381,29 @@ php artisan config:clear              # Clear config cache
 php artisan view:clear                # Clear compiled views
 ```
 
+### Search (Typesense / Scout)
+
+```bash
+# Seed Typesense index from existing DB records (run once after deploy)
+php artisan scout:import "App\Domain\Product\Models\Product"
+php artisan scout:import "App\Domain\Category\Models\Category"
+php artisan scout:import "App\Domain\Order\Models\Order"
+
+# Flush and re-import (after schema change)
+php artisan scout:flush "App\Domain\Product\Models\Product"
+php artisan scout:import "App\Domain\Product\Models\Product"
+```
+
+**Important:** Every Scout search call must pass `.where('tenant_id', Context::get('tenant_id'))` because Typesense bypasses Eloquent global scopes.
+
+```php
+// Correct — tenant-scoped Typesense search
+Product::search($query)
+    ->where('tenant_id', Context::get('tenant_id'))
+    ->where('is_active', true)
+    ->paginate(15);
+```
+
 ### Custom Commands
 
 ```bash
@@ -489,6 +530,10 @@ new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 8. **One review per user per product** — Unique constraint on (product_id, user_id)
 9. **Payment state is terminal** — Succeeded/Failed/Cancelled cannot transition
 10. **Refund requires approval** — Must be Approved before Processing
+11. **Loyalty points never go below zero** — `RedeemPointsAction` uses `lockForUpdate` and throws on deficit
+12. **One referral usage per user per code** — DB unique constraint + `ReferralAlreadyUsedException`
+13. **Self-referral is blocked** — `SelfReferralException` enforced before DB write
+14. **Scout searches must filter by tenant_id** — Typesense bypasses Eloquent global scopes
 
 ---
 

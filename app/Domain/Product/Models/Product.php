@@ -14,10 +14,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Laravel\Scout\Searchable;
 
 final class Product extends BaseModel
 {
-    use BelongsToTenant, HasFactory;
+    use BelongsToTenant, HasFactory, Searchable;
 
     /**
      * The attributes that are mass assignable.
@@ -116,6 +117,41 @@ final class Product extends BaseModel
         }
 
         return (int) round((($this->price - $this->sale_price) / $this->price) * 100);
+    }
+
+    /**
+     * Get the indexable data array for the model.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => (string) $this->id,
+            'tenant_id' => (int) $this->tenant_id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'sku' => $this->sku,
+            'description' => $this->description ?? '',
+            'short_description' => $this->short_description ?? '',
+            'price_cents' => (int) $this->price_cents,
+            'sale_price' => (int) ($this->sale_price ?? 0),
+            'currency' => $this->currency,
+            'is_active' => (bool) $this->is_active,
+            'is_featured' => (bool) $this->is_featured,
+            'category_id' => (int) ($this->category_id ?? 0),
+            'category_name' => $this->category?->name ?? '',
+            'view_count' => (int) $this->view_count,
+            'created_at' => $this->created_at->timestamp,
+        ];
+    }
+
+    /**
+     * Determine if the model should be searchable.
+     */
+    public function shouldBeSearchable(): bool
+    {
+        return (bool) $this->is_active;
     }
 
     /**

@@ -38,6 +38,7 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
         'password',
         'role_id',
         'tenant_id',
+        'google_id',
     ];
 
     /**

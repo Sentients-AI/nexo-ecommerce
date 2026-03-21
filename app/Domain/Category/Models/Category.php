@@ -11,10 +11,11 @@ use Database\Factories\CategoryFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Scout\Searchable;
 
 final class Category extends BaseModel
 {
-    use BelongsToTenant, HasFactory;
+    use BelongsToTenant, HasFactory, Searchable;
 
     /**
      * Indicates if the model should be timestamped.
@@ -76,6 +77,33 @@ final class Category extends BaseModel
     public function isRoot(): bool
     {
         return $this->parent_id === null;
+    }
+
+    /**
+     * Get the indexable data array for the model.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => (string) $this->id,
+            'tenant_id' => (int) $this->tenant_id,
+            'name' => $this->name,
+            'slug' => $this->slug,
+            'description' => $this->description ?? '',
+            'is_active' => (bool) $this->is_active,
+            'sort_order' => (int) $this->sort_order,
+            'created_at' => now()->timestamp,
+        ];
+    }
+
+    /**
+     * Determine if the model should be searchable.
+     */
+    public function shouldBeSearchable(): bool
+    {
+        return (bool) $this->is_active;
     }
 
     /**

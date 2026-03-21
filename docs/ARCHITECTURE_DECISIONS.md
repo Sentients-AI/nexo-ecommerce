@@ -2,6 +2,8 @@
 
 This document explains the key architectural decisions made in this modular e-commerce system and the reasoning behind each choice.
 
+> For the chronological decision log (what changed and when), see [DECISIONS.md](DECISIONS.md).
+
 ---
 
 ## Why This Architecture?
@@ -535,6 +537,196 @@ Context::hydrated(function (ContextHydrated $event) {
 
 ---
 
+## Why an Append-Only Ledger for Loyalty Points?
+
+Points are money-adjacent. The same principles that govern financial ledgers apply here.
+
+### The Problem with Mutable Balances
+
+A naive implementation mutates a single balance column:
+
+```sql
+UPDATE users SET points_balance = points_balance + 500 WHERE id = 42;
+```
+
+This is dangerous:
+- **No audit trail** — impossible to answer "why does this user have 1250 points?"
+- **Race conditions** — two concurrent awards can lose one update without `lockForUpdate`
+- **No undo** — correcting a wrong award requires a manual DB patch
+
+### The Ledger Pattern
+
+Two tables work together:
+
+```
+loyalty_accounts                    loyalty_transactions
+─────────────────────               ─────────────────────────────
+id       user_id  balance           id  account_id  type    points  balance_after
+──────── ──────── ────────          ── ──────────── ──────  ──────  ─────────────
+1        42       1250              1   1           earned   500     500
+                                    2   1           earned   750    1250
+                                    3   1           redeemed -200   1050   ← future
+```
+
+`balance` is a **snapshot** — updated with every transaction to avoid recalculating from the full ledger on every request. The ledger is **append-only** — never updated or deleted.
+
+### Concurrency Safety
+
+`RedeemPointsAction` uses `lockForUpdate` before checking balance:
+
+```php
+DB::transaction(function () use ($data) {
+    $account = LoyaltyAccount::where('user_id', $data->userId)
+        ->lockForUpdate()  // Prevents concurrent over-redemption
+        ->firstOrFail();
+
+    if (! $account->canRedeem($data->points)) {
+        throw new InsufficientPointsException($account->points_balance, $data->points);
+    }
+
+    $account->decrement('points_balance', $data->points);
+    $account->increment('total_points_redeemed', $data->points);
+
+    LoyaltyTransaction::create([
+        'type'          => TransactionType::Redeemed,
+        'points'        => -$data->points,
+        'balance_after' => $account->points_balance,
+    ]);
+});
+```
+
+Without the lock, two simultaneous redemption requests can both read `balance = 200`, both pass the `canRedeem(200)` check, and together drain 400 points from a 200-point balance.
+
+---
+
+## Why Time-Limited, Usage-Capped Referral Codes?
+
+### The Abuse Vector
+
+An unlimited, perpetual referral code is an open invitation to abuse:
+
+- Code gets posted on coupon sites → thousands of strangers use it → referrer earns tens of thousands of points
+- Self-referral with a second account → free points
+
+The system addresses both:
+
+```
+Code: ABCDEF123456
+├── expires_at: 30 days from creation   ← time cap
+├── max_uses: 10                        ← usage cap
+└── SelfReferralException               ← same user_id check
+```
+
+### Atomicity of the Apply Operation
+
+`ApplyReferralCodeAction` wraps five writes in a single transaction:
+
+```
+DB::transaction {
+  1. Create ReferralUsage record
+  2. Increment referral_codes.used_count
+  3. AwardPointsAction → create LoyaltyTransaction (referrer)
+  4. Generate coupon code string (referee)
+  5. AuditLog::log('referral.code_applied')
+}
+```
+
+If any step fails — say the loyalty account write fails — all five roll back. The referrer never receives points for a usage that wasn't recorded.
+
+### Idempotency at the DB Level
+
+The `referral_usages` table has a unique constraint:
+
+```sql
+UNIQUE (tenant_id, referral_code_id, referee_user_id)
+```
+
+Even if `ReferralAlreadyUsedException` is somehow bypassed at the application layer, the database enforces that one referee can never use the same code twice.
+
+### Future Work: Wiring Coupons to Promotions
+
+Currently `referee_coupon_code` is a plain string (e.g., `REF-XXXXXXXX`) stored on the usage record. The next step is to create a real `Promotion` record in the `promotions` table when the code is applied, so the discount is enforced at checkout rather than just displayed as a string. See [GitHub issue tracker] for this enhancement.
+
+---
+
+## Why Typesense Instead of a LIKE Query?
+
+### The Limits of `LIKE '%query%'`
+
+```sql
+SELECT * FROM products WHERE name LIKE '%orgnic coffe%';
+-- Returns 0 rows — typo kills the search
+```
+
+`LIKE` queries have three hard limits:
+
+| Limit | Impact |
+|---|---|
+| No typo tolerance | "orgnic" finds nothing |
+| Full-table scan | Slows as catalogue grows |
+| No relevance ranking | "coffee beans" and "decaf coffee" equally match "coffee" |
+
+### Why Typesense over Meilisearch or Elasticsearch?
+
+| | Typesense | Meilisearch | Elasticsearch |
+|---|---|---|---|
+| Setup complexity | Low | Low | High |
+| Laravel Scout driver | First-party | First-party | Third-party |
+| Typo tolerance | Yes | Yes | Yes |
+| Multi-tenant filter | Per-query `filter_by` | Per-query `filter` | Per-query |
+| Self-host resource use | ~50MB RAM | ~100MB RAM | ~500MB RAM |
+| Cloud offering | Yes | Yes | Yes |
+
+Typesense was chosen for its low resource footprint and the first-party Scout driver.
+
+### Tenant Isolation — the Critical Gotcha
+
+Eloquent's `TenantScope` global scope **does not apply** to Typesense queries. Typesense receives its query directly — there is no Eloquent builder involved when fetching IDs from the search engine.
+
+The fix is always explicit:
+
+```php
+// Wrong — returns results from ALL tenants
+Product::search($query)->get();
+
+// Correct — scoped to current tenant
+Product::search($query)
+    ->where('tenant_id', Context::get('tenant_id'))
+    ->where('is_active', true)
+    ->get();
+```
+
+`tenant_id` must be present in `toSearchableArray()` for this filter to work:
+
+```php
+public function toSearchableArray(): array
+{
+    return [
+        'id'        => (string) $this->id,   // Typesense requires string IDs
+        'tenant_id' => (int) $this->tenant_id,
+        'name'      => $this->name,
+        // ...
+        'created_at' => $this->created_at->timestamp, // Must be UNIX int
+    ];
+}
+```
+
+### Search Index Lifecycle
+
+```
+Database record saved
+        │
+        ▼ (via Scout observer, queued)
+Typesense index updated
+        │
+        ▼ (sub-50ms)
+User search returns result
+```
+
+The queue (`queue = true` in `config/scout.php`) decouples the index write from the HTTP response. A product update is visible in search results within seconds of the queue worker processing the job, not instantly — which is acceptable for a product catalogue.
+
+---
+
 ## Summary
 
 | Decision | Problem Solved | Trade-off Accepted |
@@ -545,6 +737,9 @@ Context::hydrated(function (ContextHydrated $event) {
 | Filament | Admin panel development time | Tied to Filament's upgrade cycle |
 | Idempotency | Duplicate requests, network failures | Storage overhead, implementation complexity |
 | Shared DB Multi-tenancy | Operational complexity of DB-per-tenant | Must enforce row-level isolation |
+| Loyalty Ledger | Mutable balance race conditions and no audit trail | Two writes per event, snapshot drift risk |
+| Referral Caps | Abuse via public code sharing | Codes expire, limiting long-term viral spread |
+| Typesense Search | LIKE queries are slow and typo-intolerant | External service dependency, index sync lag |
 
 These decisions optimize for:
 1. **Developer productivity**: Find code fast, change code safely

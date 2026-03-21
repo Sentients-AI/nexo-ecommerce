@@ -17,10 +17,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Laravel\Scout\Searchable;
 
 final class Order extends BaseModel
 {
-    use BelongsToTenant, HasFactory;
+    use BelongsToTenant, HasFactory, Searchable;
 
     /**
      * The attributes that are mass assignable.
@@ -178,6 +179,25 @@ final class Order extends BaseModel
     public function getRefundedAmountCents(): int
     {
         return $this->refunded_amount_cents ?? 0;
+    }
+
+    /**
+     * Get the indexable data array for the model.
+     *
+     * @return array<string, mixed>
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => (string) $this->id,
+            'tenant_id' => (int) $this->tenant_id,
+            'user_id' => (int) $this->user_id,
+            'order_number' => $this->order_number,
+            'status' => $this->status->value,
+            'total_cents' => (int) $this->total_cents,
+            'currency' => $this->currency,
+            'created_at' => $this->created_at->timestamp,
+        ];
     }
 
     /**
