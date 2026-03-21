@@ -14,8 +14,8 @@ use Tests\TestCase;
 uses(TestCase::class, RefreshDatabase::class);
 
 it('loads the payment view page successfully', function () {
-    $role = Role::factory()->create(['name' => 'admin']);
-    $user = User::factory()->create(['role_id' => $role->id]);
+    $role = Role::factory()->create(['name' => 'super_admin']);
+    $user = User::factory()->create(['role_id' => $role->id, 'tenant_id' => null]);
     $order = Order::factory()->create([
         'status' => OrderStatus::AwaitingPayment,
     ]);
