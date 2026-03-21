@@ -1,0 +1,65 @@
+name: Feature Request
+description: Propose a new feature or enhancement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to propose new features or improvements.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the problem or limitation this feature addresses.
+      placeholder: "Currently, users cannot... which means they have to..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the feature you'd like to see.
+      placeholder: "Add a `POST /api/v1/...` endpoint that..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Which domain does this touch?
+      options:
+        - Cart
+        - Category
+        - Chat
+        - Checkout / Payment
+        - Inventory
+        - Loyalty
+        - Order
+        - Product
+        - Promotion
+        - Referral
+        - Refund
+        - Review
+        - Search
+        - Tenant / Multi-tenancy
+        - User / Auth
+        - Admin (Filament)
+        - Infrastructure / CI
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you considered, and why you prefer this one.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mockups, API sketches, links to related issues, etc.

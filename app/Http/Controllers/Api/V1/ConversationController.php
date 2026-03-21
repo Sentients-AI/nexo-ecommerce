@@ -76,7 +76,7 @@ final class ConversationController extends Controller
 
         $conversation = $this->findAccessibleConversation($user, $conversationId);
 
-        if ($conversation === null) {
+        if (! $conversation instanceof Conversation) {
             return $this->errorResponse(ErrorCode::ConversationNotFound, 'Conversation not found.');
         }
 
@@ -94,7 +94,7 @@ final class ConversationController extends Controller
 
         $conversation = $this->findAccessibleConversation($user, $conversationId);
 
-        if ($conversation === null) {
+        if (! $conversation instanceof Conversation) {
             return $this->errorResponse(ErrorCode::ConversationNotFound, 'Conversation not found.');
         }
 
