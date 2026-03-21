@@ -38,6 +38,8 @@ final class ErrorMessages
             ErrorCode::RateLimitExceeded => 'Too many requests. Please wait a moment before trying again.',
             ErrorCode::ReviewAlreadySubmitted => 'You have already reviewed this product.',
             ErrorCode::IdempotencyConflict => 'This request is already being processed.',
+            ErrorCode::ConversationNotFound => 'We could not find this conversation.',
+            ErrorCode::ConversationClosed => 'This conversation has been closed.',
         };
     }
 
@@ -70,6 +72,8 @@ final class ErrorMessages
             ErrorCode::RateLimitExceeded => 'Rate limit threshold exceeded',
             ErrorCode::ReviewAlreadySubmitted => 'Duplicate review submission attempted',
             ErrorCode::IdempotencyConflict => 'Idempotency key already in use with different payload',
+            ErrorCode::ConversationNotFound => 'Conversation ID not found in database',
+            ErrorCode::ConversationClosed => 'Conversation status is closed',
         };
     }
 }

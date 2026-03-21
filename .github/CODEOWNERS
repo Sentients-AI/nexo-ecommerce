@@ -1,0 +1,21 @@
+# CODEOWNERS
+# Defines who is automatically requested for review when a PR touches these paths.
+# Format: <path pattern>  <@user or @org/team>
+
+# Default owner for everything
+*                                   @AdilAzhari
+
+# Critical domain logic — always requires explicit review
+app/Domain/Payment/                 @AdilAzhari
+app/Domain/Order/                   @AdilAzhari
+app/Domain/Inventory/               @AdilAzhari
+app/Domain/Refund/                  @AdilAzhari
+
+# Database migrations — always needs review before merge
+database/migrations/                @AdilAzhari
+
+# CI/CD changes
+.github/                            @AdilAzhari
+
+# Deployment configuration
+config/                             @AdilAzhari
