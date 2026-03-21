@@ -73,9 +73,9 @@ final class ProductController extends Controller
 
     public function wishlist(Request $request): Response
     {
-        $ids = array_filter(array_map('intval', explode(',', $request->query('ids', ''))));
+        $ids = array_filter(array_map(intval(...), explode(',', $request->query('ids', ''))));
 
-        $products = empty($ids) ? collect() : Product::query()
+        $products = $ids === [] ? collect() : Product::query()
             ->where('is_active', true)
             ->whereIn('id', $ids)
             ->with(['category', 'stock'])

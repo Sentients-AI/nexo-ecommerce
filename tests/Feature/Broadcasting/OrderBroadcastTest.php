@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Inventory\Models\Stock;
 use App\Domain\Order\Actions\CancelOrder;
 use App\Domain\Order\Actions\CreateOrderFromCart;
 use App\Domain\Order\DTOs\CreateOrderData;
@@ -9,6 +10,7 @@ use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Events\PaymentSucceeded;
 use App\Domain\Payment\Models\PaymentIntent;
+use App\Domain\Product\Models\Product;
 use App\Domain\Refund\Enums\RefundStatus;
 use App\Domain\Refund\Events\RefundSucceeded;
 use App\Domain\Refund\Models\Refund;
@@ -31,8 +33,8 @@ it('broadcasts order status updated when order is created', function () {
     $user = $this->actingAsUserInTenant();
 
     $cart = CartFactory::new()->create(['user_id' => $user->id]);
-    $product = App\Domain\Product\Models\Product::factory()->create();
-    App\Domain\Inventory\Models\Stock::factory()->create([
+    $product = Product::factory()->create();
+    Stock::factory()->create([
         'product_id' => $product->id,
         'quantity_available' => 5,
         'quantity_reserved' => 0,
@@ -48,11 +50,9 @@ it('broadcasts order status updated when order is created', function () {
         new CreateOrderData(userId: $user->id, cartId: (string) $cart->id, currency: 'USD')
     );
 
-    Event::assertDispatched(OrderStatusUpdated::class, function (OrderStatusUpdated $event) use ($user) {
-        return $event->userId === $user->id
-            && $event->tenantId === $this->tenant->id
-            && $event->status === OrderStatus::Pending->value;
-    });
+    Event::assertDispatched(OrderStatusUpdated::class, fn (OrderStatusUpdated $event) => $event->userId === $user->id
+        && $event->tenantId === $this->tenant->id
+        && $event->status === OrderStatus::Pending->value);
 });
 
 it('broadcasts order status updated when payment succeeds', function () {
@@ -74,11 +74,9 @@ it('broadcasts order status updated when payment succeeds', function () {
         'USD',
     );
 
-    Event::assertDispatched(OrderStatusUpdated::class, function (OrderStatusUpdated $event) use ($order, $user) {
-        return $event->orderId === $order->id
-            && $event->userId === $user->id
-            && $event->status === OrderStatus::Paid->value;
-    });
+    Event::assertDispatched(OrderStatusUpdated::class, fn (OrderStatusUpdated $event) => $event->orderId === $order->id
+        && $event->userId === $user->id
+        && $event->status === OrderStatus::Paid->value);
 });
 
 it('broadcasts order status updated when order is cancelled', function () {
@@ -92,10 +90,8 @@ it('broadcasts order status updated when order is cancelled', function () {
 
     app(CancelOrder::class)->execute($order);
 
-    Event::assertDispatched(OrderStatusUpdated::class, function (OrderStatusUpdated $event) use ($order) {
-        return $event->orderId === $order->id
-            && $event->status === 'cancelled';
-    });
+    Event::assertDispatched(OrderStatusUpdated::class, fn (OrderStatusUpdated $event) => $event->orderId === $order->id
+        && $event->status === 'cancelled');
 });
 
 it('broadcasts order status updated when refund succeeds', function () {
@@ -127,9 +123,7 @@ it('broadcasts order status updated when refund succeeds', function () {
         'USD',
     );
 
-    Event::assertDispatched(OrderStatusUpdated::class, function (OrderStatusUpdated $event) use ($order) {
-        return $event->orderId === $order->id;
-    });
+    Event::assertDispatched(OrderStatusUpdated::class, fn (OrderStatusUpdated $event) => $event->orderId === $order->id);
 });
 
 it('order status updated event broadcasts on the correct channels', function () {

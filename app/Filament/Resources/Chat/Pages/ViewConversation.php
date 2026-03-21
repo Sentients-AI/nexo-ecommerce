@@ -17,7 +17,7 @@ final class ViewConversation extends ViewRecord
 {
     protected static string $resource = ConversationResource::class;
 
-    public function getFooterWidgetsColumns(): int|array
+    public function getFooterWidgetsColumns(): int
     {
         return 1;
     }

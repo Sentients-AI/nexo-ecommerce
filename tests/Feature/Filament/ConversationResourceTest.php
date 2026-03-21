@@ -11,6 +11,7 @@ use App\Filament\Resources\Chat\ConversationResource;
 use App\Filament\Resources\Chat\Pages\ListConversations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Context;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -96,7 +97,7 @@ describe('ConversationResource listing', function (): void {
 
         $this->actingAs($admin);
 
-        $livewire = livewire(ListConversations::class)
+        $livewire = Livewire::test(ListConversations::class)
             ->assertSuccessful();
 
         expect(true)->toBeTrue();
