@@ -37,7 +37,7 @@ jobs:
           restore-keys: composer-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+        run: composer install --prefer-dist --no-interaction --no-progress --no-scripts
 
       - name: Check code style
         run: vendor/bin/pint --test
@@ -68,7 +68,7 @@ jobs:
           restore-keys: composer-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+        run: composer install --prefer-dist --no-interaction --no-progress --no-scripts
 
       - name: Run Rector (dry-run)
         run: vendor/bin/rector --dry-run --no-progress-bar
@@ -97,6 +97,9 @@ jobs:
           extensions: mbstring, xml, ctype, json, bcmath, pdo, pdo_sqlite, sqlite3, zip, curl
           coverage: none
 
+      - name: Copy environment file
+        run: cp .env.example .env
+
       - name: Cache Composer dependencies
         uses: actions/cache@v4
         with:
@@ -118,9 +121,6 @@ jobs:
 
       - name: Build frontend assets
         run: npm run build
-
-      - name: Copy environment file
-        run: cp .env.example .env
 
       - name: Generate application key
         run: php artisan key:generate
@@ -156,7 +156,7 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+        run: composer install --prefer-dist --no-interaction --no-progress --no-scripts
 
       - name: Run security audit
         run: composer audit --no-dev
