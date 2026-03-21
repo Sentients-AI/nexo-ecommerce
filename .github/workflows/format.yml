@@ -41,7 +41,7 @@ jobs:
           restore-keys: composer-
 
       - name: Install dependencies
-        run: composer install --prefer-dist --no-interaction --no-progress
+        run: composer install --prefer-dist --no-interaction --no-progress --no-scripts
 
       - name: Run Pint
         run: vendor/bin/pint
