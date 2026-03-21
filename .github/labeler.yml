@@ -1,0 +1,50 @@
+# GitHub Actions Labeler configuration
+# Maps file path patterns to PR labels
+
+domain:
+  - changed-files:
+      - any-glob-to-any-file: "app/Domain/**"
+
+api:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "app/Http/Controllers/Api/**"
+          - "routes/api/**"
+
+frontend:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "resources/js/**"
+          - "resources/css/**"
+
+database:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "database/migrations/**"
+          - "database/seeders/**"
+          - "database/factories/**"
+
+tests:
+  - changed-files:
+      - any-glob-to-any-file: "tests/**"
+
+documentation:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/*.md"
+          - "docs/**"
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+
+config:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "config/**"
+          - ".env.example"
+
+admin:
+  - changed-files:
+      - any-glob-to-any-file: "app/Filament/**"

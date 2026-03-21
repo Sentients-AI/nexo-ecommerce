@@ -1,0 +1,133 @@
+name: Deploy
+
+# Triggers:
+#   - Automatically on push to main (after CI passes)
+#   - Manually via workflow_dispatch for hotfixes or rollbacks
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: "production"
+        type: choice
+        options: [production, staging]
+      run_migrations:
+        description: "Run database migrations"
+        required: true
+        default: true
+        type: boolean
+      run_scout_import:
+        description: "Re-index Typesense (slow — only if schema changed)"
+        required: true
+        default: false
+        type: boolean
+
+# Require CI to pass before deploying
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false   # never cancel an in-flight deploy
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Gate: wait for CI to finish on the same SHA
+  # ─────────────────────────────────────────────────────────────
+  wait-for-ci:
+    name: Wait for CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for CI checks
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: "Tests (PHP 8.4)"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 15
+
+  # ─────────────────────────────────────────────────────────────
+  # Deploy via SSH
+  # ─────────────────────────────────────────────────────────────
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'production' }}
+    runs-on: ubuntu-latest
+    needs: wait-for-ci
+    environment: ${{ github.event.inputs.environment || 'production' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ── SSH deploy ──────────────────────────────────────────
+      # Required GitHub secrets:
+      #   DEPLOY_HOST    — server hostname or IP
+      #   DEPLOY_USER    — SSH username
+      #   DEPLOY_KEY     — private SSH key (RSA or Ed25519)
+      #   DEPLOY_PATH    — absolute path to the app on the server
+      # ────────────────────────────────────────────────────────
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Add server to known hosts
+        run: ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          RUN_MIGRATIONS: ${{ github.event.inputs.run_migrations || 'true' }}
+          RUN_SCOUT_IMPORT: ${{ github.event.inputs.run_scout_import || 'false' }}
+        run: |
+          ssh $DEPLOY_USER@$DEPLOY_HOST << EOF
+            set -e
+            cd $DEPLOY_PATH
+
+            echo "==> Pulling latest code"
+            git pull origin main
+
+            echo "==> Installing PHP dependencies"
+            composer install --no-dev --no-interaction --optimize-autoloader --prefer-dist
+
+            echo "==> Installing Node dependencies"
+            npm ci
+
+            echo "==> Building frontend assets"
+            npm run build
+
+            echo "==> Caching configuration"
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan event:cache
+
+            if [ "$RUN_MIGRATIONS" = "true" ]; then
+              echo "==> Running database migrations"
+              php artisan migrate --force
+            fi
+
+            echo "==> Restarting queue workers"
+            php artisan queue:restart
+
+            if [ "$RUN_SCOUT_IMPORT" = "true" ]; then
+              echo "==> Re-indexing Typesense"
+              php artisan scout:flush  "App\Domain\Product\Models\Product"
+              php artisan scout:import "App\Domain\Product\Models\Product"
+              php artisan scout:flush  "App\Domain\Category\Models\Category"
+              php artisan scout:import "App\Domain\Category\Models\Category"
+              php artisan scout:flush  "App\Domain\Order\Models\Order"
+              php artisan scout:import "App\Domain\Order\Models\Order"
+            fi
+
+            echo "==> Done"
+          EOF
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Deployment failed. Check the logs above."
+          # Add Slack/email notification here if needed

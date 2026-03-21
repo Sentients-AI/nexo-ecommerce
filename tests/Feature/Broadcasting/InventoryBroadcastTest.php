@@ -40,10 +40,8 @@ it('broadcasts stock updated when stock is adjusted', function () {
         reason: 'Restock',
     ));
 
-    Event::assertDispatched(InventoryStockUpdated::class, function (InventoryStockUpdated $event) use ($product) {
-        return $event->productId === $product->id
-            && $event->changeType === 'adjusted';
-    });
+    Event::assertDispatched(InventoryStockUpdated::class, fn (InventoryStockUpdated $event) => $event->productId === $product->id
+        && $event->changeType === 'adjusted');
 });
 
 it('broadcasts stock updated when stock is reserved', function () {
@@ -62,10 +60,8 @@ it('broadcasts stock updated when stock is reserved', function () {
         orderId: 99,
     ));
 
-    Event::assertDispatched(InventoryStockUpdated::class, function (InventoryStockUpdated $event) use ($product) {
-        return $event->productId === $product->id
-            && $event->changeType === 'reserved';
-    });
+    Event::assertDispatched(InventoryStockUpdated::class, fn (InventoryStockUpdated $event) => $event->productId === $product->id
+        && $event->changeType === 'reserved');
 });
 
 it('broadcasts stock updated when stock is released', function () {
@@ -86,10 +82,8 @@ it('broadcasts stock updated when stock is released', function () {
         referenceType: 'order',
     ));
 
-    Event::assertDispatched(InventoryStockUpdated::class, function (InventoryStockUpdated $event) use ($product) {
-        return $event->productId === $product->id
-            && $event->changeType === 'released';
-    });
+    Event::assertDispatched(InventoryStockUpdated::class, fn (InventoryStockUpdated $event) => $event->productId === $product->id
+        && $event->changeType === 'released');
 });
 
 it('broadcasts price updated when product price changes', function () {
@@ -101,15 +95,13 @@ it('broadcasts price updated when product price changes', function () {
         productId: $product->id,
         newPriceCents: 4500,
         newSalePrice: 4000,
-        changedBy: null,
         reason: 'Promotion',
+        changedBy: null,
     ));
 
-    Event::assertDispatched(ProductPriceUpdated::class, function (ProductPriceUpdated $event) use ($product) {
-        return $event->productId === $product->id
-            && $event->newPriceCents === 4500
-            && $event->newSalePrice === 4000;
-    });
+    Event::assertDispatched(ProductPriceUpdated::class, fn (ProductPriceUpdated $event) => $event->productId === $product->id
+        && $event->newPriceCents === 4500
+        && $event->newSalePrice === 4000);
 });
 
 it('inventory stock updated event broadcasts on the correct channels', function () {

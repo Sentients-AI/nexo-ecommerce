@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Chat\Models\Conversation;
+use App\Domain\Role\Models\Role;
 use App\Domain\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -36,7 +37,7 @@ describe('Conversation List API', function () {
     });
 
     it('admin sees all conversations for their tenant', function () {
-        $admin = User::factory()->create(['role_id' => App\Domain\Role\Models\Role::where('name', 'admin')->first()?->id]);
+        $admin = User::factory()->create(['role_id' => Role::where('name', 'admin')->first()?->id]);
 
         // Create users with conversations in same tenant
         $user1 = User::factory()->forTenant($this->tenant)->create();
@@ -47,7 +48,7 @@ describe('Conversation List API', function () {
         // Make admin belong to tenant
         $admin->update(['tenant_id' => $this->tenant->id]);
         // Give admin role
-        $adminRole = App\Domain\Role\Models\Role::firstOrCreate(['name' => 'admin'], ['description' => 'Store Administrator']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin'], ['description' => 'Store Administrator']);
         $admin->update(['role_id' => $adminRole->id]);
 
         Sanctum::actingAs($admin);
