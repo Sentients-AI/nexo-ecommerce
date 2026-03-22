@@ -102,7 +102,12 @@ final class ProductController extends Controller
             abort(404);
         }
 
-        $product->increment('view_count');
+        $sessionKey = 'viewed_product_'.$product->id;
+
+        if (! session()->has($sessionKey)) {
+            $product->increment('view_count');
+            session()->put($sessionKey, true);
+        }
         $product->load(['category', 'stock', 'tenant:id,name,slug']);
 
         $reviewStats = [
