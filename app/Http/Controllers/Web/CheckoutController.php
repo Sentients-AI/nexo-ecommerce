@@ -26,7 +26,7 @@ final class CheckoutController extends Controller
             ->first();
 
         if (! $cart || $cart->items->isEmpty()) {
-            return redirect()->route('cart.index')
+            return redirect()->route('cart.index', ['locale' => app()->getLocale()])
                 ->with('error', 'Your cart is empty.');
         }
 
@@ -44,7 +44,7 @@ final class CheckoutController extends Controller
                         'sku' => $item->product->sku,
                         'images' => $item->product->images,
                         'stock' => $item->product->stock ? [
-                            'available' => $item->product->stock->quantity - ($item->product->stock->reserved_quantity ?? 0),
+                            'available' => $item->product->stock->quantity_available - $item->product->stock->quantity_reserved,
                         ] : null,
                     ] : null,
                 ])->toArray(),
@@ -60,7 +60,7 @@ final class CheckoutController extends Controller
         $orderId = $request->query('order_id');
 
         if (! $orderId) {
-            return redirect()->route('checkout.summary');
+            return redirect()->route('checkout.summary', ['locale' => app()->getLocale()]);
         }
 
         $order = Order::query()
@@ -70,13 +70,13 @@ final class CheckoutController extends Controller
             ->first();
 
         if (! $order) {
-            return redirect()->route('checkout.summary')
+            return redirect()->route('checkout.summary', ['locale' => app()->getLocale()])
                 ->with('error', 'Order not found.');
         }
 
         // If order is already paid, redirect to result
         if (in_array($order->status, [OrderStatus::Paid, OrderStatus::Fulfilled, OrderStatus::Shipped, OrderStatus::Delivered], true)) {
-            return redirect()->route('checkout.result', ['order_id' => $order->id]);
+            return redirect()->route('checkout.result', ['locale' => app()->getLocale(), 'order_id' => $order->id]);
         }
 
         return Inertia::render('Checkout/Pending', [
@@ -91,7 +91,7 @@ final class CheckoutController extends Controller
         $orderId = $request->query('order_id');
 
         if (! $orderId) {
-            return redirect()->route('orders.index');
+            return redirect()->route('orders.index', ['locale' => app()->getLocale()]);
         }
 
         $order = Order::query()
@@ -101,7 +101,7 @@ final class CheckoutController extends Controller
             ->first();
 
         if (! $order) {
-            return redirect()->route('orders.index')
+            return redirect()->route('orders.index', ['locale' => app()->getLocale()])
                 ->with('error', 'Order not found.');
         }
 
