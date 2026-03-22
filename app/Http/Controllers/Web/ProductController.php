@@ -9,8 +9,10 @@ use App\Domain\Product\Models\Product;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Context;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 final class ProductController extends Controller
 {
@@ -23,11 +25,23 @@ final class ProductController extends Controller
             ->withAvg(['reviews' => fn ($q) => $q->where('is_approved', true)], 'rating');
 
         if ($request->filled('search')) {
-            $productIds = Product::search($request->search)
-                ->where('tenant_id', Context::get('tenant_id'))
-                ->where('is_active', true)
-                ->keys();
-            $query->whereKey($productIds);
+            try {
+                $tenantId = Context::get('tenant_id');
+                $search = Product::search($request->search)->where('is_active', true);
+
+                if ($tenantId !== null) {
+                    $search->where('tenant_id', $tenantId);
+                }
+
+                $query->whereKey($search->keys());
+            } catch (Throwable $e) {
+                Log::warning('Search engine unavailable, falling back to database search.', ['error' => $e->getMessage()]);
+                $term = '%'.$request->search.'%';
+                $query->where(fn ($q) => $q->where('name', 'like', $term)
+                    ->orWhere('sku', 'like', $term)
+                    ->orWhere('description', 'like', $term)
+                );
+            }
         }
 
         $products = $query

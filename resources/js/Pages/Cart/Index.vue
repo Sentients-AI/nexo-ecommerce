@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import QuantityStepper from '@/Components/UI/QuantityStepper.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import { useCart } from '@/Composables/useCart';
+import { useApi } from '@/Composables/useApi';
 import { useLocale } from '@/Composables/useLocale';
 import type { CartApiResource } from '@/types/api';
 
@@ -24,6 +25,7 @@ const props = defineProps<Props>();
 
 const page = usePage();
 const { updateItem, removeItem, loading, error, clearError, formatPrice } = useCart();
+const { post: apiPost } = useApi();
 
 const isAuthenticated = computed(() => page.props.auth?.user !== null);
 const Layout = computed(() => isAuthenticated.value ? AuthenticatedLayout : GuestLayout);
@@ -32,6 +34,8 @@ const { localePath } = useLocale();
 const promoCode = ref('');
 const promoError = ref('');
 const promoApplied = ref(false);
+const promoLoading = ref(false);
+const appliedPromotion = ref<{ name: string; discount_cents: number } | null>(null);
 
 const isEmpty = computed(() => props.cart.items.length === 0);
 
@@ -58,13 +62,59 @@ function getMaxQuantity(item: CartApiResource['items'][0]): number {
     return Math.min(item.product.stock.available ?? item.product.stock.quantity, 10);
 }
 
-function handleApplyPromo() {
+async function handleApplyPromo() {
+    promoError.value = '';
+
     if (!promoCode.value.trim()) {
         promoError.value = 'Please enter a promo code';
         return;
     }
-    promoError.value = 'Invalid promo code';
+
+    promoLoading.value = true;
+
+    const result = await apiPost<{
+        valid: boolean;
+        message?: string;
+        promotion?: { name: string };
+        discount_cents?: number;
+    }>('/api/v1/cart/validate-promotion', {
+        code: promoCode.value.trim().toUpperCase(),
+        cart_id: props.cart.id,
+    });
+
+    promoLoading.value = false;
+
+    if (!result) {
+        promoError.value = 'Could not apply promo code. Please try again.';
+        return;
+    }
+
+    if (!result.valid) {
+        promoError.value = result.message ?? 'Invalid promo code';
+        promoApplied.value = false;
+        appliedPromotion.value = null;
+        return;
+    }
+
+    promoApplied.value = true;
+    appliedPromotion.value = {
+        name: result.promotion!.name,
+        discount_cents: result.discount_cents!,
+    };
 }
+
+function removePromo() {
+    promoCode.value = '';
+    promoApplied.value = false;
+    promoError.value = '';
+    appliedPromotion.value = null;
+}
+
+const discountedTotal = computed(() => {
+    const subtotalCents = Math.round(props.cart.subtotal * 100);
+    const discount = appliedPromotion.value?.discount_cents ?? 0;
+    return Math.max(0, subtotalCents - discount) / 100;
+});
 </script>
 
 <template>
@@ -215,23 +265,37 @@ function handleApplyPromo() {
                             <label for="promo" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 Promo code
                             </label>
-                            <div class="mt-2 flex gap-2">
+                            <div v-if="!promoApplied" class="mt-2 flex gap-2">
                                 <input
                                     id="promo"
                                     v-model="promoCode"
                                     type="text"
                                     placeholder="Enter code"
-                                    class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500"
+                                    :disabled="promoLoading"
+                                    @keyup.enter="handleApplyPromo"
+                                    class="flex-1 rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:border-indigo-500 focus:ring-indigo-500 disabled:opacity-50"
                                 />
                                 <button
                                     @click="handleApplyPromo"
-                                    class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                                    :disabled="promoLoading"
+                                    class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
                                 >
-                                    Apply
+                                    <span v-if="promoLoading">...</span>
+                                    <span v-else>Apply</span>
+                                </button>
+                            </div>
+                            <div v-else class="mt-2 flex items-center justify-between rounded-lg bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-700 px-3 py-2">
+                                <div class="flex items-center gap-2">
+                                    <svg class="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span class="text-sm font-medium text-green-700 dark:text-green-300">{{ appliedPromotion?.name }}</span>
+                                </div>
+                                <button @click="removePromo" class="text-sm text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200">
+                                    Remove
                                 </button>
                             </div>
                             <p v-if="promoError" class="mt-2 text-sm text-red-600 dark:text-red-400">{{ promoError }}</p>
-                            <p v-if="promoApplied" class="mt-2 text-sm text-green-600 dark:text-green-400">Promo code applied!</p>
                         </div>
 
                         <!-- Summary -->
@@ -240,13 +304,17 @@ function handleApplyPromo() {
                                 <dt class="text-sm text-gray-600 dark:text-gray-400">Subtotal</dt>
                                 <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ formatPrice(cart.subtotal) }}</dd>
                             </div>
+                            <div v-if="appliedPromotion" class="flex items-center justify-between">
+                                <dt class="text-sm text-green-600 dark:text-green-400">Discount ({{ appliedPromotion.name }})</dt>
+                                <dd class="text-sm font-medium text-green-600 dark:text-green-400">-{{ formatPrice(appliedPromotion.discount_cents / 100) }}</dd>
+                            </div>
                             <div class="flex items-center justify-between">
                                 <dt class="text-sm text-gray-600 dark:text-gray-400">Shipping</dt>
                                 <dd class="text-sm font-medium text-gray-900 dark:text-white">Calculated at checkout</dd>
                             </div>
                             <div class="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
                                 <dt class="text-base font-semibold text-gray-900 dark:text-white">Total</dt>
-                                <dd class="text-base font-semibold text-gray-900 dark:text-white">{{ formatPrice(cart.subtotal) }}</dd>
+                                <dd class="text-base font-semibold text-gray-900 dark:text-white">{{ formatPrice(discountedTotal * 100) }}</dd>
                             </div>
                         </dl>
 
