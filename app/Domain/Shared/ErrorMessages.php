@@ -40,6 +40,14 @@ final class ErrorMessages
             ErrorCode::IdempotencyConflict => 'This request is already being processed.',
             ErrorCode::ConversationNotFound => 'We could not find this conversation.',
             ErrorCode::ConversationClosed => 'This conversation has been closed.',
+            ErrorCode::LoyaltyAccountNotFound => 'We could not find a loyalty account for this user.',
+            ErrorCode::InsufficientPoints => 'You do not have enough loyalty points for this redemption.',
+            ErrorCode::BelowMinimumRedemption => 'The minimum number of points required for redemption has not been met.',
+            ErrorCode::ReferralCodeInvalid => 'The referral code you entered is invalid.',
+            ErrorCode::ReferralCodeExpired => 'This referral code has expired.',
+            ErrorCode::ReferralCodeExhausted => 'This referral code has reached its usage limit.',
+            ErrorCode::ReferralAlreadyUsed => 'You have already used a referral code.',
+            ErrorCode::SelfReferral => 'You cannot use your own referral code.',
         };
     }
 
@@ -74,6 +82,14 @@ final class ErrorMessages
             ErrorCode::IdempotencyConflict => 'Idempotency key already in use with different payload',
             ErrorCode::ConversationNotFound => 'Conversation ID not found in database',
             ErrorCode::ConversationClosed => 'Conversation status is closed',
+            ErrorCode::LoyaltyAccountNotFound => 'Loyalty account not found for user ID',
+            ErrorCode::InsufficientPoints => 'Points balance below requested redemption amount',
+            ErrorCode::BelowMinimumRedemption => 'Redemption amount below configured minimum threshold',
+            ErrorCode::ReferralCodeInvalid => 'Referral code not found or inactive',
+            ErrorCode::ReferralCodeExpired => 'Referral code validity window has elapsed',
+            ErrorCode::ReferralCodeExhausted => 'Referral code usage_limit reached',
+            ErrorCode::ReferralAlreadyUsed => 'User has already applied a referral code',
+            ErrorCode::SelfReferral => 'Referee user ID matches referrer user ID',
         };
     }
 }
