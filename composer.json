@@ -19,7 +19,7 @@
         "laravel/tinker": "^2.10.1",
         "nativephp/electron": "*",
         "nunomaduro/essentials": "^1.0",
-        "typesense/typesense-php": "^6.0"
+        "typesense/typesense-php": "^6.0",
         "symfony/process": "^7.4.5"
     },
     "require-dev": {
