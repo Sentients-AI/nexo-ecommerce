@@ -112,6 +112,7 @@ final class DatabaseSeeder extends Seeder
                 'tenant_id' => $acmeStore->id,
                 'email_verified_at' => now(),
             ]
+
         );
 
         User::firstOrCreate(
@@ -246,6 +247,7 @@ final class DatabaseSeeder extends Seeder
                 CategorySeeder::class,
                 ProductSeeder::class,
                 StockSeeder::class,
+                PromotionSeeder::class,
             ]);
 
             Context::forget('tenant_id');
