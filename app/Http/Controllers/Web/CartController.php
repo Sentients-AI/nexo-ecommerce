@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Models\CartItem;
 use App\Http\Controllers\Controller;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,16 +30,24 @@ final class CartController extends Controller
         $sessionId = $request->session()->getId();
 
         if ($user) {
-            return Cart::firstOrCreate(
-                ['user_id' => $user->id, 'completed_at' => null],
-                ['session_id' => $sessionId]
-            );
+            try {
+                return Cart::firstOrCreate(
+                    ['user_id' => $user->id, 'completed_at' => null],
+                    ['session_id' => $sessionId]
+                );
+            } catch (UniqueConstraintViolationException) {
+                return Cart::where('user_id', $user->id)->whereNull('completed_at')->firstOrFail();
+            }
         }
 
-        return Cart::firstOrCreate(
-            ['session_id' => $sessionId, 'completed_at' => null],
-            ['user_id' => null]
-        );
+        try {
+            return Cart::firstOrCreate(
+                ['session_id' => $sessionId, 'completed_at' => null],
+                ['user_id' => null]
+            );
+        } catch (UniqueConstraintViolationException) {
+            return Cart::where('session_id', $sessionId)->whereNull('completed_at')->firstOrFail();
+        }
     }
 
     /**
