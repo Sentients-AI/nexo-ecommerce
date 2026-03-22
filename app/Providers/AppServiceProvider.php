@@ -9,6 +9,7 @@ use App\Infrastructure\Payment\Stripe\PaymentGatewayService as StripePaymentGate
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\ServiceProvider;
+use Stripe\StripeClient;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -17,6 +18,8 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->singleton(StripeClient::class, fn () => new StripeClient(config('services.stripe.secret')));
+
         $this->app->bind(PaymentGatewayService::class, StripePaymentGatewayService::class);
     }
 

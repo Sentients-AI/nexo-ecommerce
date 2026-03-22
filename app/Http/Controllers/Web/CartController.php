@@ -62,8 +62,8 @@ final class CartController extends Controller
                     'price_cents' => $item->product->price_cents,
                     'sale_price' => $item->product->sale_price,
                     'stock' => $item->product->stock ? [
-                        'quantity' => $item->product->stock->quantity,
-                        'available' => $item->product->stock->quantity - ($item->product->stock->reserved_quantity ?? 0),
+                        'quantity' => $item->product->stock->quantity_available,
+                        'available' => $item->product->stock->quantity_available - $item->product->stock->quantity_reserved,
                     ] : null,
                 ] : null,
             ])->toArray(),
