@@ -6,6 +6,9 @@ namespace App\Domain\Referral\Actions;
 
 use App\Domain\Loyalty\Actions\AwardPointsAction;
 use App\Domain\Loyalty\DTOs\AwardPointsData;
+use App\Domain\Promotion\Actions\CreatePromotionAction;
+use App\Domain\Promotion\DTOs\PromotionData;
+use App\Domain\Promotion\Enums\DiscountType;
 use App\Domain\Referral\DTOs\ApplyReferralCodeData;
 use App\Domain\Referral\Enums\ReferralStatus;
 use App\Domain\Referral\Events\ReferralCodeUsed;
@@ -25,6 +28,7 @@ final readonly class ApplyReferralCodeAction
 {
     public function __construct(
         private AwardPointsAction $awardPointsAction,
+        private CreatePromotionAction $createPromotionAction,
     ) {}
 
     /**
@@ -70,6 +74,19 @@ final readonly class ApplyReferralCodeAction
         return DB::transaction(function () use ($data, $referralCode): ReferralUsage {
             $couponCode = 'REF-'.Str::upper(Str::random(8));
 
+            $validityDays = (int) config('referral.default_validity_days', 30);
+
+            $promotion = $this->createPromotionAction->execute(new PromotionData(
+                name: "Referral discount for {$couponCode}",
+                discountType: DiscountType::Percentage,
+                discountValue: $referralCode->referee_discount_percent,
+                startsAt: now(),
+                endsAt: now()->addDays($validityDays),
+                code: $couponCode,
+                usageLimit: 1,
+                perUserLimit: 1,
+            ));
+
             $usage = ReferralUsage::create([
                 'tenant_id' => Context::get('tenant_id'),
                 'referral_code_id' => $referralCode->id,
@@ -78,6 +95,7 @@ final readonly class ApplyReferralCodeAction
                 'referrer_points_awarded' => $referralCode->referrer_reward_points,
                 'referee_discount_percent' => $referralCode->referee_discount_percent,
                 'referee_coupon_code' => $couponCode,
+                'promotion_id' => $promotion->id,
             ]);
 
             $referralCode->increment('used_count');

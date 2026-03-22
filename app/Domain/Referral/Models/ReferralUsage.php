@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Referral\Models;
 
+use App\Domain\Promotion\Models\Promotion;
 use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Domain\User\Models\User;
 use App\Shared\Models\BaseModel;
@@ -28,7 +29,16 @@ final class ReferralUsage extends BaseModel
         'referrer_points_awarded',
         'referee_discount_percent',
         'referee_coupon_code',
+        'promotion_id',
     ];
+
+    /**
+     * Get the promotion backing the referee's coupon.
+     */
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
+    }
 
     /**
      * Get the referral code.

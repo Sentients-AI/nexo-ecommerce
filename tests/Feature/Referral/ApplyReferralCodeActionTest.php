@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Loyalty\Models\LoyaltyAccount;
+use App\Domain\Promotion\Models\Promotion;
 use App\Domain\Referral\Actions\ApplyReferralCodeAction;
 use App\Domain\Referral\DTOs\ApplyReferralCodeData;
 use App\Domain\Referral\Exceptions\ReferralAlreadyUsedException;
@@ -144,6 +145,30 @@ it('throws ReferralCodeInvalidException for non-existent code', function () {
         refereeUserId: $referee->id,
     ));
 })->throws(ReferralCodeInvalidException::class);
+
+it('creates a promotion record backed by the referee coupon code', function () {
+    $referrer = User::factory()->create();
+    $referralCode = ReferralCode::factory()->create([
+        'user_id' => $referrer->id,
+        'referee_discount_percent' => 15,
+    ]);
+    $referee = User::factory()->create();
+
+    $usage = $this->action->execute(new ApplyReferralCodeData(
+        code: $referralCode->code,
+        refereeUserId: $referee->id,
+    ));
+
+    expect($usage->promotion_id)->not->toBeNull();
+
+    $promotion = Promotion::query()->find($usage->promotion_id);
+    expect($promotion)->not->toBeNull()
+        ->and($promotion->code)->toBe($usage->referee_coupon_code)
+        ->and($promotion->discount_type->value)->toBe('percentage')
+        ->and($promotion->discount_value)->toBe(15)
+        ->and($promotion->usage_limit)->toBe(1)
+        ->and($promotion->per_user_limit)->toBe(1);
+});
 
 it('rolls back DB transaction on failure', function () {
     $referrer = User::factory()->create();
