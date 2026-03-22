@@ -33,6 +33,7 @@ final class LoyaltyTransaction extends BaseModel
         'description',
         'reference_type',
         'reference_id',
+        'expires_at',
     ];
 
     /**
@@ -94,6 +95,7 @@ final class LoyaltyTransaction extends BaseModel
             'type' => TransactionType::class,
             'points' => 'integer',
             'balance_after' => 'integer',
+            'expires_at' => 'datetime',
         ];
     }
 }

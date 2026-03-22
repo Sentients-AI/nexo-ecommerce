@@ -37,6 +37,8 @@ final readonly class AwardPointsAction
             $account->increment('total_points_earned', $data->points);
             $account->refresh();
 
+            $expiryDays = config('loyalty.expiry_days');
+
             $transaction = LoyaltyTransaction::create([
                 'tenant_id' => $account->tenant_id,
                 'user_id' => $data->userId,
@@ -47,6 +49,7 @@ final readonly class AwardPointsAction
                 'description' => $data->description,
                 'reference_type' => $data->referenceType,
                 'reference_id' => $data->referenceId,
+                'expires_at' => $expiryDays !== null ? now()->addDays((int) $expiryDays) : null,
             ]);
 
             AuditLog::log(
