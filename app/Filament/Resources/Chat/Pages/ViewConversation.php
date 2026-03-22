@@ -57,7 +57,7 @@ final class ViewConversation extends ViewRecord
     protected function getFooterWidgets(): array
     {
         return [
-            ConversationReplyWidget::class,
+            ConversationReplyWidget::make(['conversationId' => $this->record->id]),
         ];
     }
 }

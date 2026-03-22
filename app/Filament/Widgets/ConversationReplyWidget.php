@@ -21,15 +21,6 @@ final class ConversationReplyWidget extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
-    public function mount(): void
-    {
-        $record = $this->getPage()->getRecord();
-
-        if ($record instanceof Conversation) {
-            $this->conversationId = $record->id;
-        }
-    }
-
     public function send(): void
     {
         $this->validate([
