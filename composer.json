@@ -105,11 +105,6 @@
         },
         "audit": {
             "ignore": [
-                "GHSA-vv3x-j2x5-36jc",
-                "GHSA-r39x-jcww-82v6",
-                "GHSA-4486-gxhx-5mg7",
-                "GHSA-hh8v-hgvp-g3f5",
-                "GHSA-4v6x-c7xx-hw9f",
                 "GHSA-vvj3-c3rp-c85p"
             ]
         }
