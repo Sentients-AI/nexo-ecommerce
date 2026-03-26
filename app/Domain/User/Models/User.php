@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\User\Models;
 
+use App\Domain\Order\Models\Order;
 use App\Domain\Role\Models\Role;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\Tenant\Traits\BelongsToTenant;
@@ -19,6 +20,8 @@ use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 use Illuminate\Contracts\Auth\CanResetPassword as CanResetPasswordContract;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -50,6 +53,30 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
         'password',
         'remember_token',
     ];
+
+    /**
+     * Get the orders for this user.
+     */
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Get the saved addresses for this user.
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class);
+    }
+
+    /**
+     * Get the user's default address.
+     */
+    public function defaultAddress(): HasOne
+    {
+        return $this->hasOne(Address::class)->where('is_default', true);
+    }
 
     /**
      * Get the user's role.

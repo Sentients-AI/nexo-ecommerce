@@ -8,6 +8,7 @@ use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Models\CartItem;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
+use App\Domain\User\Models\Address;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +31,16 @@ final class CheckoutController extends Controller
                 ->with('error', 'Your cart is empty.');
         }
 
+        $savedAddresses = $user->addresses()
+            ->orderByDesc('is_default')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $defaultAddress = $savedAddresses->firstWhere('is_default', true);
+
         return Inertia::render('Checkout/Summary', [
+            'savedAddresses' => $savedAddresses->map(fn (Address $a): array => $this->formatAddress($a))->toArray(),
+            'defaultAddress' => $defaultAddress ? $this->formatAddress($defaultAddress) : null,
             'cart' => [
                 'id' => $cart->id,
                 'items' => $cart->items->map(fn (CartItem $item) => [
@@ -114,6 +124,25 @@ final class CheckoutController extends Controller
     /**
      * @return array<string, mixed>
      */
+    private function formatAddress(Address $address): array
+    {
+        return [
+            'id' => $address->id,
+            'name' => $address->name,
+            'phone' => $address->phone,
+            'address_line_1' => $address->address_line_1,
+            'address_line_2' => $address->address_line_2,
+            'city' => $address->city,
+            'state' => $address->state,
+            'postal_code' => $address->postal_code,
+            'country' => $address->country,
+            'is_default' => $address->is_default,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
     private function formatOrder(Order $order): array
     {
         return [
@@ -127,11 +156,11 @@ final class CheckoutController extends Controller
             'currency' => $order->currency,
             'items' => $order->items->map(fn ($item) => [
                 'id' => $item->id,
-                'product_name' => $item->product_name,
-                'product_sku' => $item->product_sku,
+                'product_name' => $item->product?->name ?? 'Unknown',
+                'product_sku' => $item->product?->sku ?? '',
                 'quantity' => $item->quantity,
-                'unit_price_cents' => $item->unit_price_cents,
-                'total_cents' => $item->total_cents,
+                'unit_price_cents' => $item->price_cents_snapshot,
+                'total_cents' => $item->price_cents_snapshot * $item->quantity,
             ])->toArray(),
             'payment_intent' => $order->paymentIntent ? [
                 'id' => $order->paymentIntent->id,
