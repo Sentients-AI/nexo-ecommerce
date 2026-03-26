@@ -5,6 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CheckoutProgress from '@/Components/Checkout/CheckoutProgress.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import { usePayments } from '@/Composables/usePayments';
+import { useCurrency } from '@/Composables/useCurrency';
 import type { OrderApiResource } from '@/types/api';
 
 interface Props {
@@ -28,12 +29,7 @@ const clientSecret = computed(() => {
 
 const isLoading = computed(() => stripeLoading.value || paymentProcessing.value || isSubmitting.value);
 
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
+const { formatPrice } = useCurrency();
 
 async function mountPaymentElement() {
     if (!clientSecret.value || !stripe.value || paymentElementMounted.value) {

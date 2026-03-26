@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import { useCurrency } from '@/Composables/useCurrency';
 
 interface OrderRow {
     id: number;
@@ -39,13 +40,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-function formatCurrency(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-    }).format(cents / 100);
-}
+const { formatPrice: formatCurrency } = useCurrency();
 
 function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString('en-US', {

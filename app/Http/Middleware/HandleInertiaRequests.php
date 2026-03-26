@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Context;
 use Inertia\Middleware;
 
 final class HandleInertiaRequests extends Middleware
@@ -37,6 +38,7 @@ final class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'unread_notifications_count' => fn () => $request->user()?->unreadNotifications()->count() ?? 0,
+            'currency' => fn () => Context::get('tenant')?->getSetting('currency', config('tenancy.default_settings.currency', 'MYR')) ?? 'MYR',
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

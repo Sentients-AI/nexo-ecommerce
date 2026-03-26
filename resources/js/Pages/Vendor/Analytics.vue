@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Head } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import { useCurrency } from '@/Composables/useCurrency';
 
 interface DailyPoint {
     date: string;
@@ -39,13 +40,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-function formatCurrency(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 0,
-    }).format(cents / 100);
-}
+const { formatPrice: formatCurrency } = useCurrency();
 
 const maxDailyRevenue = computed(() =>
     Math.max(...props.daily_revenue.map(d => d.revenue), 1)

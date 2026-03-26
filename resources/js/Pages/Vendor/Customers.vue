@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import { useCurrency } from '@/Composables/useCurrency';
 
 interface CustomerRow {
     id: number;
@@ -33,12 +34,10 @@ const props = defineProps<Props>();
 
 const searchInput = ref(props.search ?? '');
 
+const { formatPrice: formatCurrency } = useCurrency();
+
 function applySearch(): void {
     router.get('/vendor/customers', searchInput.value ? { search: searchInput.value } : {}, { preserveState: true });
-}
-
-function formatCurrency(cents: number): string {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 }
 
 function formatDate(iso: string): string {

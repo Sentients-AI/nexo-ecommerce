@@ -1,9 +1,11 @@
 import { ref } from 'vue';
 import { useApi } from './useApi';
+import { useCurrency } from './useCurrency';
 import type { OrderApiResource, PaginatedApiResponse } from '@/types/api';
 
 export function useOrders() {
     const { loading, error, get, clearError } = useApi();
+    const { formatPrice } = useCurrency();
 
     const orders = ref<OrderApiResource[]>([]);
     const currentOrder = ref<OrderApiResource | null>(null);
@@ -23,13 +25,6 @@ export function useOrders() {
             return result.order;
         }
         return null;
-    }
-
-    function formatPrice(cents: number): string {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(cents / 100);
     }
 
     function formatDate(dateString: string): string {

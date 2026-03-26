@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Console\Commands\ExpireLoyaltyPointsCommand;
+use App\Console\Commands\FetchExchangeRatesCommand;
 use App\Console\Commands\SendAbandonedCartRecoveryCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -14,3 +15,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command(ExpireLoyaltyPointsCommand::class)->daily();
 Schedule::command(SendAbandonedCartRecoveryCommand::class)->hourly();
+Schedule::command(FetchExchangeRatesCommand::class)->hourly();

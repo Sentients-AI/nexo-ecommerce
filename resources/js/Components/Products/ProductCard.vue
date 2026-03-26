@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { useCart } from '@/Composables/useCart';
+import { useCurrency } from '@/Composables/useCurrency';
 import { useWishlist } from '@/Composables/useWishlist';
 import { useLocale } from '@/Composables/useLocale';
 import type { ProductApiResource } from '@/types/api';
@@ -25,6 +26,7 @@ const emit = defineEmits<{
 }>();
 
 const { addToCart, loading } = useCart();
+const { formatPrice } = useCurrency();
 const { isInWishlist, toggleWishlist } = useWishlist();
 const { localePath } = useLocale();
 const isAdding = ref(false);
@@ -40,12 +42,6 @@ function normalizeImages(images: string | string[] | null | undefined): string[]
 
 const productImages = computed(() => normalizeImages(props.product.images));
 
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
 
 const effectivePrice = computed(() => {
     return props.product.sale_price ?? props.product.price_cents;

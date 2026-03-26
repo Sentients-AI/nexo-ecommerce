@@ -1,9 +1,11 @@
 import { ref } from 'vue';
 import { useApi } from './useApi';
+import { useCurrency } from './useCurrency';
 import type { RefundApiResource } from '@/types/api';
 
 export function useRefunds() {
     const { loading, error, post, get, clearError } = useApi();
+    const { formatPrice } = useCurrency();
 
     const currentRefund = ref<RefundApiResource | null>(null);
 
@@ -43,13 +45,6 @@ export function useRefunds() {
         }
 
         return null;
-    }
-
-    function formatPrice(cents: number): string {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(cents / 100);
     }
 
     function formatDate(dateString: string): string {

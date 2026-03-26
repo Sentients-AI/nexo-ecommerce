@@ -13,6 +13,7 @@ import ReviewForm from '@/Components/Reviews/ReviewForm.vue';
 import RatingDistribution from '@/Components/Reviews/RatingDistribution.vue';
 import ReviewCard from '@/Components/Reviews/ReviewCard.vue';
 import { useCart } from '@/Composables/useCart';
+import { useCurrency } from '@/Composables/useCurrency';
 import { useWishlist } from '@/Composables/useWishlist';
 import { useRecentlyViewed } from '@/Composables/useRecentlyViewed';
 import { useLocale } from '@/Composables/useLocale';
@@ -70,6 +71,7 @@ const props = defineProps<Props>();
 
 const page = usePage();
 const { addToCart, loading: cartLoading, error: cartError } = useCart();
+const { formatPrice } = useCurrency();
 const { isInWishlist, toggleWishlist } = useWishlist();
 const { addToRecentlyViewed } = useRecentlyViewed();
 const { t, localePath } = useLocale();
@@ -190,13 +192,6 @@ function normalizeImages(images: string | string[] | null | undefined): string[]
 }
 
 const productImages = computed(() => normalizeImages(props.product.images));
-
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
 
 const effectivePrice = computed(() => {
     return liveSalePrice.value ?? livePriceCents.value;

@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import { useCurrency } from '@/Composables/useCurrency';
 
 interface ProductRow {
     id: number;
@@ -38,6 +39,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { formatPrice: formatCurrency } = useCurrency();
+
 const searchInput = ref(props.search ?? '');
 
 function applyFilters(): void {
@@ -52,10 +55,6 @@ function setActiveFilter(val: string | null): void {
         ...(searchInput.value ? { search: searchInput.value } : {}),
         ...(val !== null ? { active: val } : {}),
     }, { preserveState: true });
-}
-
-function formatCurrency(cents: number): string {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 }
 
 function stockClass(qty: number | undefined): string {

@@ -5,6 +5,7 @@ import Modal from '@/Components/UI/Modal.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import QuantityStepper from '@/Components/UI/QuantityStepper.vue';
 import { useCart } from '@/Composables/useCart';
+import { useCurrency } from '@/Composables/useCurrency';
 import { useWishlist } from '@/Composables/useWishlist';
 import type { ProductApiResource } from '@/types/api';
 
@@ -19,6 +20,7 @@ const emit = defineEmits<{
 }>();
 
 const { addToCart, loading: cartLoading } = useCart();
+const { formatPrice } = useCurrency();
 const { isInWishlist, toggleWishlist } = useWishlist();
 
 const quantity = ref(1);
@@ -45,12 +47,6 @@ const productImages = computed(() => {
     return normalizeImages(props.product.images);
 });
 
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
 
 const effectivePrice = computed(() => {
     if (!props.product) return 0;

@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import { useCurrency } from '@/Composables/useCurrency';
 
 interface Customer {
     name: string;
@@ -44,6 +45,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { formatPrice: formatCurrency } = useCurrency();
+
 const statusConfig: Record<string, { label: string; class: string }> = {
     pending:            { label: 'Pending',            class: 'bg-amber-500/15 text-amber-400 border border-amber-500/20' },
     paid:               { label: 'Paid',               class: 'bg-accent-500/15 text-accent-400 border border-accent-500/20' },
@@ -64,10 +67,6 @@ function getStatusConfig(status: string) {
 }
 
 const fulfillmentStatuses = ['packed', 'shipped', 'delivered', 'cancelled'];
-
-function formatCurrency(cents: number): string {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
-}
 
 function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString('en-US', {

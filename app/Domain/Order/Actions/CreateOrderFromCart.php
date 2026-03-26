@@ -6,6 +6,7 @@ namespace App\Domain\Order\Actions;
 
 use App\Domain\Cart\Exceptions\EmptyCartException;
 use App\Domain\Cart\Models\Cart;
+use App\Domain\Currency\Services\CurrencyService;
 use App\Domain\Inventory\Actions\ReserveStock;
 use App\Domain\Inventory\DTOs\ReserveStockData;
 use App\Domain\Inventory\Exceptions\InsufficientStockException;
@@ -19,6 +20,7 @@ use App\Domain\Tax\DTOs\TaxCalculationData;
 use App\Events\OrderStatusUpdated;
 use App\Shared\Metrics\MetricsRecorder;
 use Exception;
+use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -27,6 +29,7 @@ final readonly class CreateOrderFromCart
     public function __construct(
         private ReserveStock $reserveStock,
         private CalculateTax $calculateTax,
+        private CurrencyService $currencyService,
     ) {}
 
     /**
@@ -95,19 +98,35 @@ final readonly class CreateOrderFromCart
 
             $totalCents = $subtotalAfterDiscount + $taxCents + $shippingCents;
 
+            // Resolve tenant base currency and apply conversion if needed
+            $tenant = Context::get('tenant');
+            $baseCurrency = $tenant?->getSetting('currency', config('tenancy.default_settings.currency', 'MYR')) ?? 'MYR';
+            $checkoutCurrency = mb_strtoupper($data->currency);
+
+            $exchangeRate = $this->currencyService->getRate($baseCurrency, $checkoutCurrency);
+            $convertedTotalCents = $this->currencyService->convertCents((int) $totalCents, $baseCurrency, $checkoutCurrency);
+            $convertedSubtotalCents = $this->currencyService->convertCents((int) $subtotalCents, $baseCurrency, $checkoutCurrency);
+            $convertedTaxCents = $this->currencyService->convertCents($taxCents, $baseCurrency, $checkoutCurrency);
+            $convertedShippingCents = $this->currencyService->convertCents($shippingCents, $baseCurrency, $checkoutCurrency);
+            $convertedDiscountCents = $this->currencyService->convertCents($discountCents, $baseCurrency, $checkoutCurrency);
+            $convertedLoyaltyDiscountCents = $this->currencyService->convertCents($loyaltyDiscountCents, $baseCurrency, $checkoutCurrency);
+
             // STEP 2: Create order AFTER stock validation passes
             $order = Order::query()->create([
                 'user_id' => $data->userId,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => OrderStatus::Pending,
-                'subtotal_cents' => $subtotalCents,
-                'tax_cents' => $taxCents,
-                'shipping_cost_cents' => $shippingCents,
-                'total_cents' => $totalCents,
-                'currency' => $data->currency,
+                'subtotal_cents' => $convertedSubtotalCents,
+                'tax_cents' => $convertedTaxCents,
+                'shipping_cost_cents' => $convertedShippingCents,
+                'total_cents' => $convertedTotalCents,
+                'currency' => $checkoutCurrency,
+                'base_currency' => $baseCurrency,
+                'exchange_rate' => $exchangeRate,
+                'base_total_cents' => (int) $totalCents,
                 'promotion_id' => $data->promotionId,
-                'discount_cents' => $discountCents,
-                'loyalty_discount_cents' => $loyaltyDiscountCents,
+                'discount_cents' => $convertedDiscountCents,
+                'loyalty_discount_cents' => $convertedLoyaltyDiscountCents,
             ]);
 
             // STEP 3: Create order items and reserve stock (already validated)

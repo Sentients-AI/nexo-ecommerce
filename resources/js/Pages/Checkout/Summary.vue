@@ -7,6 +7,7 @@ import Spinner from '@/Components/UI/Spinner.vue';
 import { useCheckout } from '@/Composables/useCheckout';
 import { usePayments } from '@/Composables/usePayments';
 import { useLocale } from '@/Composables/useLocale';
+import { useCurrency } from '@/Composables/useCurrency';
 import type { CartApiResource } from '@/types/api';
 
 function normalizeImages(images: string | string[] | null | undefined): string[] {
@@ -23,6 +24,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { localePath } = useLocale();
+const { currency, formatPrice } = useCurrency();
 
 const { initiateCheckout, loading: checkoutLoading, error: checkoutError, clearError } = useCheckout();
 const { stripe, elements, loading: stripeLoading, error: stripeError, createElements, confirmPayment, paymentProcessing } = usePayments(props.stripePublicKey);
@@ -35,13 +37,6 @@ const itemsExpanded = ref(true);
 
 const isLoading = computed(() => checkoutLoading.value || stripeLoading.value || paymentProcessing.value || isSubmitting.value);
 
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
-
 const taxCents = computed(() => Math.round(props.cart.subtotal * 0.08));
 const totalCents = computed(() => props.cart.subtotal + taxCents.value);
 
@@ -50,7 +45,7 @@ async function handleInitiateCheckout() {
     submitError.value = null;
     isSubmitting.value = true;
 
-    const success = await initiateCheckout(props.cart.id);
+    const success = await initiateCheckout(props.cart.id, currency.value);
 
     if (!success) {
         submitError.value = checkoutError.value?.message ?? 'Failed to initiate checkout';
@@ -69,7 +64,7 @@ async function handleInitiateCheckout() {
         credentials: 'include',
         body: JSON.stringify({
             cart_id: props.cart.id,
-            currency: 'USD',
+            currency: currency.value,
         }),
     });
 

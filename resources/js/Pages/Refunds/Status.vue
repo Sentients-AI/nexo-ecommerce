@@ -4,6 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import { useLocale } from '@/Composables/useLocale';
+import { useCurrency } from '@/Composables/useCurrency';
 import { RefundStatus } from '@/types/models';
 
 interface Refund {
@@ -31,13 +32,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const { localePath } = useLocale();
-
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
+const { formatPrice } = useCurrency();
 
 function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('en-US', {

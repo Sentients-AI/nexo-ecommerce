@@ -5,6 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import { useLocale } from '@/Composables/useLocale';
+import { useCurrency } from '@/Composables/useCurrency';
 import { useOrderUpdates } from '@/Composables/useOrderUpdates';
 import { OrderStatus, RefundStatus } from '@/types/models';
 
@@ -75,12 +76,7 @@ if (authUser?.user?.id) {
     });
 }
 
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
+const { formatPrice } = useCurrency();
 
 function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('en-US', {

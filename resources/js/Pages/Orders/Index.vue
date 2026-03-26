@@ -4,6 +4,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/UI/StatusBadge.vue';
 import { useLocale } from '@/Composables/useLocale';
+import { useCurrency } from '@/Composables/useCurrency';
 import { useOrderUpdates } from '@/Composables/useOrderUpdates';
 import { OrderStatus } from '@/types/models';
 
@@ -48,6 +49,8 @@ if (authUser?.user?.id) {
     });
 }
 
+const { formatPrice } = useCurrency();
+
 const statusFilter = ref(props.filters?.status || '');
 const hoveredOrderId = ref<number | null>(null);
 
@@ -64,12 +67,6 @@ const statusOptions = [
     { value: OrderStatus.Refunded, label: 'Refunded' },
 ];
 
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
 
 function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('en-US', {

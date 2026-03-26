@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import { useApi } from './useApi';
+import { useCurrency } from './useCurrency';
 import type { CartApiResource } from '@/types/api';
 
 const cart = ref<CartApiResource | null>(null);
@@ -7,6 +8,7 @@ const cartLoading = ref(false);
 
 export function useCart() {
     const { loading, error, get, post, put, destroy, clearError } = useApi();
+    const { formatPrice } = useCurrency();
 
     const totalItems = computed(() => cart.value?.total_items ?? 0);
     const subtotal = computed(() => cart.value?.subtotal ?? 0);
@@ -73,13 +75,6 @@ export function useCart() {
         }
 
         return false;
-    }
-
-    function formatPrice(cents: number): string {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-        }).format(cents / 100);
     }
 
     return {

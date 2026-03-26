@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import PriceRangeSlider from './PriceRangeSlider.vue';
+import { useCurrency } from '@/Composables/useCurrency';
 import type { CategoryApiResource } from '@/types/api';
 
 interface Props {
@@ -28,6 +29,8 @@ const emit = defineEmits<{
     apply: [];
     clear: [];
 }>();
+
+const { formatPrice } = useCurrency();
 
 const localMinPrice = ref(props.minPrice);
 const localMaxPrice = ref(props.maxPrice);
@@ -187,6 +190,7 @@ function handleClearAll() {
                             :min="0"
                             :max="100000"
                             :step="100"
+                            :format-price="formatPrice"
                             @change="handlePriceChange"
                         />
                     </div>

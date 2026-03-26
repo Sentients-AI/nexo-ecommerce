@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ProductCard from '@/Components/Products/ProductCard.vue';
 import StarRating from '@/Components/Reviews/StarRating.vue';
 import { useLocale } from '@/Composables/useLocale';
+import { useCurrency } from '@/Composables/useCurrency';
 import type { ProductApiResource } from '@/types/api';
 
 interface LaravelPaginator<T> {
@@ -42,12 +43,7 @@ const { t, localePath } = useLocale();
 const isAuthenticated = computed(() => page.props.auth?.user !== null);
 const Layout = computed(() => isAuthenticated.value ? AuthenticatedLayout : GuestLayout);
 
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
+const { formatPrice } = useCurrency();
 </script>
 
 <template>

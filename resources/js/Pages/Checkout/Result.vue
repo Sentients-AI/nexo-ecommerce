@@ -4,6 +4,7 @@ import { Head, Link } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import CheckoutProgress from '@/Components/Checkout/CheckoutProgress.vue';
 import { useLocale } from '@/Composables/useLocale';
+import { useCurrency } from '@/Composables/useCurrency';
 import type { OrderApiResource } from '@/types/api';
 
 interface Props {
@@ -15,13 +16,7 @@ const props = defineProps<Props>();
 
 const showConfetti = ref(false);
 const { localePath } = useLocale();
-
-function formatPrice(cents: number): string {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-    }).format(cents / 100);
-}
+const { formatPrice } = useCurrency();
 
 function formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('en-US', {

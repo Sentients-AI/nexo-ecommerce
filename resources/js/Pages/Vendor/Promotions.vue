@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
+import { useCurrency } from '@/Composables/useCurrency';
 
 interface PromotionRow {
     id: number;
@@ -35,16 +36,13 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { formatPrice } = useCurrency();
+
 const togglingId = ref<number | null>(null);
 
 function formatDate(iso: string | null): string {
     if (!iso) { return '—'; }
     return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function formatCurrency(cents: number | null): string {
-    if (!cents) { return '—'; }
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 }
 
 function formatCountdown(seconds: number): string {
@@ -219,7 +217,7 @@ function toggleActive(promo: PromotionRow): void {
                                     <span v-if="!promo.starts_at && !promo.ends_at" class="text-navy-600">No expiry</span>
                                 </div>
                                 <div v-if="promo.minimum_order_cents" class="text-xs text-navy-500 mt-0.5">
-                                    Min. {{ formatCurrency(promo.minimum_order_cents) }}
+                                    Min. {{ promo.minimum_order_cents ? formatPrice(promo.minimum_order_cents) : '—' }}
                                 </div>
                             </td>
                             <td class="px-5 py-3.5 text-center">
