@@ -30,6 +30,7 @@ describe('Product Search', function () {
                 '*' => ['id', 'name', 'slug', 'sku', 'price_cents', 'currency', 'is_featured'],
             ],
             'meta' => ['current_page', 'last_page', 'per_page', 'total'],
+            'facets' => ['categories', 'price_range' => ['min', 'max']],
         ]);
         $names = collect($response->json('data'))->pluck('name');
         expect($names)->toContain('Unique Widget Alpha');
@@ -43,6 +44,42 @@ describe('Product Search', function () {
 
         $response->assertSuccessful();
         expect($response->json('meta.total'))->toBe(3);
+        $response->assertJsonStructure([
+            'facets' => ['categories', 'price_range' => ['min', 'max']],
+        ]);
+    });
+
+    it('returns category facets with counts', function () {
+        $beverages = Category::factory()->create(['name' => 'Beverages', 'slug' => 'beverages', 'is_active' => true]);
+        $snacks = Category::factory()->create(['name' => 'Snacks', 'slug' => 'snacks', 'is_active' => true]);
+
+        Product::factory()->count(3)->create(['is_active' => true, 'category_id' => $beverages->id]);
+        Product::factory()->count(2)->create(['is_active' => true, 'category_id' => $snacks->id]);
+
+        $response = $this->getJson('/api/v1/search/products');
+
+        $response->assertSuccessful();
+
+        $categories = collect($response->json('facets.categories'));
+        $beveragesFacet = $categories->firstWhere('slug', 'beverages');
+        $snacksFacet = $categories->firstWhere('slug', 'snacks');
+
+        expect($beveragesFacet)->not->toBeNull()
+            ->and($beveragesFacet['count'])->toBe(3)
+            ->and($snacksFacet)->not->toBeNull()
+            ->and($snacksFacet['count'])->toBe(2);
+    });
+
+    it('returns price range facet', function () {
+        Product::factory()->create(['is_active' => true, 'price_cents' => 199]);
+        Product::factory()->create(['is_active' => true, 'price_cents' => 5000]);
+        Product::factory()->create(['is_active' => true, 'price_cents' => 9999]);
+
+        $response = $this->getJson('/api/v1/search/products');
+
+        $response->assertSuccessful();
+        expect($response->json('facets.price_range.min'))->toBe(199)
+            ->and($response->json('facets.price_range.max'))->toBe(9999);
     });
 
     it('filters by category slug', function () {
