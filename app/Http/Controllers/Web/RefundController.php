@@ -14,18 +14,21 @@ use Inertia\Response;
 
 final class RefundController extends Controller
 {
-    public function create(Request $request, Order $order): Response|RedirectResponse
+    public function create(Request $request): Response|RedirectResponse
     {
-        if ($order->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $orderId = (int) $request->route('orderId');
+
+        $order = Order::query()
+            ->where('id', $orderId)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
 
         if (! $order->isRefundable()) {
-            return redirect()->route('orders.show', $order)
+            return redirect()->route('orders.show', ['orderId' => $order->id])
                 ->with('error', 'This order cannot be refunded.');
         }
 
-        $order->load('items');
+        $order->load('items.product');
 
         return Inertia::render('Refunds/Request', [
             'order' => [
@@ -38,10 +41,10 @@ final class RefundController extends Controller
                 'currency' => $order->currency,
                 'items' => $order->items->map(fn ($item) => [
                     'id' => $item->id,
-                    'product_name' => $item->product_name,
+                    'product_name' => $item->product?->name ?? 'Unknown',
                     'quantity' => $item->quantity,
-                    'unit_price_cents' => $item->unit_price_cents,
-                    'total_cents' => $item->total_cents,
+                    'unit_price_cents' => $item->price_cents_snapshot,
+                    'total_cents' => $item->price_cents_snapshot * $item->quantity,
                 ])->toArray(),
                 'created_at' => $order->created_at->toISOString(),
             ],

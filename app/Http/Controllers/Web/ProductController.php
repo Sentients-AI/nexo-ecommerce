@@ -21,7 +21,10 @@ final class ProductController extends Controller
         $query = Product::query()
             ->where('is_active', true)
             ->with(['category', 'stock'])
-            ->withCount(['reviews' => fn ($q) => $q->where('is_approved', true)])
+            ->withCount([
+                'reviews' => fn ($q) => $q->where('is_approved', true),
+                'activeVariants',
+            ])
             ->withAvg(['reviews' => fn ($q) => $q->where('is_approved', true)], 'rating');
 
         if ($request->filled('search')) {
@@ -122,11 +125,22 @@ final class ProductController extends Controller
             $product->increment('view_count');
             session()->put($sessionKey, true);
         }
-        $product->load(['category', 'stock', 'tenant:id,name,slug']);
+        $product->load([
+            'category',
+            'stock',
+            'tenant:id,name,slug',
+            'activeVariants.attributeValues.attributeType',
+            'activeVariants.stock',
+        ]);
 
         $reviewStats = [
-            'average_rating' => $product->reviews()->approved()->avg('rating'),
+            'average_rating' => ($avg = $product->reviews()->approved()->avg('rating')) !== null ? round((float) $avg, 1) : null,
             'review_count' => $product->reviews()->approved()->count(),
+            'distribution' => $product->reviews()->approved()
+                ->selectRaw('rating, count(*) as count')
+                ->groupBy('rating')
+                ->pluck('count', 'rating')
+                ->toArray(),
         ];
 
         $relatedProducts = Product::query()
