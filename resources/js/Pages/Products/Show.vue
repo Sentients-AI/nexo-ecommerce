@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { useStockUpdates, usePriceUpdates } from '@/Composables/useStockUpdates';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
@@ -10,20 +10,57 @@ import QuantityStepper from '@/Components/UI/QuantityStepper.vue';
 import Spinner from '@/Components/UI/Spinner.vue';
 import StarRating from '@/Components/Reviews/StarRating.vue';
 import ReviewForm from '@/Components/Reviews/ReviewForm.vue';
+import RatingDistribution from '@/Components/Reviews/RatingDistribution.vue';
+import ReviewCard from '@/Components/Reviews/ReviewCard.vue';
 import { useCart } from '@/Composables/useCart';
 import { useWishlist } from '@/Composables/useWishlist';
 import { useRecentlyViewed } from '@/Composables/useRecentlyViewed';
 import { useLocale } from '@/Composables/useLocale';
 import { useApi } from '@/Composables/useApi';
-import type { ProductApiResource, ReviewApiResource } from '@/types/api';
+import type { ProductApiResource, ReviewApiResource, ReviewReplyApiResource } from '@/types/api';
+
+interface VariantAttributeValue {
+    id: number;
+    value: string;
+    slug: string;
+    metadata?: Record<string, string> | null;
+    attribute_type_id?: number;
+}
+
+interface VariantAttributeType {
+    id: number;
+    name: string;
+    slug: string;
+}
+
+interface AttributeValueWithType extends VariantAttributeValue {
+    attributeType: VariantAttributeType;
+}
+
+interface VariantStock {
+    quantity_available: number;
+    quantity_reserved: number;
+}
+
+interface ProductVariant {
+    id: number;
+    sku: string;
+    price_cents: number | null;
+    sale_price: number | null;
+    is_active: boolean;
+    sort_order: number;
+    attributeValues: AttributeValueWithType[];
+    stock: VariantStock | null;
+}
 
 interface ReviewStats {
     average_rating: number | null;
     review_count: number;
+    distribution?: Record<number, number>;
 }
 
 interface Props {
-    product: ProductApiResource;
+    product: ProductApiResource & { active_variants?: ProductVariant[] };
     reviewStats: ReviewStats;
     relatedProducts: ProductApiResource[];
 }
@@ -48,10 +85,77 @@ const addedToCart = ref(false);
 const lightboxOpen = ref(false);
 const activeTab = ref<'description' | 'specifications' | 'reviews'>('description');
 
+// Variant state
+const variants = computed<ProductVariant[]>(() => (props.product as any).active_variants ?? []);
+const hasVariants = computed(() => variants.value.length > 0);
+
+// Group attribute types from all variants
+const attributeTypes = computed(() => {
+    const types = new Map<number, { id: number; name: string; slug: string; values: Map<number, AttributeValueWithType> }>();
+    variants.value.forEach(variant => {
+        variant.attributeValues.forEach(av => {
+            if (!types.has(av.attributeType.id)) {
+                types.set(av.attributeType.id, { ...av.attributeType, values: new Map() });
+            }
+            types.get(av.attributeType.id)!.values.set(av.id, av);
+        });
+    });
+    return Array.from(types.values()).map(t => ({ ...t, values: Array.from(t.values.values()) }));
+});
+
+// Track selected attribute value per type { typeId: valueId }
+const selectedAttributes = ref<Record<number, number>>({});
+
+// Find matching variant from current selections
+const selectedVariant = computed<ProductVariant | null>(() => {
+    if (!hasVariants.value) return null;
+    const selectedEntries = Object.entries(selectedAttributes.value).map(([k, v]) => [Number(k), v]);
+    if (selectedEntries.length === 0) return null;
+
+    return variants.value.find(variant => {
+        return selectedEntries.every(([typeId, valueId]) =>
+            variant.attributeValues.some(av => av.attributeType.id === typeId && av.id === valueId)
+        );
+    }) ?? null;
+});
+
+// Check if a given attribute value is available given current other selections
+function isValueAvailable(typeId: number, valueId: number): boolean {
+    if (!hasVariants.value) return true;
+    const otherSelections = Object.entries(selectedAttributes.value)
+        .filter(([k]) => Number(k) !== typeId)
+        .map(([k, v]) => [Number(k), v]);
+
+    return variants.value.some(variant =>
+        variant.is_active &&
+        variant.attributeValues.some(av => av.attributeType.id === typeId && av.id === valueId) &&
+        otherSelections.every(([otherTypeId, otherValueId]) =>
+            variant.attributeValues.some(av => av.attributeType.id === otherTypeId && av.id === otherValueId)
+        )
+    );
+}
+
+function selectAttribute(typeId: number, valueId: number): void {
+    selectedAttributes.value = { ...selectedAttributes.value, [typeId]: valueId };
+}
+
 // Live stock & price state
 const liveStock = ref(props.product.stock ?? null);
 const livePriceCents = ref(props.product.price_cents);
 const liveSalePrice = ref<number | null>(props.product.sale_price ?? null);
+
+// When a variant is selected, update the live price/stock to reflect it
+watch(selectedVariant, (variant) => {
+    if (variant) {
+        livePriceCents.value = variant.price_cents ?? props.product.price_cents;
+        liveSalePrice.value = variant.sale_price ?? null;
+        liveStock.value = variant.stock ?? null;
+    } else {
+        livePriceCents.value = props.product.price_cents;
+        liveSalePrice.value = props.product.sale_price ?? null;
+        liveStock.value = props.product.stock ?? null;
+    }
+});
 
 useStockUpdates(props.product.id, (payload) => {
     if (liveStock.value) {
@@ -106,7 +210,7 @@ const discountPercentage = computed(() => {
 
 const stockStatus = computed(() => {
     if (!liveStock.value) {
-        return { text: t('products.in_stock'), class: 'text-gray-500 dark:text-gray-400', available: true };
+        return { text: t('products.in_stock'), class: 'text-slate-500 dark:text-slate-400', available: true };
     }
     const available = (liveStock.value.quantity_available ?? 0) - (liveStock.value.quantity_reserved ?? 0);
     if (available <= 0) {
@@ -128,7 +232,7 @@ const maxQuantity = computed(() => {
 
 async function handleAddToCart() {
     addedToCart.value = false;
-    const success = await addToCart(props.product.id, quantity.value);
+    const success = await addToCart(props.product.id, quantity.value, selectedVariant.value?.id ?? null);
     if (success) {
         addedToCart.value = true;
         setTimeout(() => {
@@ -178,6 +282,16 @@ function handleReviewSubmitted(review: ReviewApiResource) {
     reviews.value.unshift(review);
 }
 
+function handleReplyAdded(reviewId: number, reply: ReviewReplyApiResource): void {
+    const review = reviews.value.find(r => r.id === reviewId);
+    if (review) {
+        if (!review.replies) {
+            review.replies = [];
+        }
+        review.replies.push(reply);
+    }
+}
+
 function switchToReviews() {
     activeTab.value = 'reviews';
     loadReviews();
@@ -207,24 +321,24 @@ const trustBadges = computed(() => [
             <nav class="mb-8">
                 <ol class="flex flex-wrap items-center gap-2 text-sm">
                     <li>
-                        <Link :href="localePath('/')" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                        <Link :href="localePath('/')" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
                             {{ t('nav.home') }}
                         </Link>
                     </li>
                     <li class="text-gray-400">/</li>
                     <li>
-                        <Link :href="localePath('/products')" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                        <Link :href="localePath('/products')" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
                             {{ t('nav.products') }}
                         </Link>
                     </li>
                     <li v-if="product.category" class="text-gray-400">/</li>
                     <li v-if="product.category">
-                        <Link :href="localePath(`/products?category=${product.category.slug}`)" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                        <Link :href="localePath(`/products?category=${product.category.slug}`)" class="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
                             {{ product.category.name }}
                         </Link>
                     </li>
                     <li class="text-gray-400">/</li>
-                    <li class="text-gray-900 dark:text-white font-medium truncate">{{ product.name }}</li>
+                    <li class="text-slate-900 dark:text-white font-medium truncate">{{ product.name }}</li>
                 </ol>
             </nav>
 
@@ -233,7 +347,7 @@ const trustBadges = computed(() => [
                 <div class="lg:row-span-3">
                     <!-- Main image -->
                     <div
-                        class="relative aspect-square overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800 cursor-zoom-in group"
+                        class="relative aspect-square overflow-hidden rounded-2xl bg-slate-100 dark:bg-navy-800 cursor-zoom-in group"
                         @click="openLightbox(selectedImage)"
                     >
                         <img
@@ -244,7 +358,7 @@ const trustBadges = computed(() => [
                         />
                         <div
                             v-else
-                            class="flex h-full items-center justify-center text-gray-400 dark:text-gray-500"
+                            class="flex h-full items-center justify-center text-slate-400 dark:text-navy-500"
                         >
                             <svg class="h-24 w-24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -280,7 +394,7 @@ const trustBadges = computed(() => [
                             class="aspect-square overflow-hidden rounded-lg transition-all"
                             :class="[
                                 selectedImage === index
-                                    ? 'ring-2 ring-indigo-500 ring-offset-2 dark:ring-offset-gray-900'
+                                    ? 'ring-2 ring-brand-500 ring-offset-2 dark:ring-offset-navy-900'
                                     : 'opacity-60 hover:opacity-100'
                             ]"
                         >
@@ -292,12 +406,12 @@ const trustBadges = computed(() => [
                 <!-- Product info -->
                 <div class="mt-10 lg:mt-0">
                     <!-- Category -->
-                    <p v-if="product.category" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">
+                    <p v-if="product.category" class="text-sm font-medium text-brand-600 dark:text-brand-400 uppercase tracking-wide">
                         {{ product.category.name }}
                     </p>
 
                     <!-- Name -->
-                    <h1 class="mt-2 text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                    <h1 class="mt-2 text-3xl font-bold text-slate-900 dark:text-white sm:text-4xl">
                         {{ product.name }}
                     </h1>
 
@@ -309,16 +423,16 @@ const trustBadges = computed(() => [
                             class="flex items-center gap-2 hover:opacity-80 transition-opacity"
                         >
                             <StarRating :rating="Math.round(reviewStats.average_rating ?? 0)" size="sm" />
-                            <span class="text-sm text-gray-600 dark:text-gray-400">
+                            <span class="text-sm text-slate-600 dark:text-slate-400">
                                 {{ reviewStats.average_rating?.toFixed(1) }}
                                 ({{ reviewStats.review_count }})
                             </span>
                         </button>
-                        <span v-else class="text-sm text-gray-500 dark:text-gray-400">
+                        <span v-else class="text-sm text-slate-500 dark:text-slate-400">
                             {{ t('reviews.no_reviews') }}
                         </span>
 
-                        <span v-if="product.view_count" class="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <span v-if="product.view_count" class="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -328,7 +442,7 @@ const trustBadges = computed(() => [
                     </div>
 
                     <!-- SKU -->
-                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
                         SKU: {{ product.sku }}
                     </p>
 
@@ -336,24 +450,24 @@ const trustBadges = computed(() => [
                     <div v-if="product.tenant" class="mt-3">
                         <Link
                             :href="localePath(`/stores/${product.tenant.slug}`)"
-                            class="inline-flex items-center gap-2 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                            class="inline-flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 px-3 py-2 text-sm transition-colors hover:bg-slate-100 dark:hover:bg-navy-800"
                         >
-                            <svg class="h-4 w-4 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <svg class="h-4 w-4 text-gray-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
                             </svg>
                             <span class="text-gray-500 dark:text-gray-400">{{ t('products.sold_by') }}</span>
-                            <span class="font-medium text-indigo-600 dark:text-indigo-400">{{ product.tenant.name }}</span>
+                            <span class="font-medium text-brand-600 dark:text-brand-400">{{ product.tenant.name }}</span>
                         </Link>
                     </div>
 
                     <!-- Price -->
                     <div class="mt-6 flex items-baseline gap-4">
-                        <span class="text-4xl font-bold text-gray-900 dark:text-white">
+                        <span class="text-4xl font-bold text-slate-900 dark:text-white">
                             {{ formatPrice(effectivePrice) }}
                         </span>
                         <span
                             v-if="product.sale_price"
-                            class="text-xl text-gray-400 line-through"
+                            class="text-xl text-slate-400 line-through"
                         >
                             {{ formatPrice(product.price_cents) }}
                         </span>
@@ -363,6 +477,76 @@ const trustBadges = computed(() => [
                         >
                             Save {{ discountPercentage }}%
                         </span>
+                    </div>
+
+                    <!-- Variant Selector -->
+                    <div v-if="hasVariants" class="mt-6 space-y-4">
+                        <div v-for="type in attributeTypes" :key="type.id">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-sm font-semibold text-slate-700 dark:text-slate-300">{{ type.name }}</span>
+                                <span v-if="selectedAttributes[type.id]" class="text-sm text-slate-500 dark:text-slate-400">
+                                    — {{ type.values.find(v => v.id === selectedAttributes[type.id])?.value }}
+                                </span>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <!-- Color swatch -->
+                                <template v-if="type.slug === 'color'">
+                                    <button
+                                        v-for="value in type.values"
+                                        :key="value.id"
+                                        :title="value.value"
+                                        :disabled="!isValueAvailable(type.id, value.id)"
+                                        @click="selectAttribute(type.id, value.id)"
+                                        class="relative h-9 w-9 rounded-full border-2 transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                                        :class="{
+                                            'border-brand-500 ring-2 ring-brand-500 ring-offset-1': selectedAttributes[type.id] === value.id,
+                                            'border-slate-300 dark:border-navy-600 hover:border-slate-400': selectedAttributes[type.id] !== value.id,
+                                            'opacity-40 cursor-not-allowed': !isValueAvailable(type.id, value.id),
+                                        }"
+                                        :style="value.metadata?.hex ? { backgroundColor: value.metadata.hex } : {}"
+                                    >
+                                        <span v-if="!value.metadata?.hex" class="text-xs font-medium text-slate-700 dark:text-white">
+                                            {{ value.value.charAt(0) }}
+                                        </span>
+                                        <!-- Strikethrough overlay for unavailable -->
+                                        <span
+                                            v-if="!isValueAvailable(type.id, value.id)"
+                                            class="absolute inset-0 flex items-center justify-center"
+                                        >
+                                            <span class="absolute w-full h-px bg-red-400 rotate-45" />
+                                        </span>
+                                    </button>
+                                </template>
+
+                                <!-- Text option button -->
+                                <template v-else>
+                                    <button
+                                        v-for="value in type.values"
+                                        :key="value.id"
+                                        :disabled="!isValueAvailable(type.id, value.id)"
+                                        @click="selectAttribute(type.id, value.id)"
+                                        class="relative min-w-[3rem] rounded-lg border px-3 py-1.5 text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2"
+                                        :class="{
+                                            'border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300': selectedAttributes[type.id] === value.id,
+                                            'border-slate-300 dark:border-navy-600 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-navy-500': selectedAttributes[type.id] !== value.id,
+                                            'opacity-40 cursor-not-allowed line-through': !isValueAvailable(type.id, value.id),
+                                        }"
+                                    >
+                                        {{ value.value }}
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <!-- Variant not available notice -->
+                        <p v-if="hasVariants && !selectedVariant && Object.keys(selectedAttributes).length === attributeTypes.length" class="text-sm text-red-600 dark:text-red-400">
+                            This combination is not available.
+                        </p>
+
+                        <!-- Selected variant SKU -->
+                        <p v-if="selectedVariant" class="text-xs text-slate-500 dark:text-slate-400">
+                            SKU: {{ selectedVariant.sku }}
+                        </p>
                     </div>
 
                     <!-- Stock status -->
@@ -386,7 +570,7 @@ const trustBadges = computed(() => [
                     <!-- Add to cart section -->
                     <div v-if="stockStatus.available" class="mt-8 space-y-4">
                         <div class="flex items-center gap-4">
-                            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
                                 {{ t('products.quantity') }}
                             </label>
                             <QuantityStepper
@@ -427,8 +611,9 @@ const trustBadges = computed(() => [
                         <div class="flex gap-3">
                             <button
                                 @click="handleAddToCart"
-                                :disabled="cartLoading"
-                                class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-4 text-base font-semibold text-white shadow-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                :disabled="cartLoading || (hasVariants && !selectedVariant)"
+                                :title="hasVariants && !selectedVariant ? 'Please select options above' : undefined"
+                                class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-8 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 hover:bg-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 <Spinner v-if="cartLoading" size="sm" color="white" />
                                 <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -443,7 +628,7 @@ const trustBadges = computed(() => [
                                 class="flex items-center justify-center rounded-xl border-2 px-5 py-4 transition-all"
                                 :class="isInWishlist(product.id)
                                     ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-500'
-                                    : 'border-gray-300 dark:border-gray-600 text-gray-500 hover:border-red-300 hover:text-red-500'"
+                                    : 'border-slate-300 dark:border-navy-700 text-slate-500 hover:border-red-300 hover:text-red-500'"
                             >
                                 <svg
                                     class="h-6 w-6"
@@ -462,27 +647,27 @@ const trustBadges = computed(() => [
                     <div v-else class="mt-8">
                         <button
                             disabled
-                            class="w-full flex items-center justify-center gap-2 rounded-xl bg-gray-300 dark:bg-gray-700 px-8 py-4 text-base font-semibold text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                            class="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-200 dark:bg-navy-800 px-8 py-4 text-base font-semibold text-slate-500 dark:text-slate-400 cursor-not-allowed"
                         >
                             {{ t('products.out_of_stock') }}
                         </button>
                     </div>
 
                     <!-- Trust badges -->
-                    <div class="mt-8 grid grid-cols-3 gap-4 border-t border-gray-200 dark:border-gray-700 pt-8">
+                    <div class="mt-8 grid grid-cols-3 gap-4 border-t border-slate-100 dark:border-navy-800/60 pt-8">
                         <div v-for="badge in trustBadges" :key="badge.text" class="flex flex-col items-center text-center">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                                <svg v-if="badge.icon === 'shield'" class="h-5 w-5 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 dark:bg-navy-800">
+                                <svg v-if="badge.icon === 'shield'" class="h-5 w-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                                 </svg>
-                                <svg v-else-if="badge.icon === 'truck'" class="h-5 w-5 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <svg v-else-if="badge.icon === 'truck'" class="h-5 w-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
                                 </svg>
-                                <svg v-else class="h-5 w-5 text-gray-600 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <svg v-else class="h-5 w-5 text-slate-600 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
                                 </svg>
                             </div>
-                            <span class="mt-2 text-xs font-medium text-gray-600 dark:text-gray-400">{{ badge.text }}</span>
+                            <span class="mt-2 text-xs font-medium text-slate-600 dark:text-slate-400">{{ badge.text }}</span>
                         </div>
                     </div>
                 </div>
@@ -490,14 +675,14 @@ const trustBadges = computed(() => [
 
             <!-- Tabbed content -->
             <div class="mt-16">
-                <div class="border-b border-gray-200 dark:border-gray-700">
+                <div class="border-b border-slate-200 dark:border-navy-700">
                     <nav class="flex gap-8">
                         <button
                             @click="activeTab = 'description'"
                             class="py-4 text-sm font-medium border-b-2 transition-colors"
                             :class="activeTab === 'description'
-                                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'"
+                                ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300'"
                         >
                             {{ t('products.description') }}
                         </button>
@@ -505,8 +690,8 @@ const trustBadges = computed(() => [
                             @click="activeTab = 'specifications'"
                             class="py-4 text-sm font-medium border-b-2 transition-colors"
                             :class="activeTab === 'specifications'
-                                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'"
+                                ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300'"
                         >
                             {{ t('products.specifications') }}
                         </button>
@@ -514,13 +699,13 @@ const trustBadges = computed(() => [
                             @click="switchToReviews"
                             class="py-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
                             :class="activeTab === 'reviews'
-                                ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
-                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'"
+                                ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300'"
                         >
                             {{ t('reviews.title') }}
                             <span
                                 v-if="reviewStats.review_count > 0"
-                                class="rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs font-medium"
+                                class="rounded-full bg-slate-100 dark:bg-navy-800 px-2 py-0.5 text-xs font-medium"
                             >
                                 {{ reviewStats.review_count }}
                             </span>
@@ -532,7 +717,7 @@ const trustBadges = computed(() => [
                     <!-- Description tab -->
                     <div v-if="activeTab === 'description'">
                         <div class="prose prose-gray dark:prose-invert max-w-none">
-                            <p class="text-gray-600 dark:text-gray-300 leading-relaxed">
+                            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
                                 {{ product.description || product.short_description || 'No description available for this product.' }}
                             </p>
                         </div>
@@ -540,17 +725,17 @@ const trustBadges = computed(() => [
 
                     <!-- Specifications tab -->
                     <div v-if="activeTab === 'specifications'">
-                        <dl class="divide-y divide-gray-200 dark:divide-gray-700">
+                        <dl class="divide-y divide-slate-100 dark:divide-navy-800/60">
                             <div class="py-4 grid grid-cols-3 gap-4">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">SKU</dt>
-                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white">{{ product.sku }}</dd>
+                                <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">SKU</dt>
+                                <dd class="col-span-2 text-sm text-slate-900 dark:text-white">{{ product.sku }}</dd>
                             </div>
                             <div v-if="product.category" class="py-4 grid grid-cols-3 gap-4">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('products.specifications') === 'Specifications' ? 'Category' : t('products.specifications') }}</dt>
-                                <dd class="col-span-2 text-sm text-gray-900 dark:text-white">{{ product.category.name }}</dd>
+                                <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ t('products.specifications') === 'Specifications' ? 'Category' : t('products.specifications') }}</dt>
+                                <dd class="col-span-2 text-sm text-slate-900 dark:text-white">{{ product.category.name }}</dd>
                             </div>
                             <div class="py-4 grid grid-cols-3 gap-4">
-                                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ t('products.in_stock') }}</dt>
+                                <dt class="text-sm font-medium text-slate-500 dark:text-slate-400">{{ t('products.in_stock') }}</dt>
                                 <dd class="col-span-2 text-sm" :class="stockStatus.class">{{ stockStatus.text }}</dd>
                             </div>
                         </dl>
@@ -561,13 +746,13 @@ const trustBadges = computed(() => [
                         <div class="lg:grid lg:grid-cols-3 lg:gap-8">
                             <!-- Left: Rating summary -->
                             <div class="mb-8 lg:mb-0">
-                                <div class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6">
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                <div class="rounded-xl bg-white dark:bg-navy-900/60 border border-slate-100 dark:border-navy-800/60 p-6">
+                                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                                         {{ t('reviews.average') }}
                                     </h3>
 
                                     <div v-if="reviewStats.review_count > 0" class="text-center">
-                                        <p class="text-5xl font-bold text-gray-900 dark:text-white">
+                                        <p class="text-5xl font-bold text-slate-900 dark:text-white">
                                             {{ reviewStats.average_rating?.toFixed(1) }}
                                         </p>
                                         <StarRating
@@ -575,12 +760,18 @@ const trustBadges = computed(() => [
                                             size="lg"
                                             class="mt-2 justify-center"
                                         />
-                                        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                             {{ reviewStats.review_count }} {{ reviewStats.review_count === 1 ? 'review' : 'reviews' }}
                                         </p>
+                                        <RatingDistribution
+                                            v-if="reviewStats.distribution"
+                                            :distribution="reviewStats.distribution"
+                                            :total-count="reviewStats.review_count"
+                                            class="mt-4"
+                                        />
                                     </div>
                                     <div v-else class="text-center py-4">
-                                        <p class="text-gray-500 dark:text-gray-400 text-sm">
+                                        <p class="text-slate-500 dark:text-slate-400 text-sm">
                                             {{ t('reviews.no_reviews') }}
                                         </p>
                                     </div>
@@ -593,13 +784,13 @@ const trustBadges = computed(() => [
                                         :product-slug="product.slug"
                                         @submitted="handleReviewSubmitted"
                                     />
-                                    <div v-else class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 text-center">
-                                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                    <div v-else class="rounded-xl bg-white dark:bg-navy-900/60 border border-slate-100 dark:border-navy-800/60 p-6 text-center">
+                                        <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">
                                             {{ t('reviews.sign_in_to_review') }}
                                         </p>
                                         <Link
                                             :href="localePath('/login')"
-                                            class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+                                            class="inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-400 transition-colors"
                                         >
                                             {{ t('auth.sign_in') }}
                                         </Link>
@@ -616,44 +807,21 @@ const trustBadges = computed(() => [
 
                                 <!-- Reviews list -->
                                 <div v-else-if="reviews.length > 0" class="space-y-6">
-                                    <div
+                                    <ReviewCard
                                         v-for="review in reviews"
                                         :key="review.id"
-                                        class="rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6"
-                                    >
-                                        <div class="flex items-start justify-between">
-                                            <div>
-                                                <div class="flex items-center gap-3">
-                                                    <div class="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 font-semibold text-sm">
-                                                        {{ (review.user_name || 'U').charAt(0).toUpperCase() }}
-                                                    </div>
-                                                    <div>
-                                                        <p class="font-medium text-gray-900 dark:text-white">
-                                                            {{ review.user_name || 'Anonymous' }}
-                                                        </p>
-                                                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                                                            {{ formatDate(review.created_at) }}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <StarRating :rating="review.rating" size="sm" />
-                                        </div>
-
-                                        <h4 class="mt-4 font-semibold text-gray-900 dark:text-white">
-                                            {{ review.title }}
-                                        </h4>
-                                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                                            {{ review.body }}
-                                        </p>
-                                    </div>
+                                        :review="review"
+                                        :current-user-id="$page.props.auth?.user?.id"
+                                        :is-authenticated="!!$page.props.auth?.user"
+                                        @reply-added="handleReplyAdded"
+                                    />
 
                                     <!-- Load more -->
                                     <div v-if="reviewsNextPage" class="text-center pt-4">
                                         <button
                                             @click="loadMoreReviews"
                                             :disabled="reviewsLoading"
-                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                                            class="inline-flex items-center gap-2 rounded-xl border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 px-6 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 disabled:opacity-50 transition-colors"
                                         >
                                             <Spinner v-if="reviewsLoading" size="sm" />
                                             {{ t('reviews.load_more') }}
@@ -663,13 +831,13 @@ const trustBadges = computed(() => [
 
                                 <!-- Empty reviews state -->
                                 <div v-else class="text-center py-12">
-                                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                                    <svg class="mx-auto h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
                                     </svg>
-                                    <h3 class="mt-4 text-lg font-medium text-gray-900 dark:text-white">
+                                    <h3 class="mt-4 text-lg font-medium text-slate-900 dark:text-white">
                                         {{ t('reviews.no_reviews') }}
                                     </h3>
-                                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                                    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                         {{ t('reviews.be_first') }}
                                     </p>
                                 </div>
@@ -681,7 +849,7 @@ const trustBadges = computed(() => [
 
             <!-- Related products -->
             <div v-if="relatedProducts.length > 0" class="mt-16">
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ t('products.related') }}</h2>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">{{ t("products.related") }}</h2>
                 <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                     <ProductCard
                         v-for="related in relatedProducts.slice(0, 4)"
@@ -695,17 +863,17 @@ const trustBadges = computed(() => [
         <!-- Sticky mobile add-to-cart bar -->
         <div
             v-if="stockStatus.available"
-            class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 lg:hidden"
+            class="fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-navy-950 border-t border-slate-200 dark:border-navy-800 p-4 lg:hidden"
         >
             <div class="flex items-center gap-4">
                 <div class="flex-1">
-                    <p class="text-lg font-bold text-gray-900 dark:text-white">{{ formatPrice(effectivePrice) }}</p>
+                    <p class="text-lg font-bold text-slate-900 dark:text-white">{{ formatPrice(effectivePrice) }}</p>
                     <p class="text-sm" :class="stockStatus.class">{{ stockStatus.text }}</p>
                 </div>
                 <button
                     @click="handleAddToCart"
                     :disabled="cartLoading"
-                    class="flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <Spinner v-if="cartLoading" size="sm" color="white" />
                     <span>{{ cartLoading ? t('common.loading') : t('products.add_to_cart') }}</span>

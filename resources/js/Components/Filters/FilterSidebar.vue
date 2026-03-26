@@ -84,17 +84,17 @@ function handleClearAll() {
 
 <template>
     <aside class="w-full lg:w-64 shrink-0">
-        <div class="sticky top-4 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="sticky top-4 rounded-2xl bg-white dark:bg-navy-900/60 border border-slate-100 dark:border-navy-800/60 overflow-hidden shadow-sm">
             <!-- Header -->
-            <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between p-4 border-b border-slate-100 dark:border-navy-800/60">
                 <div class="flex items-center gap-2">
-                    <svg class="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <svg class="h-5 w-5 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
                     </svg>
-                    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Filters</h2>
+                    <h2 class="text-base font-semibold text-slate-900 dark:text-white">Filters</h2>
                     <span
                         v-if="activeFilterCount > 0"
-                        class="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white"
+                        class="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-xs font-medium text-white"
                     >
                         {{ activeFilterCount }}
                     </span>
@@ -102,21 +102,21 @@ function handleClearAll() {
                 <button
                     v-if="activeFilterCount > 0"
                     @click="handleClearAll"
-                    class="text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
+                    class="text-xs font-medium text-brand-600 dark:text-brand-400 hover:text-brand-500 transition-colors"
                 >
                     Clear all
                 </button>
             </div>
 
             <!-- Categories Section -->
-            <div v-if="categories && categories.length > 0" class="border-b border-gray-200 dark:border-gray-700">
+            <div v-if="categories && categories.length > 0" class="border-b border-slate-100 dark:border-navy-800/60">
                 <button
                     @click="showCategories = !showCategories"
-                    class="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    class="flex w-full items-center justify-between p-4 text-left hover:bg-slate-50 dark:hover:bg-navy-800/40 transition-colors"
                 >
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">Categories</span>
+                    <span class="text-sm font-medium text-slate-900 dark:text-white">Categories</span>
                     <svg
-                        class="h-4 w-4 text-gray-500 transition-transform duration-200"
+                        class="h-4 w-4 text-slate-500 transition-transform duration-200"
                         :class="{ 'rotate-180': showCategories }"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -143,8 +143,8 @@ function handleClearAll() {
                                 @click="handleCategoryClick(cat.slug)"
                                 class="px-3 py-1.5 text-sm font-medium rounded-full border transition-all"
                                 :class="selectedCategory === cat.slug
-                                    ? 'bg-indigo-600 border-indigo-600 text-white'
-                                    : 'bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-indigo-400 hover:text-indigo-600'"
+                                    ? 'bg-brand-500 border-brand-500 text-white shadow-sm shadow-brand-500/25'
+                                    : 'bg-white dark:bg-navy-800 border-slate-300 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-400'"
                             >
                                 {{ cat.name }}
                             </button>
@@ -154,14 +154,14 @@ function handleClearAll() {
             </div>
 
             <!-- Price Range Section -->
-            <div class="border-b border-gray-200 dark:border-gray-700">
+            <div class="border-b border-slate-100 dark:border-navy-800/60">
                 <button
                     @click="showPrice = !showPrice"
-                    class="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    class="flex w-full items-center justify-between p-4 text-left hover:bg-slate-50 dark:hover:bg-navy-800/40 transition-colors"
                 >
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">Price Range</span>
+                    <span class="text-sm font-medium text-slate-900 dark:text-white">Price Range</span>
                     <svg
-                        class="h-4 w-4 text-gray-500 transition-transform duration-200"
+                        class="h-4 w-4 text-slate-500 transition-transform duration-200"
                         :class="{ 'rotate-180': showPrice }"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -197,11 +197,11 @@ function handleClearAll() {
             <div>
                 <button
                     @click="showAvailability = !showAvailability"
-                    class="flex w-full items-center justify-between p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    class="flex w-full items-center justify-between p-4 text-left hover:bg-slate-50 dark:hover:bg-navy-800/40 transition-colors"
                 >
-                    <span class="text-sm font-medium text-gray-900 dark:text-white">Availability</span>
+                    <span class="text-sm font-medium text-slate-900 dark:text-white">Availability</span>
                     <svg
-                        class="h-4 w-4 text-gray-500 transition-transform duration-200"
+                        class="h-4 w-4 text-slate-500 transition-transform duration-200"
                         :class="{ 'rotate-180': showAvailability }"
                         fill="none"
                         viewBox="0 0 24 24"
@@ -230,10 +230,10 @@ function handleClearAll() {
                                     @change="handleInStockToggle"
                                     class="sr-only peer"
                                 />
-                                <div class="h-5 w-9 rounded-full bg-gray-200 dark:bg-gray-700 peer-checked:bg-indigo-600 transition-colors" />
+                                <div class="h-5 w-9 rounded-full bg-slate-200 dark:bg-navy-700 peer-checked:bg-accent-500 transition-colors" />
                                 <div class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-4" />
                             </div>
-                            <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                            <span class="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                 In Stock Only
                             </span>
                         </label>
@@ -247,11 +247,11 @@ function handleClearAll() {
                                     @change="handleOnSaleToggle"
                                     class="sr-only peer"
                                 />
-                                <div class="h-5 w-9 rounded-full bg-gray-200 dark:bg-gray-700 peer-checked:bg-red-500 transition-colors" />
+                                <div class="h-5 w-9 rounded-full bg-slate-200 dark:bg-navy-700 peer-checked:bg-red-500 transition-colors" />
                                 <div class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform peer-checked:translate-x-4" />
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white">
+                                <span class="text-sm text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                     On Sale
                                 </span>
                                 <span class="px-1.5 py-0.5 text-xs font-bold text-white bg-red-500 rounded">

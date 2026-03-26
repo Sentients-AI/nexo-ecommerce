@@ -164,6 +164,22 @@ export interface CategoryApiResource {
 // Review API
 // ========================================
 
+export interface ReviewPhotoApiResource {
+    id: number;
+    url: string;
+    order: number;
+}
+
+export interface ReviewReplyApiResource {
+    id: number;
+    review_id: number;
+    user_id: number;
+    user_name?: string;
+    body: string;
+    is_merchant_reply: boolean;
+    created_at: string;
+}
+
 export interface ReviewApiResource {
     id: number;
     product_id: number;
@@ -173,6 +189,11 @@ export interface ReviewApiResource {
     title: string;
     body: string;
     created_at: string;
+    photos?: ReviewPhotoApiResource[];
+    replies?: ReviewReplyApiResource[];
+    helpful_count?: number;
+    not_helpful_count?: number;
+    user_vote?: boolean | null;
 }
 
 // ========================================

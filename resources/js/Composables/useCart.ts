@@ -21,10 +21,11 @@ export function useCart() {
         cartLoading.value = false;
     }
 
-    async function addToCart(productId: number, quantity: number = 1): Promise<boolean> {
+    async function addToCart(productId: number, quantity: number = 1, variantId?: number | null): Promise<boolean> {
         const result = await post<{ cart: CartApiResource }>('/api/v1/cart/items', {
             product_id: productId,
             quantity,
+            ...(variantId ? { variant_id: variantId } : {}),
         });
 
         if (result?.cart) {

@@ -5,7 +5,195 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* ============================================================
+   MODERN ENTERPRISE DESIGN SYSTEM
+   Multi-tenant theming via CSS custom properties
+   ============================================================ */
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Typography */
+    --font-sans: 'Inter', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+
+    /* Navy — deep background palette for vendor dashboard */
+    --color-navy-50:  oklch(0.97 0.01 264);
+    --color-navy-100: oklch(0.93 0.02 264);
+    --color-navy-200: oklch(0.86 0.04 264);
+    --color-navy-300: oklch(0.74 0.07 264);
+    --color-navy-400: oklch(0.58 0.10 264);
+    --color-navy-500: oklch(0.44 0.13 264);
+    --color-navy-600: oklch(0.33 0.12 264);
+    --color-navy-700: oklch(0.24 0.10 264);
+    --color-navy-800: oklch(0.17 0.08 264);
+    --color-navy-900: oklch(0.12 0.06 264);
+    --color-navy-950: oklch(0.08 0.04 264);
+
+    /* Brand — Electric Indigo (tenant-overridable via --color-brand-* override) */
+    --color-brand-50:  oklch(0.96 0.03 284);
+    --color-brand-100: oklch(0.92 0.07 284);
+    --color-brand-200: oklch(0.84 0.13 284);
+    --color-brand-300: oklch(0.74 0.18 284);
+    --color-brand-400: oklch(0.65 0.22 284);
+    --color-brand-500: oklch(0.58 0.24 284);
+    --color-brand-600: oklch(0.49 0.24 284);
+    --color-brand-700: oklch(0.40 0.22 284);
+    --color-brand-800: oklch(0.32 0.17 284);
+    --color-brand-900: oklch(0.24 0.12 284);
+    --color-brand-950: oklch(0.15 0.08 284);
+
+    /* Accent — Emerald */
+    --color-accent-50:  oklch(0.97 0.03 155);
+    --color-accent-100: oklch(0.93 0.07 155);
+    --color-accent-200: oklch(0.86 0.12 155);
+    --color-accent-300: oklch(0.77 0.17 155);
+    --color-accent-400: oklch(0.68 0.19 155);
+    --color-accent-500: oklch(0.60 0.20 155);
+    --color-accent-600: oklch(0.51 0.19 155);
+    --color-accent-700: oklch(0.43 0.16 155);
+    --color-accent-800: oklch(0.34 0.12 155);
+    --color-accent-900: oklch(0.26 0.09 155);
+    --color-accent-950: oklch(0.17 0.06 155);
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+
+@keyframes shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-6px); }
+}
+
+@keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50%       { background-position: 100% 50%; }
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 0 0  oklch(0.58 0.24 284 / 0.4); }
+    50%       { box-shadow: 0 0 0 8px oklch(0.58 0.24 284 / 0); }
+}
+
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes count-up {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* ============================================================
+   GLOBAL UTILITIES
+   ============================================================ */
+
+/* --- Glassmorphism --- */
+.glass {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.glass-light {
+    background: rgba(255, 255, 255, 0.90);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.50);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+
+.glass-dark {
+    background: oklch(0.08 0.04 264 / 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* --- Gradient text --- */
+.gradient-text {
+    background: linear-gradient(135deg, oklch(0.58 0.24 284), oklch(0.60 0.20 155));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* --- Animated gradient bg --- */
+.gradient-animated {
+    background: linear-gradient(
+        135deg,
+        oklch(0.12 0.06 264),
+        oklch(0.16 0.09 284),
+        oklch(0.12 0.06 264)
+    );
+    background-size: 200% 200%;
+    animation: gradient-shift 8s ease infinite;
+}
+
+/* --- Bento card --- */
+.bento {
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bento:hover {
+    transform: translateY(-2px);
+}
+
+/* --- Skeleton loader --- */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: oklch(0.93 0.01 264);
+    border-radius: 0.5rem;
+}
+
+.skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+    animation: shimmer 1.5s linear infinite;
+}
+
+.dark .skeleton {
+    background: oklch(0.18 0.04 264);
+}
+
+.dark .skeleton::after {
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+}
+
+/* --- Float animation --- */
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+/* --- Fade in up --- */
+.animate-fade-in-up {
+    animation: fade-in-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* --- Custom scrollbar --- */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: oklch(0.74 0.06 264 / 0.25);
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.74 0.06 264 / 0.45);
+}
+
+/* --- Focus ring --- */
+:focus-visible {
+    outline: 2px solid oklch(0.58 0.24 284);
+    outline-offset: 2px;
 }

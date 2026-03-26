@@ -51,10 +51,10 @@ onUnmounted(() => {
         <!-- Trigger -->
         <button
             @click="toggle"
-            class="flex items-center gap-2 rounded-full p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            class="flex items-center gap-2 rounded-full p-1 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
         >
             <!-- Avatar -->
-            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-sm font-medium text-white">
+            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-brand-500 text-sm font-medium text-white ring-2 ring-brand-500/20">
                 {{ user?.name?.charAt(0).toUpperCase() ?? 'U' }}
             </span>
             <!-- Chevron -->
@@ -81,15 +81,15 @@ onUnmounted(() => {
         >
             <div
                 v-show="isOpen"
-                class="absolute right-0 mt-2 w-56 origin-top-right rounded-md bg-white dark:bg-gray-800 shadow-lg ring-1 ring-black/5 dark:ring-white/10 focus:outline-none z-50"
+                class="absolute right-0 mt-2 w-56 origin-top-right rounded-xl bg-white dark:bg-navy-900 shadow-lg shadow-navy-950/10 ring-1 ring-slate-200/60 dark:ring-navy-700/60 focus:outline-none z-50"
             >
                 <div class="py-1">
                     <!-- User info -->
-                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                        <p class="text-sm font-medium text-gray-900 dark:text-white">
+                    <div class="px-4 py-3 border-b border-slate-100 dark:border-navy-800">
+                        <p class="text-sm font-medium text-slate-900 dark:text-white">
                             {{ user?.name }}
                         </p>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 truncate">
                             {{ user?.email }}
                         </p>
                     </div>
@@ -98,7 +98,7 @@ onUnmounted(() => {
                     <div class="py-1">
                         <Link
                             :href="localePath('/orders')"
-                            class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                             @click="close"
                         >
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -109,10 +109,10 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Sign out -->
-                    <div class="border-t border-gray-100 dark:border-gray-700 py-1">
+                    <div class="border-t border-slate-100 dark:border-navy-800 py-1">
                         <button
                             @click="logout"
-                            class="flex w-full items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            class="flex w-full items-center gap-2 px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                         >
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />

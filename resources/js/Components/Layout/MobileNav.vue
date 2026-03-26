@@ -60,7 +60,7 @@ onUnmounted(() => {
         >
             <div
                 v-show="show"
-                class="fixed inset-0 z-40 bg-gray-600/50 dark:bg-gray-900/80"
+                class="fixed inset-0 z-40 bg-navy-950/60 backdrop-blur-sm"
                 @click="close"
             />
         </Transition>
@@ -76,16 +76,16 @@ onUnmounted(() => {
         >
             <div
                 v-show="show"
-                class="fixed inset-y-0 left-0 z-50 w-full max-w-xs bg-white dark:bg-gray-800 shadow-xl"
+                class="fixed inset-y-0 left-0 z-50 w-full max-w-xs bg-white dark:bg-navy-900 shadow-xl shadow-navy-950/20"
             >
                 <!-- Header -->
-                <div class="flex items-center justify-between px-4 py-5 border-b border-gray-200 dark:border-gray-700">
-                    <Link :href="localePath('/')" class="text-xl font-bold text-gray-900 dark:text-white" @click="close">
+                <div class="flex items-center justify-between px-4 py-5 border-b border-slate-100 dark:border-navy-800">
+                    <Link :href="localePath('/')" class="text-xl font-bold text-slate-900 dark:text-white" @click="close">
                         Store
                     </Link>
                     <button
                         @click="close"
-                        class="rounded-md p-2 text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                        class="rounded-lg p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-navy-800 dark:hover:text-slate-300 transition-colors"
                     >
                         <span class="sr-only">Close menu</span>
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -95,17 +95,17 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Navigation -->
-                <nav class="px-4 py-6 space-y-2">
+                <nav class="px-4 py-6 space-y-1">
                     <Link
                         :href="localePath('/')"
-                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        class="block px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                         @click="close"
                     >
                         {{ t('nav.home') }}
                     </Link>
                     <Link
                         :href="localePath('/products')"
-                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        class="block px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                         @click="close"
                     >
                         {{ t('nav.products') }}
@@ -113,27 +113,27 @@ onUnmounted(() => {
                     <Link
                         v-if="isAuthenticated"
                         :href="localePath('/orders')"
-                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        class="block px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                         @click="close"
                     >
                         {{ t('nav.orders') }}
                     </Link>
                     <Link
                         :href="localePath('/wishlist')"
-                        class="flex items-center justify-between px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        class="flex items-center justify-between px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                         @click="close"
                     >
                         {{ t('nav.wishlist') }}
                         <span
                             v-if="wishlistCount > 0"
-                            class="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/50 px-1.5 text-xs font-medium text-red-600 dark:text-red-400"
+                            class="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/50 px-1.5 text-xs font-medium text-brand-600 dark:text-brand-400"
                         >
                             {{ wishlistCount }}
                         </span>
                     </Link>
                     <Link
                         :href="localePath('/cart')"
-                        class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                        class="block px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 hover:text-slate-900 dark:hover:text-white transition-colors"
                         @click="close"
                     >
                         {{ t('nav.cart') }}
@@ -141,16 +141,16 @@ onUnmounted(() => {
                 </nav>
 
                 <!-- Auth links -->
-                <div class="absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 p-4 space-y-2">
+                <div class="absolute bottom-0 left-0 right-0 border-t border-slate-100 dark:border-navy-800 p-4 space-y-2">
                     <template v-if="isAuthenticated">
-                        <div class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-                            Signed in as <span class="font-medium text-gray-900 dark:text-white">{{ page.props.auth?.user?.name }}</span>
+                        <div class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">
+                            Signed in as <span class="font-medium text-slate-900 dark:text-white">{{ page.props.auth?.user?.name }}</span>
                         </div>
                         <Link
                             :href="localePath('/logout')"
                             method="post"
                             as="button"
-                            class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                            class="block w-full text-left px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                             @click="close"
                         >
                             {{ t('nav.logout') }}
@@ -159,14 +159,14 @@ onUnmounted(() => {
                     <template v-else>
                         <Link
                             :href="localePath('/login')"
-                            class="block px-3 py-2 rounded-md text-base font-medium text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+                            class="block px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                             @click="close"
                         >
                             {{ t('nav.sign_in') }}
                         </Link>
                         <Link
                             :href="localePath('/register')"
-                            class="block px-3 py-2 rounded-md text-base font-medium text-white bg-indigo-600 hover:bg-indigo-500 text-center"
+                            class="block px-3 py-2.5 rounded-xl text-base font-semibold text-white bg-brand-500 hover:bg-brand-400 text-center shadow-sm shadow-brand-500/25 transition-colors"
                             @click="close"
                         >
                             {{ t('nav.sign_up') }}

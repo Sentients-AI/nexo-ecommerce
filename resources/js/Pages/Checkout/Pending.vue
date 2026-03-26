@@ -122,25 +122,25 @@ onUnmounted(() => {
             <!-- Progress indicator -->
             <CheckoutProgress :current-step="1" class="mb-8" />
 
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Complete Your Payment</h1>
-            <p class="mt-2 text-gray-600 dark:text-gray-400">
+            <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Complete Your Payment</h1>
+            <p class="mt-2 text-slate-600 dark:text-slate-400">
                 Enter your payment details to complete your order.
             </p>
 
             <div class="mt-8 space-y-6">
                 <!-- Order summary card -->
-                <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div class="rounded-2xl bg-white dark:bg-navy-900/60 shadow-sm border border-slate-100 dark:border-navy-800/60 p-6">
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                                 Order #{{ order.order_number }}
                             </h2>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
                                 {{ order.items?.length ?? 0 }} items
                             </p>
                         </div>
                         <div class="text-right">
-                            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+                            <p class="text-2xl font-bold text-slate-900 dark:text-white">
                                 {{ formatPrice(order.total_cents) }}
                             </p>
                             <span class="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 dark:bg-yellow-900/50 px-2.5 py-1 text-xs font-medium text-yellow-800 dark:text-yellow-200 mt-1">
@@ -151,39 +151,39 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Price breakdown -->
-                    <dl class="mt-6 space-y-2 text-sm border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <dl class="mt-6 space-y-2 text-sm border-t border-slate-200 dark:border-navy-700 pt-4">
                         <div class="flex justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">Subtotal</dt>
-                            <dd class="text-gray-900 dark:text-white">{{ formatPrice(order.subtotal_cents) }}</dd>
+                            <dt class="text-slate-500 dark:text-slate-400">Subtotal</dt>
+                            <dd class="text-slate-900 dark:text-white">{{ formatPrice(order.subtotal_cents) }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">Tax</dt>
-                            <dd class="text-gray-900 dark:text-white">{{ formatPrice(order.tax_cents) }}</dd>
+                            <dt class="text-slate-500 dark:text-slate-400">Tax</dt>
+                            <dd class="text-slate-900 dark:text-white">{{ formatPrice(order.tax_cents) }}</dd>
                         </div>
                         <div v-if="order.shipping_cost_cents" class="flex justify-between">
-                            <dt class="text-gray-500 dark:text-gray-400">Shipping</dt>
-                            <dd class="text-gray-900 dark:text-white">{{ formatPrice(order.shipping_cost_cents) }}</dd>
+                            <dt class="text-slate-500 dark:text-slate-400">Shipping</dt>
+                            <dd class="text-slate-900 dark:text-white">{{ formatPrice(order.shipping_cost_cents) }}</dd>
                         </div>
                     </dl>
                 </div>
 
                 <!-- Payment form -->
-                <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-6">Payment Details</h2>
+                <div class="rounded-2xl bg-white dark:bg-navy-900/60 shadow-sm border border-slate-100 dark:border-navy-800/60 p-6">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-6">Payment Details</h2>
 
                     <!-- Loading state -->
                     <div v-if="stripeLoading" class="flex flex-col items-center justify-center py-12">
                         <Spinner size="lg" />
-                        <p class="mt-4 text-gray-500 dark:text-gray-400">Loading secure payment form...</p>
+                        <p class="mt-4 text-slate-500 dark:text-slate-400">Loading secure payment form...</p>
                     </div>
 
                     <!-- Stripe error -->
-                    <div v-else-if="stripeError" class="rounded-lg bg-red-50 dark:bg-red-900/50 p-4 border border-red-200 dark:border-red-800">
+                    <div v-else-if="stripeError" class="rounded-xl bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800/60">
                         <div class="flex items-center gap-2">
                             <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                             </svg>
-                            <p class="text-sm text-red-700 dark:text-red-200">{{ stripeError }}</p>
+                            <p class="text-sm text-red-700 dark:text-red-300">{{ stripeError }}</p>
                         </div>
                     </div>
 
@@ -200,12 +200,12 @@ onUnmounted(() => {
                             leave-from-class="opacity-100 translate-y-0"
                             leave-to-class="opacity-0 -translate-y-2"
                         >
-                            <div v-if="submitError" class="mt-4 rounded-lg bg-red-50 dark:bg-red-900/50 p-4 border border-red-200 dark:border-red-800">
+                            <div v-if="submitError" class="mt-4 rounded-xl bg-red-50 dark:bg-red-900/20 p-4 border border-red-200 dark:border-red-800/60">
                                 <div class="flex items-center gap-2">
                                     <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
                                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
                                     </svg>
-                                    <p class="text-sm text-red-700 dark:text-red-200">{{ submitError }}</p>
+                                    <p class="text-sm text-red-700 dark:text-red-300">{{ submitError }}</p>
                                 </div>
                             </div>
                         </Transition>
@@ -214,7 +214,7 @@ onUnmounted(() => {
                         <button
                             @click="handleSubmitPayment"
                             :disabled="isLoading || !paymentElementMounted"
-                            class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-lg hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            class="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-brand-500/25 hover:bg-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         >
                             <Spinner v-if="isLoading" size="sm" color="white" />
                             <svg v-else class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -226,7 +226,7 @@ onUnmounted(() => {
                 </div>
 
                 <!-- Security notice -->
-                <div class="flex items-center justify-center gap-6 text-xs text-gray-500 dark:text-gray-400">
+                <div class="flex items-center justify-center gap-6 text-xs text-slate-500 dark:text-slate-400">
                     <div class="flex items-center gap-1">
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />

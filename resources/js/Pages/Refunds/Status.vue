@@ -191,7 +191,7 @@ const progressPercentage = computed(() => {
             <!-- Back link -->
             <Link
                 :href="`/orders/${order.id}`"
-                class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
+                class="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
             >
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -200,7 +200,7 @@ const progressPercentage = computed(() => {
             </Link>
 
             <!-- Status header card -->
-            <div class="mt-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden shadow-sm">
+            <div class="mt-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-navy-900/60 overflow-hidden shadow-sm">
                 <div
                     :class="[
                         'px-6 py-8 text-center',
@@ -266,27 +266,27 @@ const progressPercentage = computed(() => {
                         </div>
                     </div>
 
-                    <h1 class="mt-6 text-2xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="mt-6 text-2xl font-bold text-slate-900 dark:text-white">
                         Refund {{ formatStatus(refund.status) }}
                     </h1>
-                    <p class="mt-2 text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+                    <p class="mt-2 text-slate-600 dark:text-slate-400 max-w-md mx-auto">
                         {{ statusMessage }}
                     </p>
 
                     <!-- Amount badge -->
-                    <div class="mt-6 inline-flex items-center gap-2 rounded-full bg-white dark:bg-gray-800 px-4 py-2 shadow-sm border border-gray-200 dark:border-gray-700">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Amount:</span>
-                        <span class="text-lg font-bold text-gray-900 dark:text-white">{{ formatPrice(refund.amount_cents) }}</span>
+                    <div class="mt-6 inline-flex items-center gap-2 rounded-full bg-white dark:bg-navy-900/60 px-4 py-2 shadow-sm border border-slate-100 dark:border-navy-800/60">
+                        <span class="text-sm text-slate-500 dark:text-slate-400">Amount:</span>
+                        <span class="text-lg font-bold text-slate-900 dark:text-white">{{ formatPrice(refund.amount_cents) }}</span>
                     </div>
                 </div>
 
                 <!-- Progress bar -->
-                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
+                <div class="px-6 py-4 bg-slate-50 dark:bg-navy-900/80">
                     <div class="flex items-center justify-between text-sm mb-2">
-                        <span class="text-gray-500 dark:text-gray-400">Progress</span>
-                        <span class="font-medium text-gray-700 dark:text-gray-300">{{ Math.round(progressPercentage) }}%</span>
+                        <span class="text-slate-500 dark:text-slate-400">Progress</span>
+                        <span class="font-medium text-slate-700 dark:text-slate-300">{{ Math.round(progressPercentage) }}%</span>
                     </div>
-                    <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                    <div class="h-2 rounded-full bg-gray-200 dark:bg-navy-800 overflow-hidden">
                         <div
                             class="h-full rounded-full transition-all duration-500 ease-out"
                             :class="[
@@ -301,9 +301,9 @@ const progressPercentage = computed(() => {
             </div>
 
             <!-- Enhanced Timeline -->
-            <div class="mt-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden shadow-sm">
-                <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Timeline</h2>
+            <div class="mt-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-navy-900/60 overflow-hidden shadow-sm">
+                <div class="border-b border-slate-100 dark:border-navy-800/60 px-6 py-4 bg-slate-50 dark:bg-navy-900/80">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Timeline</h2>
                 </div>
                 <div class="px-6 py-6">
                     <ol class="relative">
@@ -321,7 +321,7 @@ const progressPercentage = computed(() => {
                                         ? 'bg-green-500'
                                         : event.failed
                                             ? 'bg-red-500'
-                                            : 'bg-gray-200 dark:bg-gray-700'
+                                            : 'bg-gray-200 dark:bg-navy-800'
                                 ]"
                             />
 
@@ -329,14 +329,14 @@ const progressPercentage = computed(() => {
                                 <!-- Step indicator -->
                                 <div
                                     :class="[
-                                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-gray-800 transition-all duration-300',
+                                        'flex h-8 w-8 shrink-0 items-center justify-center rounded-full ring-4 ring-white dark:ring-navy-900 transition-all duration-300',
                                         event.completed && !event.failed
                                             ? 'bg-green-500 text-white'
                                             : event.failed
                                                 ? 'bg-red-500 text-white'
                                                 : event.current
                                                     ? 'bg-yellow-500 text-white'
-                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-400'
+                                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-400'
                                     ]"
                                 >
                                     <!-- Completed check -->
@@ -376,16 +376,16 @@ const progressPercentage = computed(() => {
                                         :class="[
                                             'font-medium',
                                             event.completed || event.current
-                                                ? 'text-gray-900 dark:text-white'
-                                                : 'text-gray-500 dark:text-gray-400'
+                                                ? 'text-slate-900 dark:text-white'
+                                                : 'text-slate-500 dark:text-slate-400'
                                         ]"
                                     >
                                         {{ event.title }}
                                     </p>
-                                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                                    <p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                                         {{ event.description }}
                                     </p>
-                                    <p v-if="event.date && event.completed" class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                                    <p v-if="event.date && event.completed" class="mt-1 text-xs text-slate-400 dark:text-slate-500">
                                         {{ formatDateTime(event.date) }}
                                     </p>
                                 </div>
@@ -396,43 +396,43 @@ const progressPercentage = computed(() => {
             </div>
 
             <!-- Refund details -->
-            <div class="mt-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden shadow-sm">
-                <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Refund Details</h2>
+            <div class="mt-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-navy-900/60 overflow-hidden shadow-sm">
+                <div class="border-b border-slate-100 dark:border-navy-800/60 px-6 py-4 bg-slate-50 dark:bg-navy-900/80 flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Refund Details</h2>
                     <StatusBadge type="refund" :status="refund.status" />
                 </div>
                 <div class="px-6 py-5">
                     <dl class="space-y-4">
                         <div class="flex justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Refund ID</dt>
-                            <dd class="text-sm font-medium text-gray-900 dark:text-white">#{{ refund.id }}</dd>
+                            <dt class="text-sm text-slate-500 dark:text-slate-400">Refund ID</dt>
+                            <dd class="text-sm font-medium text-slate-900 dark:text-white">#{{ refund.id }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Order</dt>
+                            <dt class="text-sm text-slate-500 dark:text-slate-400">Order</dt>
                             <dd class="text-sm font-medium">
                                 <Link
                                     :href="`/orders/${order.id}`"
-                                    class="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                    class="text-brand-600 hover:text-brand-500 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
                                 >
                                     {{ order.order_number }}
                                 </Link>
                             </dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Amount</dt>
-                            <dd class="text-sm font-semibold text-gray-900 dark:text-white">{{ formatPrice(refund.amount_cents) }}</dd>
+                            <dt class="text-sm text-slate-500 dark:text-slate-400">Amount</dt>
+                            <dd class="text-sm font-semibold text-slate-900 dark:text-white">{{ formatPrice(refund.amount_cents) }}</dd>
                         </div>
                         <div class="flex justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Requested</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">{{ formatDateTime(refund.created_at) }}</dd>
+                            <dt class="text-sm text-slate-500 dark:text-slate-400">Requested</dt>
+                            <dd class="text-sm text-slate-900 dark:text-white">{{ formatDateTime(refund.created_at) }}</dd>
                         </div>
                         <div v-if="refund.approved_at" class="flex justify-between">
-                            <dt class="text-sm text-gray-500 dark:text-gray-400">Approved</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">{{ formatDateTime(refund.approved_at) }}</dd>
+                            <dt class="text-sm text-slate-500 dark:text-slate-400">Approved</dt>
+                            <dd class="text-sm text-slate-900 dark:text-white">{{ formatDateTime(refund.approved_at) }}</dd>
                         </div>
-                        <div v-if="refund.reason" class="pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Reason</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                        <div v-if="refund.reason" class="pt-4 border-t border-slate-100 dark:border-navy-800/60">
+                            <dt class="text-sm font-medium text-slate-500 dark:text-slate-400 mb-2">Reason</dt>
+                            <dd class="text-sm text-slate-900 dark:text-white bg-gray-50 dark:bg-navy-800/50 rounded-lg p-3">
                                 {{ refund.reason }}
                             </dd>
                         </div>
@@ -441,21 +441,21 @@ const progressPercentage = computed(() => {
             </div>
 
             <!-- Need help section -->
-            <div class="mt-8 rounded-2xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50 dark:bg-indigo-900/20 p-6">
+            <div class="mt-8 rounded-2xl border border-brand-100 dark:border-brand-900/50 bg-brand-50 dark:bg-brand-900/20 p-6">
                 <div class="flex items-start gap-4">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 dark:bg-indigo-900/50">
-                        <svg class="h-5 w-5 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-900/50">
+                        <svg class="h-5 w-5 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
                         </svg>
                     </div>
                     <div>
-                        <h3 class="text-sm font-semibold text-indigo-900 dark:text-indigo-100">Have questions?</h3>
-                        <p class="mt-1 text-sm text-indigo-700 dark:text-indigo-300">
+                        <h3 class="text-sm font-semibold text-brand-900 dark:text-brand-100">Have questions?</h3>
+                        <p class="mt-1 text-sm text-brand-700 dark:text-brand-300">
                             If you have any questions about your refund or need assistance, our support team is here to help.
                         </p>
                         <Link
                             :href="localePath('/contact')"
-                            class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition-colors"
+                            class="mt-3 inline-flex items-center gap-2 text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-indigo-500 transition-colors"
                         >
                             Contact Support
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -470,7 +470,7 @@ const progressPercentage = computed(() => {
             <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
                 <Link
                     :href="`/orders/${order.id}`"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-3 text-base font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-900/60 px-6 py-3 text-base font-medium text-slate-700 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                 >
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -479,7 +479,7 @@ const progressPercentage = computed(() => {
                 </Link>
                 <Link
                     :href="localePath('/orders')"
-                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-brand-400 transition-colors"
                 >
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />

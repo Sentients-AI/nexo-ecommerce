@@ -162,10 +162,10 @@ const recentlyViewedProducts = computed(() => {
             <div class="mb-6">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                        <h1 class="text-3xl font-bold text-slate-900 dark:text-white">
                             {{ filters.featured ? 'Featured Products' : 'All Products' }}
                         </h1>
-                        <p class="mt-1 text-gray-600 dark:text-gray-400">
+                        <p class="mt-1 text-slate-600 dark:text-slate-400">
                             {{ products.total }} {{ products.total === 1 ? 'product' : 'products' }} found
                         </p>
                     </div>
@@ -190,7 +190,7 @@ const recentlyViewedProducts = computed(() => {
                 <form @submit.prevent="handleSearch" class="flex-1 max-w-md">
                     <div class="relative">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
                             </svg>
                         </div>
@@ -198,7 +198,7 @@ const recentlyViewedProducts = computed(() => {
                             v-model="search"
                             type="text"
                             placeholder="Search products..."
-                            class="block w-full rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 pl-10 pr-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 transition-colors"
+                            class="block w-full rounded-lg border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 pl-10 pr-4 py-2.5 text-slate-900 dark:text-white placeholder-gray-500 focus:border-brand-500 focus:ring-brand-500 transition-colors"
                             @keyup.enter="handleSearch"
                         />
                     </div>
@@ -208,7 +208,7 @@ const recentlyViewedProducts = computed(() => {
                     <!-- Mobile filter button -->
                     <button
                         @click="showMobileFilters = !showMobileFilters"
-                        class="lg:hidden inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        class="lg:hidden inline-flex items-center gap-2 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                     >
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
@@ -216,7 +216,7 @@ const recentlyViewedProducts = computed(() => {
                         Filters
                         <span
                             v-if="activeFilterCount > 0"
-                            class="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-xs font-medium text-white"
+                            class="flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 text-xs font-medium text-white"
                         >
                             {{ activeFilterCount }}
                         </span>
@@ -226,7 +226,7 @@ const recentlyViewedProducts = computed(() => {
                     <select
                         v-model="sortBy"
                         @change="applyFilters"
-                        class="rounded-lg border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 py-2.5 text-sm text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
+                        class="rounded-lg border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand-500 focus:ring-brand-500"
                     >
                         <option value="newest">Newest</option>
                         <option value="price_asc">Price: Low to High</option>
@@ -236,11 +236,11 @@ const recentlyViewedProducts = computed(() => {
                     </select>
 
                     <!-- View toggle -->
-                    <div class="hidden sm:flex items-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 p-1">
+                    <div class="hidden sm:flex items-center rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 p-1">
                         <button
                             @click="viewMode = 'grid'"
                             class="p-2 rounded-md transition-colors"
-                            :class="viewMode === 'grid' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                            :class="viewMode === 'grid' ? 'bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400' : 'text-slate-500 hover:text-gray-700 dark:hover:text-gray-300'"
                         >
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
@@ -249,7 +249,7 @@ const recentlyViewedProducts = computed(() => {
                         <button
                             @click="viewMode = 'list'"
                             class="p-2 rounded-md transition-colors"
-                            :class="viewMode === 'list' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'"
+                            :class="viewMode === 'list' ? 'bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400' : 'text-slate-500 hover:text-gray-700 dark:hover:text-gray-300'"
                         >
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
@@ -261,18 +261,18 @@ const recentlyViewedProducts = computed(() => {
 
             <!-- Active filters chips -->
             <div v-if="hasActiveFilters" class="mb-6 flex flex-wrap items-center gap-2">
-                <span class="text-sm text-gray-500 dark:text-gray-400">Active filters:</span>
+                <span class="text-sm text-slate-500 dark:text-slate-400">Active filters:</span>
 
                 <span
                     v-if="filters.featured"
-                    class="inline-flex items-center gap-1 rounded-full bg-indigo-100 dark:bg-indigo-900/50 px-3 py-1 text-sm font-medium text-indigo-700 dark:text-indigo-300"
+                    class="inline-flex items-center gap-1 rounded-full bg-brand-100 dark:bg-brand-900/50 px-3 py-1 text-sm font-medium text-brand-700 dark:text-brand-300"
                 >
                     Featured
                 </span>
 
                 <span
                     v-if="search"
-                    class="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
                     "{{ search }}"
                     <button @click="search = ''; handleSearch()" class="ml-1 hover:text-gray-900 dark:hover:text-white">
@@ -284,7 +284,7 @@ const recentlyViewedProducts = computed(() => {
 
                 <span
                     v-if="selectedCategory"
-                    class="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
                     {{ categories?.find(c => c.slug === selectedCategory)?.name || selectedCategory }}
                     <button @click="selectedCategory = ''; applyFilters()" class="ml-1 hover:text-gray-900 dark:hover:text-white">
@@ -296,7 +296,7 @@ const recentlyViewedProducts = computed(() => {
 
                 <span
                     v-if="minPrice > 0 || maxPrice < 100000"
-                    class="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-sm font-medium text-gray-700 dark:text-gray-300"
+                    class="inline-flex items-center gap-1 rounded-full bg-slate-100 dark:bg-navy-800 px-3 py-1 text-sm font-medium text-slate-700 dark:text-slate-300"
                 >
                     ${{ (minPrice / 100).toFixed(0) }} - ${{ (maxPrice / 100).toFixed(0) }}
                     <button @click="minPrice = 0; maxPrice = 100000; applyFilters()" class="ml-1 hover:text-gray-900 dark:hover:text-white">
@@ -332,7 +332,7 @@ const recentlyViewedProducts = computed(() => {
 
                 <button
                     @click="clearFilters"
-                    class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-500"
+                    class="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-500"
                 >
                     Clear all
                 </button>
@@ -390,20 +390,20 @@ const recentlyViewedProducts = computed(() => {
                     </div>
 
                     <!-- Empty state -->
-                    <div v-else class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
-                        <div class="mx-auto h-24 w-24 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center mb-6">
-                            <svg class="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                    <div v-else class="text-center py-16 bg-white dark:bg-navy-800/60 rounded-xl border border-slate-200 dark:border-navy-800">
+                        <div class="mx-auto h-24 w-24 rounded-full bg-slate-100 dark:bg-navy-800 flex items-center justify-center mb-6">
+                            <svg class="h-12 w-12 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">No products found</h3>
-                        <p class="mt-2 text-gray-500 dark:text-gray-400">
+                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">No products found</h3>
+                        <p class="mt-2 text-slate-500 dark:text-slate-400">
                             Try adjusting your search or filter criteria
                         </p>
                         <button
                             v-if="hasActiveFilters"
                             @click="clearFilters"
-                            class="mt-6 inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+                            class="mt-6 inline-flex items-center rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-400 transition-colors"
                         >
                             Clear filters
                         </button>
@@ -411,7 +411,7 @@ const recentlyViewedProducts = computed(() => {
 
                     <!-- Pagination -->
                     <div v-if="products.last_page > 1" class="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">
+                        <p class="text-sm text-slate-500 dark:text-slate-400">
                             Showing {{ products.from }} to {{ products.to }} of {{ products.total }} results
                         </p>
 
@@ -419,7 +419,7 @@ const recentlyViewedProducts = computed(() => {
                             <Link
                                 v-if="products.prev_page_url"
                                 :href="products.prev_page_url"
-                                class="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                             >
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -428,7 +428,7 @@ const recentlyViewedProducts = computed(() => {
                             </Link>
                             <span
                                 v-else
-                                class="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                                class="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 px-4 py-2 text-sm font-medium text-slate-400 dark:text-slate-500 cursor-not-allowed"
                             >
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -436,14 +436,14 @@ const recentlyViewedProducts = computed(() => {
                                 Previous
                             </span>
 
-                            <span class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <span class="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                                 {{ products.current_page }} / {{ products.last_page }}
                             </span>
 
                             <Link
                                 v-if="products.next_page_url"
                                 :href="products.next_page_url"
-                                class="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                             >
                                 Next
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -452,7 +452,7 @@ const recentlyViewedProducts = computed(() => {
                             </Link>
                             <span
                                 v-else
-                                class="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                                class="inline-flex items-center gap-1 rounded-lg border border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-900 px-4 py-2 text-sm font-medium text-slate-400 dark:text-slate-500 cursor-not-allowed"
                             >
                                 Next
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -481,7 +481,7 @@ const recentlyViewedProducts = computed(() => {
                 >
                     <!-- Backdrop -->
                     <div
-                        class="fixed inset-0 bg-gray-900/50"
+                        class="fixed inset-0 bg-navy-950/60"
                         @click="showMobileFilters = false"
                     />
 
@@ -496,13 +496,13 @@ const recentlyViewedProducts = computed(() => {
                     >
                         <div
                             v-if="showMobileFilters"
-                            class="fixed inset-y-0 left-0 w-full max-w-xs bg-white dark:bg-gray-800 shadow-xl"
+                            class="fixed inset-y-0 left-0 w-full max-w-xs bg-white dark:bg-navy-800/60 shadow-xl"
                         >
-                            <div class="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Filters</h2>
+                            <div class="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-800">
+                                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Filters</h2>
                                 <button
                                     @click="showMobileFilters = false"
-                                    class="p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                    class="p-2 rounded-lg text-slate-400 hover:text-gray-600 hover:bg-slate-100 dark:hover:bg-navy-800"
                                 >
                                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />

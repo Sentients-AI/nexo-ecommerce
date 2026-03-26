@@ -36,6 +36,12 @@ export function useApi() {
         loading.value = true;
         error.value = null;
 
+        // Read XSRF-TOKEN cookie for Laravel CSRF verification on web-middleware routes
+        const xsrfToken = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('XSRF-TOKEN='))
+            ?.split('=')[1];
+
         const config: AxiosRequestConfig = {
             method,
             url,
@@ -45,6 +51,7 @@ export function useApi() {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
+                ...(xsrfToken ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrfToken) } : {}),
             },
         };
 

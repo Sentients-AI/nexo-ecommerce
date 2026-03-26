@@ -15,7 +15,7 @@ final class TenantSeeder extends Seeder
     public function run(): void
     {
         // Demo tenant 1 - Active subscription
-        Tenant::firstOrCreate(
+        Tenant::query()->firstOrCreate(
             ['slug' => 'acme-store'],
             [
                 'name' => 'ACME Store',
@@ -31,7 +31,7 @@ final class TenantSeeder extends Seeder
         );
 
         // Demo tenant 2 - On trial
-        Tenant::firstOrCreate(
+        Tenant::query()->firstOrCreate(
             ['slug' => 'gadget-world'],
             [
                 'name' => 'Gadget World',

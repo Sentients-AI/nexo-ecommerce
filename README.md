@@ -197,6 +197,36 @@ npm run build
 composer run dev
 ```
 
+### Post-Deploy: Search Index Population
+
+After a fresh deploy or a Typesense schema change, populate the search index. Use the
+`scout:import-all` command (introduced in this project) to flush and re-import all
+searchable models in one step:
+
+```bash
+# Flush existing data and re-import all models (recommended on fresh deploys)
+php artisan scout:import-all --fresh
+
+# Import without flushing (safe for incremental syncs)
+php artisan scout:import-all
+```
+
+If you need to target a single model:
+
+```bash
+php artisan scout:flush  "App\Domain\Product\Models\Product"
+php artisan scout:import "App\Domain\Product\Models\Product"
+php artisan scout:flush  "App\Domain\Category\Models\Category"
+php artisan scout:import "App\Domain\Category\Models\Category"
+php artisan scout:flush  "App\Domain\Order\Models\Order"
+php artisan scout:import "App\Domain\Order\Models\Order"
+```
+
+> **Important:** If `scout:import` is skipped after a deploy, searches return empty results
+> silently — no error, just zero products found. The Typesense health widget in the admin
+> Control Plane (System dashboard) shows the server status and document count per model so
+> you can verify the index is populated.
+
 ### Environment Variables
 
 ```env

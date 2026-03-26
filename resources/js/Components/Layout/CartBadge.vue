@@ -18,7 +18,7 @@ onMounted(() => {
 <template>
     <Link
         :href="localePath('/cart')"
-        class="relative p-2 rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+        class="relative p-2 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
     >
         <span class="sr-only">View cart</span>
 
@@ -48,7 +48,7 @@ onMounted(() => {
         >
             <span
                 v-if="hasItems"
-                class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-xs font-bold text-white"
+                class="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1.5 text-xs font-bold text-white"
             >
                 {{ displayCount }}
             </span>

@@ -38,23 +38,23 @@ defineProps<{
                 <div class="px-8 py-8 text-center">
                     <!-- Discount Offer -->
                     <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-6 mb-6">
-                        <p class="text-sm text-indigo-600 dark:text-indigo-400 font-medium uppercase tracking-wide mb-1">
+                        <p class="text-sm text-brand-600 dark:text-brand-400 font-medium uppercase tracking-wide mb-1">
                             Your exclusive offer
                         </p>
-                        <p class="text-5xl font-bold text-indigo-700 dark:text-indigo-300 mb-1">
+                        <p class="text-5xl font-bold text-brand-700 dark:text-brand-300 mb-1">
                             {{ referralCode.referee_discount_percent }}%
                         </p>
-                        <p class="text-gray-600 dark:text-gray-400">
+                        <p class="text-slate-600 dark:text-slate-400">
                             off your first order
                         </p>
                     </div>
 
                     <!-- Referral Code -->
                     <div class="mb-6">
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-2">
                             Your referral code
                         </p>
-                        <div class="bg-gray-100 dark:bg-gray-800 rounded-lg px-4 py-3 font-mono text-lg font-semibold text-gray-800 dark:text-gray-200 tracking-widest">
+                        <div class="bg-gray-100 dark:bg-navy-900/60 rounded-lg px-4 py-3 font-mono text-lg font-semibold text-gray-800 dark:text-gray-200 tracking-widest">
                             {{ referralCode.code }}
                         </div>
                     </div>
@@ -62,7 +62,7 @@ defineProps<{
                     <!-- Expiry -->
                     <p
                         v-if="referralCode.expires_at"
-                        class="text-sm text-gray-400 dark:text-gray-500 mb-6"
+                        class="text-sm text-slate-400 dark:text-slate-500 mb-6"
                     >
                         Offer expires {{ new Date(referralCode.expires_at).toLocaleDateString() }}
                     </p>
@@ -70,14 +70,14 @@ defineProps<{
                     <!-- CTA -->
                     <Link
                         href="/en/register"
-                        class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 text-center"
+                        class="block w-full bg-brand-500 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200 text-center"
                     >
                         Sign up &amp; claim your discount
                     </Link>
 
-                    <p class="mt-4 text-sm text-gray-400 dark:text-gray-500">
+                    <p class="mt-4 text-sm text-slate-400 dark:text-slate-500">
                         Already have an account?
-                        <Link href="/en/login" class="text-indigo-600 dark:text-indigo-400 hover:underline">
+                        <Link href="/en/login" class="text-brand-600 dark:text-brand-400 hover:underline">
                             Sign in
                         </Link>
                     </p>

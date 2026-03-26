@@ -104,7 +104,7 @@ function formatCentsInput(value: number): string {
             <!-- Back link -->
             <Link
                 :href="`/orders/${order.id}`"
-                class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors"
+                class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:text-slate-400 dark:hover:text-gray-300 transition-colors"
             >
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -114,24 +114,24 @@ function formatCentsInput(value: number): string {
 
             <!-- Header -->
             <div class="mt-6">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Request Refund</h1>
-                <p class="mt-2 text-gray-500 dark:text-gray-400">
-                    Order <span class="font-medium text-gray-700 dark:text-gray-300">{{ order.order_number }}</span>
+                <h1 class="text-3xl font-bold text-slate-900 dark:text-white">Request Refund</h1>
+                <p class="mt-2 text-slate-500 dark:text-slate-400">
+                    Order <span class="font-medium text-slate-700 dark:text-slate-300">{{ order.order_number }}</span>
                 </p>
             </div>
 
             <!-- Order summary -->
-            <div class="mt-8 rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 overflow-hidden shadow-sm">
-                <div class="border-b border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-800/50">
-                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Order Items</h2>
+            <div class="mt-8 rounded-2xl border border-slate-100 bg-white dark:border-navy-800/60 dark:bg-navy-900/60 overflow-hidden shadow-sm">
+                <div class="border-b border-slate-100 dark:border-navy-800/60 px-6 py-4 bg-slate-50 dark:bg-navy-900/80">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Order Items</h2>
                 </div>
-                <ul class="divide-y divide-gray-200 dark:divide-gray-700">
+                <ul class="divide-y divide-slate-100 dark:divide-navy-800/60">
                     <li
                         v-for="item in order.items"
                         :key="item.id"
                         class="flex items-center gap-4 px-6 py-4"
                     >
-                        <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-700">
+                        <div class="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-slate-100 dark:bg-navy-800">
                             <img
                                 v-if="item.product_image"
                                 :src="item.product_image"
@@ -139,32 +139,32 @@ function formatCentsInput(value: number): string {
                                 class="h-full w-full object-cover"
                             />
                             <div v-else class="flex h-full w-full items-center justify-center">
-                                <svg class="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                                 </svg>
                             </div>
                         </div>
                         <div class="flex-1 min-w-0">
-                            <p class="font-medium text-gray-900 dark:text-white truncate">{{ item.product_name }}</p>
-                            <p class="text-sm text-gray-500 dark:text-gray-400">Qty: {{ item.quantity }}</p>
+                            <p class="font-medium text-slate-900 dark:text-white truncate">{{ item.product_name }}</p>
+                            <p class="text-sm text-slate-500 dark:text-slate-400">Qty: {{ item.quantity }}</p>
                         </div>
-                        <p class="font-medium text-gray-900 dark:text-white">
+                        <p class="font-medium text-slate-900 dark:text-white">
                             {{ formatPrice(item.total_cents) }}
                         </p>
                     </li>
                 </ul>
-                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 space-y-2">
+                <div class="px-6 py-4 bg-slate-50 dark:bg-navy-900/80 space-y-2">
                     <div class="flex justify-between text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">Order Total</span>
-                        <span class="font-medium text-gray-900 dark:text-white">{{ formatPrice(order.total_cents) }}</span>
+                        <span class="text-slate-500 dark:text-slate-400">Order Total</span>
+                        <span class="font-medium text-slate-900 dark:text-white">{{ formatPrice(order.total_cents) }}</span>
                     </div>
                     <div v-if="order.refunded_amount_cents > 0" class="flex justify-between text-sm">
-                        <span class="text-gray-500 dark:text-gray-400">Already Refunded</span>
+                        <span class="text-slate-500 dark:text-slate-400">Already Refunded</span>
                         <span class="font-medium text-red-600 dark:text-red-400">-{{ formatPrice(order.refunded_amount_cents) }}</span>
                     </div>
-                    <div class="flex justify-between pt-2 border-t border-gray-200 dark:border-gray-700">
-                        <span class="font-semibold text-gray-900 dark:text-white">Refundable Amount</span>
-                        <span class="font-semibold text-gray-900 dark:text-white">{{ formatPrice(order.remaining_refundable_amount) }}</span>
+                    <div class="flex justify-between pt-2 border-t border-slate-100 dark:border-navy-800/60">
+                        <span class="font-semibold text-slate-900 dark:text-white">Refundable Amount</span>
+                        <span class="font-semibold text-slate-900 dark:text-white">{{ formatPrice(order.remaining_refundable_amount) }}</span>
                     </div>
                 </div>
             </div>
@@ -172,28 +172,28 @@ function formatCentsInput(value: number): string {
             <!-- Refund form -->
             <form @submit.prevent="openConfirmation" class="mt-8 space-y-8">
                 <!-- Refund type -->
-                <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Refund Amount</h3>
+                <div class="rounded-2xl border border-slate-100 bg-white dark:border-navy-800/60 dark:bg-navy-900/60 p-6 shadow-sm">
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Refund Amount</h3>
                     <div class="space-y-3">
                         <label
                             :class="[
                                 'flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all',
                                 refundType === 'full'
-                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
+                                    : 'border-slate-100 dark:border-navy-800/60 hover:border-gray-300 dark:hover:border-gray-600'
                             ]"
                         >
                             <input
                                 v-model="refundType"
                                 type="radio"
                                 value="full"
-                                class="h-5 w-5 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                class="h-5 w-5 border-gray-300 text-brand-600 focus:ring-brand-500"
                             />
                             <div class="flex-1">
-                                <p class="font-medium text-gray-900 dark:text-white">Full refund</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Get back the entire refundable amount</p>
+                                <p class="font-medium text-slate-900 dark:text-white">Full refund</p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Get back the entire refundable amount</p>
                             </div>
-                            <span class="text-lg font-semibold text-gray-900 dark:text-white">
+                            <span class="text-lg font-semibold text-slate-900 dark:text-white">
                                 {{ formatPrice(order.remaining_refundable_amount) }}
                             </span>
                         </label>
@@ -201,19 +201,19 @@ function formatCentsInput(value: number): string {
                             :class="[
                                 'flex items-center gap-4 p-4 rounded-xl border-2 cursor-pointer transition-all',
                                 refundType === 'partial'
-                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
+                                    : 'border-slate-100 dark:border-navy-800/60 hover:border-gray-300 dark:hover:border-gray-600'
                             ]"
                         >
                             <input
                                 v-model="refundType"
                                 type="radio"
                                 value="partial"
-                                class="h-5 w-5 border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                class="h-5 w-5 border-gray-300 text-brand-600 focus:ring-brand-500"
                             />
                             <div class="flex-1">
-                                <p class="font-medium text-gray-900 dark:text-white">Partial refund</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Specify a custom amount</p>
+                                <p class="font-medium text-slate-900 dark:text-white">Partial refund</p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Specify a custom amount</p>
                             </div>
                         </label>
                     </div>
@@ -228,11 +228,11 @@ function formatCentsInput(value: number): string {
                         leave-to-class="opacity-0 -translate-y-2"
                     >
                         <div v-if="refundType === 'partial'" class="mt-4">
-                            <label for="amount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <label for="amount" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                                 Custom Amount
                             </label>
                             <div class="relative">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500 dark:text-gray-400 font-medium">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500 dark:text-slate-400 font-medium">
                                     $
                                 </span>
                                 <input
@@ -243,10 +243,10 @@ function formatCentsInput(value: number): string {
                                     step="0.01"
                                     min="0.01"
                                     :max="order.remaining_refundable_amount / 100"
-                                    class="block w-full rounded-xl border-gray-300 dark:border-gray-600 py-3 pl-8 pr-4 text-gray-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700"
+                                    class="block w-full rounded-xl border-slate-300 dark:border-navy-700 py-3 pl-8 pr-4 text-slate-900 dark:text-white focus:border-brand-500 focus:ring-brand-500 dark:bg-gray-700"
                                 />
                             </div>
-                            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                            <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                 Maximum: {{ formatPrice(order.remaining_refundable_amount) }}
                             </p>
                         </div>
@@ -255,11 +255,11 @@ function formatCentsInput(value: number): string {
 
                 <!-- Reason -->
                 <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 p-6 shadow-sm">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Reason for Refund</h3>
+                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Reason for Refund</h3>
 
                     <!-- Quick select buttons -->
                     <div class="mb-4">
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">Quick select:</p>
+                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-3">Quick select:</p>
                         <div class="flex flex-wrap gap-2">
                             <button
                                 v-for="quickReason in quickReasons"
@@ -269,8 +269,8 @@ function formatCentsInput(value: number): string {
                                 :class="[
                                     'px-3 py-1.5 rounded-full text-sm font-medium transition-all',
                                     reason === quickReason.value
-                                        ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300 ring-2 ring-indigo-500'
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                                        ? 'bg-brand-100 text-brand-700 dark:bg-brand-900/50 dark:text-brand-300 ring-2 ring-brand-500'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-navy-700'
                                 ]"
                             >
                                 {{ quickReason.label }}
@@ -284,7 +284,7 @@ function formatCentsInput(value: number): string {
                         rows="4"
                         required
                         placeholder="Please provide additional details about your refund request..."
-                        class="block w-full rounded-xl border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white placeholder:text-gray-400"
+                        class="block w-full rounded-xl border-slate-300 dark:border-navy-700 shadow-sm focus:border-brand-500 focus:ring-brand-500 dark:bg-navy-800 dark:text-white placeholder:text-slate-400"
                     ></textarea>
                 </div>
 
@@ -311,14 +311,14 @@ function formatCentsInput(value: number): string {
                 <div class="flex flex-col sm:flex-row items-center justify-end gap-3">
                     <Link
                         :href="`/orders/${order.id}`"
-                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-6 py-3 text-base font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-900/60 px-6 py-3 text-base font-medium text-slate-700 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                     >
                         Cancel
                     </Link>
                     <button
                         type="submit"
                         :disabled="!canSubmit || loading"
-                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                         <Spinner v-if="loading" size="sm" color="white" />
                         {{ loading ? 'Submitting...' : 'Request Refund' }}
@@ -335,38 +335,38 @@ function formatCentsInput(value: number): string {
                         </svg>
                     </div>
 
-                    <h3 class="mt-4 text-center text-lg font-semibold text-gray-900 dark:text-white">
+                    <h3 class="mt-4 text-center text-lg font-semibold text-slate-900 dark:text-white">
                         Confirm Refund Request
                     </h3>
 
-                    <div class="mt-4 rounded-xl bg-gray-50 dark:bg-gray-800 p-4">
+                    <div class="mt-4 rounded-xl bg-slate-50 dark:bg-navy-900/80 p-4">
                         <dl class="space-y-2 text-sm">
                             <div class="flex justify-between">
-                                <dt class="text-gray-500 dark:text-gray-400">Order</dt>
-                                <dd class="font-medium text-gray-900 dark:text-white">{{ order.order_number }}</dd>
+                                <dt class="text-slate-500 dark:text-slate-400">Order</dt>
+                                <dd class="font-medium text-slate-900 dark:text-white">{{ order.order_number }}</dd>
                             </div>
                             <div class="flex justify-between">
-                                <dt class="text-gray-500 dark:text-gray-400">Refund Amount</dt>
-                                <dd class="font-semibold text-indigo-600 dark:text-indigo-400">{{ formatPrice(refundAmount) }}</dd>
+                                <dt class="text-slate-500 dark:text-slate-400">Refund Amount</dt>
+                                <dd class="font-semibold text-brand-600 dark:text-brand-400">{{ formatPrice(refundAmount) }}</dd>
                             </div>
                         </dl>
                     </div>
 
-                    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400 text-center">
+                    <p class="mt-4 text-sm text-slate-500 dark:text-slate-400 text-center">
                         This request will be reviewed by our team. Refunds typically take 5-10 business days to process.
                     </p>
 
                     <div class="mt-6 flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
                         <button
                             @click="closeConfirmation"
-                            class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-900/60 px-5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                         >
                             Go Back
                         </button>
                         <button
                             @click="handleSubmit"
                             :disabled="loading"
-                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-400 disabled:opacity-50 transition-colors"
                         >
                             <Spinner v-if="loading" size="xs" color="white" />
                             {{ loading ? 'Submitting...' : 'Confirm Request' }}

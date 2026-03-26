@@ -73,10 +73,10 @@ const displayedProducts = computed(() => {
             <!-- Header -->
             <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-3xl font-bold text-slate-900 dark:text-white">
                         {{ t('wishlist.title') }}
                     </h1>
-                    <p class="mt-1 text-gray-600 dark:text-gray-400">
+                    <p class="mt-1 text-slate-600 dark:text-slate-400">
                         {{ wishlistCount }} {{ wishlistCount === 1 ? 'item' : 'items' }}
                     </p>
                 </div>
@@ -102,7 +102,7 @@ const displayedProducts = computed(() => {
                         <!-- Remove button overlay -->
                         <button
                             @click="handleRemove(product.id)"
-                            class="absolute top-2 right-2 z-10 rounded-full bg-white dark:bg-gray-800 p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 shadow-md hover:shadow-lg transition-all"
+                            class="absolute top-2 right-2 z-10 rounded-full bg-white dark:bg-navy-900/60 p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 shadow-md hover:shadow-lg transition-all"
                             :title="t('wishlist.remove')"
                         >
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
@@ -114,21 +114,21 @@ const displayedProducts = computed(() => {
             </div>
 
             <!-- Empty state -->
-            <div v-else class="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div v-else class="text-center py-16 bg-white dark:bg-navy-900/60 rounded-xl border border-slate-100 dark:border-navy-800/60">
                 <div class="mx-auto h-24 w-24 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-6">
                     <svg class="h-12 w-12 text-red-300 dark:text-red-700" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
                     {{ t('wishlist.empty') }}
                 </h3>
-                <p class="mt-2 text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                <p class="mt-2 text-slate-500 dark:text-slate-400 max-w-md mx-auto">
                     {{ t('wishlist.empty_description') }}
                 </p>
                 <Link
                     :href="localePath('/products')"
-                    class="mt-6 inline-flex items-center rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-500 transition-colors"
+                    class="mt-6 inline-flex items-center rounded-lg bg-brand-500 px-6 py-3 text-sm font-semibold text-white hover:bg-brand-400 transition-colors"
                 >
                     {{ t('wishlist.browse_products') }}
                 </Link>

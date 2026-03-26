@@ -54,9 +54,9 @@ const passwordStrength = computed(() => {
     if (checks.special) score++;
 
     if (score <= 2) return { score, label: 'Weak', color: 'bg-red-500' };
-    if (score <= 3) return { score, label: 'Fair', color: 'bg-yellow-500' };
-    if (score <= 4) return { score, label: 'Good', color: 'bg-blue-500' };
-    return { score, label: 'Strong', color: 'bg-green-500' };
+    if (score <= 3) return { score, label: 'Fair', color: 'bg-amber-500' };
+    if (score <= 4) return { score, label: 'Good', color: 'bg-brand-500' };
+    return { score, label: 'Strong', color: 'bg-accent-500' };
 });
 
 const passwordsMatch = computed(() => {
@@ -70,23 +70,23 @@ const passwordsMatch = computed(() => {
     <GuestLayout>
         <div class="flex min-h-[calc(100vh-10rem)]">
             <!-- Left side - Illustration (hidden on mobile) -->
-            <div class="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 relative overflow-hidden">
-                <!-- Background pattern -->
-                <div class="absolute inset-0 opacity-10">
+            <div class="hidden lg:flex lg:w-1/2 bg-navy-950 relative overflow-hidden">
+                <!-- Gradient orbs -->
+                <div class="absolute top-1/4 right-1/4 w-64 h-64 bg-accent-500/20 rounded-full blur-3xl animate-float" />
+                <div class="absolute bottom-1/3 left-1/4 w-48 h-48 bg-brand-500/15 rounded-full blur-3xl animate-float" style="animation-delay: 1.5s;" />
+                <div class="absolute top-1/2 right-1/2 w-32 h-32 bg-accent-400/10 rounded-full blur-2xl animate-float" style="animation-delay: 3s;" />
+
+                <!-- Dot grid overlay -->
+                <div class="absolute inset-0 opacity-5">
                     <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
                         <defs>
-                            <pattern id="circles" width="20" height="20" patternUnits="userSpaceOnUse">
-                                <circle cx="10" cy="10" r="2" fill="white" />
+                            <pattern id="reg-dots" width="10" height="10" patternUnits="userSpaceOnUse">
+                                <circle cx="5" cy="5" r="1" fill="white" />
                             </pattern>
                         </defs>
-                        <rect width="100" height="100" fill="url(#circles)" />
+                        <rect width="100" height="100" fill="url(#reg-dots)" />
                     </svg>
                 </div>
-
-                <!-- Floating shapes -->
-                <div class="absolute top-32 right-10 w-24 h-24 bg-white/10 rounded-full blur-xl animate-pulse" />
-                <div class="absolute bottom-20 left-20 w-36 h-36 bg-cyan-300/20 rounded-full blur-2xl animate-pulse" style="animation-delay: 1s;" />
-                <div class="absolute top-1/3 right-1/4 w-20 h-20 bg-emerald-200/20 rounded-full blur-xl animate-pulse" style="animation-delay: 2s;" />
 
                 <!-- Content -->
                 <div class="relative z-10 flex flex-col justify-center px-12 xl:px-20">
@@ -94,41 +94,41 @@ const passwordsMatch = computed(() => {
                         <h1 class="text-4xl xl:text-5xl font-bold text-white leading-tight">
                             Join our community
                         </h1>
-                        <p class="mt-4 text-lg text-emerald-100 max-w-md">
+                        <p class="mt-4 text-lg text-navy-300 max-w-md">
                             Create an account to unlock exclusive benefits and start your shopping journey.
                         </p>
                     </div>
 
                     <!-- Benefits list -->
                     <div class="mt-12 space-y-4">
-                        <div class="flex items-center gap-3 text-white/90">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <div class="flex items-center gap-3 text-white/80">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-500/15 border border-accent-500/20">
+                                <svg class="h-5 w-5 text-accent-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <span>Earn rewards on every purchase</span>
                         </div>
-                        <div class="flex items-center gap-3 text-white/90">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <div class="flex items-center gap-3 text-white/80">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/15 border border-brand-500/20">
+                                <svg class="h-5 w-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
                                 </svg>
                             </div>
                             <span>Early access to sales and new products</span>
                         </div>
-                        <div class="flex items-center gap-3 text-white/90">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <div class="flex items-center gap-3 text-white/80">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/15 border border-brand-500/20">
+                                <svg class="h-5 w-5 text-brand-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
                                 </svg>
                             </div>
                             <span>Free shipping on orders over $50</span>
                         </div>
-                        <div class="flex items-center gap-3 text-white/90">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <div class="flex items-center gap-3 text-white/80">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-500/15 border border-accent-500/20">
+                                <svg class="h-5 w-5 text-accent-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
                                 </svg>
                             </div>
@@ -139,16 +139,16 @@ const passwordsMatch = computed(() => {
             </div>
 
             <!-- Right side - Form -->
-            <div class="flex w-full lg:w-1/2 flex-col justify-center px-4 sm:px-6 lg:px-12 xl:px-20 py-12">
+            <div class="flex w-full lg:w-1/2 flex-col justify-center px-4 sm:px-6 lg:px-12 xl:px-20 py-12 bg-white dark:bg-navy-950">
                 <div class="mx-auto w-full max-w-md">
                     <!-- Header -->
                     <div class="text-center lg:text-left">
-                        <h2 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
+                        <h2 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
                             Create your account
                         </h2>
-                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                        <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
                             Already have an account?
-                            <Link :href="localePath('/login')" class="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 transition-colors">
+                            <Link :href="localePath('/login')" class="font-semibold text-brand-600 hover:text-brand-500 dark:text-brand-400 transition-colors">
                                 Sign in
                             </Link>
                         </p>
@@ -158,12 +158,12 @@ const passwordsMatch = computed(() => {
                     <form @submit.prevent="submit" class="mt-8 space-y-5">
                         <!-- Name -->
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label for="name" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                 Full name
                             </label>
                             <div class="mt-2 relative">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                                     </svg>
                                 </div>
@@ -176,10 +176,10 @@ const passwordsMatch = computed(() => {
                                     required
                                     placeholder="John Doe"
                                     :class="[
-                                        'block w-full rounded-xl border py-3 pl-11 pr-4 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors',
+                                        'block w-full rounded-xl border py-3 pl-11 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors',
                                         form.errors.name
                                             ? 'border-red-300 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20'
-                                            : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500/20 dark:bg-gray-800'
+                                            : 'border-slate-300 dark:border-navy-700 focus:border-brand-500 focus:ring-brand-500/20 dark:bg-navy-800/60'
                                     ]"
                                 />
                             </div>
@@ -190,12 +190,12 @@ const passwordsMatch = computed(() => {
 
                         <!-- Email -->
                         <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label for="email" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                 Email address
                             </label>
                             <div class="mt-2 relative">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
                                     </svg>
                                 </div>
@@ -208,10 +208,10 @@ const passwordsMatch = computed(() => {
                                     required
                                     placeholder="you@example.com"
                                     :class="[
-                                        'block w-full rounded-xl border py-3 pl-11 pr-4 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors',
+                                        'block w-full rounded-xl border py-3 pl-11 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors',
                                         form.errors.email
                                             ? 'border-red-300 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20'
-                                            : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500/20 dark:bg-gray-800'
+                                            : 'border-slate-300 dark:border-navy-700 focus:border-brand-500 focus:ring-brand-500/20 dark:bg-navy-800/60'
                                     ]"
                                 />
                             </div>
@@ -222,12 +222,12 @@ const passwordsMatch = computed(() => {
 
                         <!-- Password -->
                         <div>
-                            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label for="password" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                 Password
                             </label>
                             <div class="mt-2 relative">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                                     </svg>
                                 </div>
@@ -240,16 +240,16 @@ const passwordsMatch = computed(() => {
                                     required
                                     placeholder="Create a strong password"
                                     :class="[
-                                        'block w-full rounded-xl border py-3 pl-11 pr-12 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors',
+                                        'block w-full rounded-xl border py-3 pl-11 pr-12 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors',
                                         form.errors.password
                                             ? 'border-red-300 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20'
-                                            : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500/20 dark:bg-gray-800'
+                                            : 'border-slate-300 dark:border-navy-700 focus:border-brand-500 focus:ring-brand-500/20 dark:bg-navy-800/60'
                                     ]"
                                 />
                                 <button
                                     type="button"
                                     @click="togglePassword"
-                                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                 >
                                     <svg v-if="showPassword" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
@@ -264,14 +264,14 @@ const passwordsMatch = computed(() => {
                             <!-- Password strength indicator -->
                             <div v-if="form.password" class="mt-3">
                                 <div class="flex items-center justify-between mb-1.5">
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">Password strength</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">Password strength</span>
                                     <span
                                         :class="[
                                             'text-xs font-medium',
                                             passwordStrength.score <= 2 ? 'text-red-600 dark:text-red-400' :
-                                            passwordStrength.score <= 3 ? 'text-yellow-600 dark:text-yellow-400' :
-                                            passwordStrength.score <= 4 ? 'text-blue-600 dark:text-blue-400' :
-                                            'text-green-600 dark:text-green-400'
+                                            passwordStrength.score <= 3 ? 'text-amber-600 dark:text-amber-400' :
+                                            passwordStrength.score <= 4 ? 'text-brand-600 dark:text-brand-400' :
+                                            'text-accent-600 dark:text-accent-400'
                                         ]"
                                     >
                                         {{ passwordStrength.label }}
@@ -282,7 +282,7 @@ const passwordsMatch = computed(() => {
                                         v-for="i in 5"
                                         :key="i"
                                         class="h-1.5 flex-1 rounded-full transition-colors"
-                                        :class="i <= passwordStrength.score ? passwordStrength.color : 'bg-gray-200 dark:bg-gray-700'"
+                                        :class="i <= passwordStrength.score ? passwordStrength.color : 'bg-slate-200 dark:bg-navy-700'"
                                     />
                                 </div>
                             </div>
@@ -294,12 +294,12 @@ const passwordsMatch = computed(() => {
 
                         <!-- Confirm Password -->
                         <div>
-                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            <label for="password_confirmation" class="block text-sm font-medium text-slate-700 dark:text-slate-300">
                                 Confirm password
                             </label>
                             <div class="mt-2 relative">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
                                 </div>
@@ -312,18 +312,18 @@ const passwordsMatch = computed(() => {
                                     required
                                     placeholder="Confirm your password"
                                     :class="[
-                                        'block w-full rounded-xl border py-3 pl-11 pr-12 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors',
+                                        'block w-full rounded-xl border py-3 pl-11 pr-12 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors',
                                         form.password_confirmation && !passwordsMatch
                                             ? 'border-red-300 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20'
                                             : passwordsMatch
-                                                ? 'border-green-300 dark:border-green-600 focus:border-green-500 focus:ring-green-500/20 dark:bg-gray-800'
-                                                : 'border-gray-300 dark:border-gray-600 focus:border-indigo-500 focus:ring-indigo-500/20 dark:bg-gray-800'
+                                                ? 'border-accent-300 dark:border-accent-700 focus:border-accent-500 focus:ring-accent-500/20 dark:bg-navy-800/60'
+                                                : 'border-slate-300 dark:border-navy-700 focus:border-brand-500 focus:ring-brand-500/20 dark:bg-navy-800/60'
                                     ]"
                                 />
                                 <button
                                     type="button"
                                     @click="toggleConfirmPassword"
-                                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                 >
                                     <svg v-if="showConfirmPassword" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
@@ -337,7 +337,7 @@ const passwordsMatch = computed(() => {
                             <p v-if="form.password_confirmation && !passwordsMatch" class="mt-2 text-sm text-red-600 dark:text-red-400">
                                 Passwords do not match
                             </p>
-                            <p v-else-if="passwordsMatch" class="mt-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-1">
+                            <p v-else-if="passwordsMatch" class="mt-2 text-sm text-accent-600 dark:text-accent-400 flex items-center gap-1">
                                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                 </svg>
@@ -346,18 +346,18 @@ const passwordsMatch = computed(() => {
                         </div>
 
                         <!-- Terms -->
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
                             By creating an account, you agree to our
-                            <Link :href="localePath('/terms')" class="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">Terms of Service</Link>
+                            <Link :href="localePath('/terms')" class="text-brand-600 hover:text-brand-500 dark:text-brand-400">Terms of Service</Link>
                             and
-                            <Link :href="localePath('/privacy')" class="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400">Privacy Policy</Link>.
+                            <Link :href="localePath('/privacy')" class="text-brand-600 hover:text-brand-500 dark:text-brand-400">Privacy Policy</Link>.
                         </p>
 
                         <!-- Submit button -->
                         <button
                             type="submit"
                             :disabled="form.processing"
-                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-500 px-4 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-500/30 hover:bg-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <Spinner v-if="form.processing" size="sm" color="white" />
                             <span>{{ form.processing ? 'Creating account...' : 'Create account' }}</span>
@@ -366,18 +366,18 @@ const passwordsMatch = computed(() => {
                         <!-- Divider -->
                         <div class="relative">
                             <div class="absolute inset-0 flex items-center">
-                                <div class="w-full border-t border-gray-200 dark:border-gray-700" />
+                                <div class="w-full border-t border-slate-200 dark:border-navy-700" />
                             </div>
                             <div class="relative flex justify-center text-sm">
-                                <span class="bg-white dark:bg-gray-900 px-4 text-gray-500 dark:text-gray-400">Or sign up with</span>
+                                <span class="bg-white dark:bg-navy-950 px-4 text-slate-500 dark:text-slate-400">Or sign up with</span>
                             </div>
                         </div>
 
-                        <!-- Social login buttons (placeholder) -->
+                        <!-- Social signup buttons -->
                         <div class="grid grid-cols-2 gap-3">
-                            <button
-                                type="button"
-                                class="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                            <a
+                                href="/auth/google/redirect"
+                                class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                             >
                                 <svg class="h-5 w-5" viewBox="0 0 24 24">
                                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -386,10 +386,10 @@ const passwordsMatch = computed(() => {
                                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                                 </svg>
                                 Google
-                            </button>
+                            </a>
                             <button
                                 type="button"
-                                class="flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                class="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 px-4 py-3 text-sm font-medium text-slate-700 dark:text-slate-300 shadow-sm hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
                             >
                                 <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
