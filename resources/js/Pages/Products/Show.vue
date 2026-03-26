@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link, usePage, Deferred } from '@inertiajs/vue3';
 import { useStockUpdates, usePriceUpdates } from '@/Composables/useStockUpdates';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -63,6 +63,7 @@ interface Props {
     product: ProductApiResource & { active_variants?: ProductVariant[] };
     reviewStats: ReviewStats;
     relatedProducts: ProductApiResource[];
+    recommendations?: ProductApiResource[];
 }
 
 const props = defineProps<Props>();
@@ -845,6 +846,40 @@ const trustBadges = computed(() => [
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- AI Recommendations: Customers Also Bought -->
+            <div class="mt-16">
+                <Deferred data="recommendations">
+                    <template #fallback>
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Customers Also Bought</h2>
+                        <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            <div
+                                v-for="n in 4"
+                                :key="n"
+                                class="animate-pulse rounded-2xl border border-slate-100 bg-white dark:border-navy-800/60 dark:bg-navy-900/60 overflow-hidden"
+                            >
+                                <div class="h-48 bg-slate-200 dark:bg-navy-800" />
+                                <div class="p-4 space-y-3">
+                                    <div class="h-4 rounded bg-slate-200 dark:bg-navy-800 w-3/4" />
+                                    <div class="h-3 rounded bg-slate-200 dark:bg-navy-800 w-1/2" />
+                                    <div class="h-5 rounded bg-slate-200 dark:bg-navy-800 w-1/3" />
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template v-if="recommendations && recommendations.length > 0">
+                        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Customers Also Bought</h2>
+                        <div class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                            <ProductCard
+                                v-for="rec in recommendations.slice(0, 4)"
+                                :key="rec.id"
+                                :product="rec"
+                            />
+                        </div>
+                    </template>
+                </Deferred>
             </div>
 
             <!-- Related products -->

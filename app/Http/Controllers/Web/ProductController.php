@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Web;
 
 use App\Domain\Category\Models\Category;
+use App\Domain\Product\Actions\GetProductRecommendationsAction;
 use App\Domain\Product\Models\Product;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -113,7 +114,7 @@ final class ProductController extends Controller
         ]);
     }
 
-    public function show(string $locale, Product $product): Response
+    public function show(string $locale, Product $product, GetProductRecommendationsAction $recommendations): Response
     {
         if (! $product->is_active) {
             abort(404);
@@ -157,6 +158,7 @@ final class ProductController extends Controller
             'product' => $product,
             'reviewStats' => $reviewStats,
             'relatedProducts' => $relatedProducts,
+            'recommendations' => Inertia::defer(fn () => $recommendations->execute($product)),
         ]);
     }
 }
