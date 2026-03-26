@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\AddressController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
@@ -11,11 +12,37 @@ use App\Http\Controllers\Web\ReferralWebController;
 use App\Http\Controllers\Web\RefundController;
 use App\Http\Controllers\Web\SocialiteController;
 use App\Http\Controllers\Web\StoreController;
+use App\Http\Controllers\Web\VendorAnalyticsController;
+use App\Http\Controllers\Web\VendorCustomerController;
+use App\Http\Controllers\Web\VendorDashboardController;
+use App\Http\Controllers\Web\VendorInventoryController;
+use App\Http\Controllers\Web\VendorOrderController;
+use App\Http\Controllers\Web\VendorProductController;
+use App\Http\Controllers\Web\VendorPromotionController;
+use App\Http\Controllers\Web\VendorSettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 // Root redirects to default locale
 Route::get('/', fn () => redirect('/en'));
+
+// Vendor dashboard (authenticated, no locale prefix for clean URLs)
+Route::prefix('vendor')
+    ->name('vendor.')
+    ->middleware(['auth', 'tenant.user'])
+    ->group(function () {
+        Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/orders', [VendorOrderController::class, 'index'])->name('orders.index');
+        Route::patch('/orders/{order}/status', [VendorOrderController::class, 'updateStatus'])->name('orders.update-status');
+        Route::post('/orders/{order}/ship', [VendorOrderController::class, 'shipOrder'])->name('orders.ship');
+        Route::get('/products', [VendorProductController::class, 'index'])->name('products.index');
+        Route::get('/inventory', [VendorInventoryController::class, 'index'])->name('inventory.index');
+        Route::patch('/inventory/{stock}', [VendorInventoryController::class, 'update'])->name('inventory.update');
+        Route::get('/customers', [VendorCustomerController::class, 'index'])->name('customers.index');
+        Route::get('/analytics', [VendorAnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/promotions', [VendorPromotionController::class, 'index'])->name('promotions.index');
+        Route::get('/settings', [VendorSettingsController::class, 'index'])->name('settings.index');
+    });
 
 // Referral links (global, no locale prefix needed)
 Route::get('/r/{code}', [ReferralWebController::class, 'show'])->name('referral.use');
@@ -63,12 +90,19 @@ Route::prefix('{locale}')
             Route::get('/checkout/pending', [CheckoutController::class, 'pending'])->name('checkout.pending');
             Route::get('/checkout/result', [CheckoutController::class, 'result'])->name('checkout.result');
 
+            // Addresses
+            Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');
+            Route::post('/addresses', [AddressController::class, 'store'])->name('addresses.store');
+            Route::patch('/addresses/{address}', [AddressController::class, 'update'])->name('addresses.update');
+            Route::delete('/addresses/{address}', [AddressController::class, 'destroy'])->name('addresses.destroy');
+            Route::patch('/addresses/{address}/default', [AddressController::class, 'setDefault'])->name('addresses.set-default');
+
             // Orders
             Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
-            Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+            Route::get('/orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
 
             // Refunds
-            Route::get('/orders/{order}/refund', [RefundController::class, 'create'])->name('refunds.create');
+            Route::get('/orders/{orderId}/refund', [RefundController::class, 'create'])->name('refunds.create');
             Route::get('/refunds/{refund}', [RefundController::class, 'show'])->name('refunds.show');
         });
     });

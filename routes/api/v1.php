@@ -42,6 +42,8 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
 Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     // Reviews (authenticated)
     Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store'])->name('api.v1.products.reviews.store');
+    Route::post('/reviews/{review}/replies', [ReviewController::class, 'storeReply'])->name('api.v1.reviews.replies.store');
+    Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('api.v1.reviews.vote');
     // Checkout
     Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('api.v1.checkout');
     Route::post('/checkout/confirm-payment', [CheckoutController::class, 'confirmPayment'])->name('api.v1.checkout.confirm-payment');

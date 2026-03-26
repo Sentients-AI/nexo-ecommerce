@@ -40,6 +40,12 @@ final class Order extends BaseModel
         'refunded_amount_cents',
         'promotion_id',
         'discount_cents',
+        'loyalty_discount_cents',
+        'shipping_address',
+        'carrier',
+        'tracking_number',
+        'shipped_at',
+        'estimated_delivery_at',
     ];
 
     /**
@@ -171,6 +177,16 @@ final class Order extends BaseModel
         return $this->total_cents - ($this->refunded_amount_cents ?? 0);
     }
 
+    public function isShipped(): bool
+    {
+        return $this->status === OrderStatus::Shipped;
+    }
+
+    public function hasTracking(): bool
+    {
+        return filled($this->tracking_number);
+    }
+
     public function isPartiallyRefunded(): bool
     {
         return $this->status === OrderStatus::PartiallyRefunded;
@@ -222,7 +238,11 @@ final class Order extends BaseModel
             'total_cents' => 'integer',
             'refunded_amount_cents' => 'integer',
             'discount_cents' => 'integer',
+            'loyalty_discount_cents' => 'integer',
             'status' => OrderStatus::class,
+            'shipping_address' => 'array',
+            'shipped_at' => 'datetime',
+            'estimated_delivery_at' => 'date',
         ];
     }
 }

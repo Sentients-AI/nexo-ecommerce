@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Orders\Pages;
 
 use App\Domain\Order\Actions\CancelOrder;
+use App\Domain\Order\Actions\ShipOrderAction;
+use App\Domain\Order\DTOs\ShipOrderData;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Actions\RetryPaymentIntentAction;
 use App\Filament\Resources\Orders\OrderResource;
 use Exception;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
@@ -21,6 +25,51 @@ final class ViewOrder extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('ship_order')
+                ->label('Ship Order')
+                ->icon('heroicon-o-truck')
+                ->color('info')
+                ->modalHeading('Mark Order as Shipped')
+                ->modalDescription('Enter the shipment tracking details below.')
+                ->form([
+                    TextInput::make('carrier')
+                        ->label('Carrier')
+                        ->placeholder('e.g. FedEx, UPS, DHL')
+                        ->required()
+                        ->maxLength(100),
+
+                    TextInput::make('tracking_number')
+                        ->label('Tracking Number')
+                        ->required()
+                        ->maxLength(100),
+
+                    DatePicker::make('estimated_delivery_at')
+                        ->label('Estimated Delivery Date')
+                        ->minDate(today()->addDay())
+                        ->nullable(),
+                ])
+                ->visible(fn (Order $record): bool => $record->status->canTransitionTo(OrderStatus::Shipped))
+                ->action(function (Order $record, array $data): void {
+                    try {
+                        app(ShipOrderAction::class)->execute(
+                            $record,
+                            ShipOrderData::fromRequest($data),
+                        );
+
+                        Notification::make()
+                            ->title('Order Shipped')
+                            ->body("Order {$record->order_number} has been marked as shipped.")
+                            ->success()
+                            ->send();
+                    } catch (Exception $e) {
+                        Notification::make()
+                            ->title('Failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+
             Action::make('cancel_order')
                 ->label('Cancel Order')
                 ->icon('heroicon-o-x-circle')

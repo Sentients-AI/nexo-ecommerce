@@ -45,13 +45,16 @@ final class OrderController extends Controller
         ]);
     }
 
-    public function show(Request $request, Order $order): Response
+    public function show(Request $request): Response
     {
-        if ($order->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $orderId = (int) $request->route('orderId');
 
-        $order->load(['items', 'paymentIntent', 'refunds']);
+        $order = Order::query()
+            ->where('id', $orderId)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $order->load(['items.product', 'paymentIntent', 'refunds']);
 
         return Inertia::render('Orders/Show', [
             'order' => [
@@ -68,11 +71,11 @@ final class OrderController extends Controller
                 'remaining_refundable_amount' => $order->getRemainingRefundableAmount(),
                 'items' => $order->items->map(fn ($item) => [
                     'id' => $item->id,
-                    'product_name' => $item->product_name,
-                    'product_sku' => $item->product_sku,
+                    'product_name' => $item->product?->name ?? 'Unknown',
+                    'product_sku' => $item->product?->sku ?? '',
                     'quantity' => $item->quantity,
-                    'unit_price_cents' => $item->unit_price_cents,
-                    'total_cents' => $item->total_cents,
+                    'unit_price_cents' => $item->price_cents_snapshot,
+                    'total_cents' => $item->price_cents_snapshot * $item->quantity,
                 ])->toArray(),
                 'payment_intent' => $order->paymentIntent ? [
                     'id' => $order->paymentIntent->id,
@@ -86,6 +89,10 @@ final class OrderController extends Controller
                     'reason' => $refund->reason,
                     'created_at' => $refund->created_at->toISOString(),
                 ])->toArray(),
+                'carrier' => $order->carrier,
+                'tracking_number' => $order->tracking_number,
+                'shipped_at' => $order->shipped_at?->toISOString(),
+                'estimated_delivery_at' => $order->estimated_delivery_at?->toDateString(),
                 'created_at' => $order->created_at->toISOString(),
                 'updated_at' => $order->updated_at->toISOString(),
             ],
