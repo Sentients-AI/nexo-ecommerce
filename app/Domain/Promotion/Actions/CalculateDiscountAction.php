@@ -6,6 +6,7 @@ namespace App\Domain\Promotion\Actions;
 
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Promotion\DTOs\DiscountCalculationResult;
+use App\Domain\Promotion\Enums\DiscountType;
 use App\Domain\Promotion\Enums\PromotionScope;
 use App\Domain\Promotion\Models\Promotion;
 use App\Domain\Promotion\Specifications\PromotionIsValid;
@@ -53,8 +54,14 @@ final readonly class CalculateDiscountAction
             return DiscountCalculationResult::zero();
         }
 
-        // Calculate discount
-        $discountCents = $promotion->calculateDiscount($eligibleSubtotalCents);
+        // Calculate discount based on type
+        $discountCents = match ($promotion->discount_type) {
+            DiscountType::Bogo => $promotion->calculateBogoDiscount(
+                $this->expandItemsToUnitPrices($cart, $eligibleItemIds),
+            ),
+            DiscountType::Tiered => $promotion->calculateTieredDiscount($eligibleSubtotalCents),
+            default => $promotion->calculateDiscount($eligibleSubtotalCents),
+        };
 
         return new DiscountCalculationResult(
             discountCents: $discountCents,
@@ -62,5 +69,28 @@ final readonly class CalculateDiscountAction
             promotionId: $promotion->id,
             eligibleItemIds: $eligibleItemIds,
         );
+    }
+
+    /**
+     * Expand eligible cart items into a flat array of unit prices (one entry per quantity unit).
+     *
+     * @param  array<int>  $eligibleItemIds
+     * @return array<int>
+     */
+    private function expandItemsToUnitPrices(Cart $cart, array $eligibleItemIds): array
+    {
+        $prices = [];
+
+        foreach ($cart->items as $item) {
+            if (! in_array($item->id, $eligibleItemIds, true)) {
+                continue;
+            }
+
+            for ($i = 0; $i < $item->quantity; $i++) {
+                $prices[] = $item->price_cents_snapshot;
+            }
+        }
+
+        return $prices;
     }
 }

@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Domain\Promotion\Models\Promotion;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,11 +22,16 @@ final class VendorPromotionController extends Controller
                 'id' => $p->id,
                 'name' => $p->name,
                 'code' => $p->code,
-                'discount_type' => $p->discount_type,
+                'discount_type' => $p->discount_type->value,
                 'discount_value' => $p->discount_value,
                 'scope' => $p->scope,
                 'auto_apply' => $p->auto_apply,
                 'is_active' => $p->is_active,
+                'is_flash_sale' => $p->is_flash_sale,
+                'buy_quantity' => $p->buy_quantity,
+                'get_quantity' => $p->get_quantity,
+                'tiers' => $p->tiers,
+                'time_remaining_seconds' => $p->timeRemainingSeconds(),
                 'usage_count' => $p->usage_count,
                 'usage_limit' => $p->usage_limit,
                 'usages_count' => $p->usages_count,
@@ -45,5 +51,15 @@ final class VendorPromotionController extends Controller
             'active_count' => $activeCount,
             'expired_count' => $expiredCount,
         ]);
+    }
+
+    public function toggle(Promotion $promotion): RedirectResponse
+    {
+        $promotion->update(['is_active' => ! $promotion->is_active]);
+
+        return redirect()->back()->with('success', $promotion->is_active
+            ? "Promotion \"{$promotion->name}\" enabled."
+            : "Promotion \"{$promotion->name}\" disabled."
+        );
     }
 }

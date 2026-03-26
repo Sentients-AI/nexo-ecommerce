@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 
 interface PromotionRow {
@@ -11,6 +12,11 @@ interface PromotionRow {
     scope: string;
     auto_apply: boolean;
     is_active: boolean;
+    is_flash_sale: boolean;
+    buy_quantity: number | null;
+    get_quantity: number | null;
+    tiers: Array<{ min_cents: number; discount_bps: number }> | null;
+    time_remaining_seconds: number;
     usage_count: number;
     usage_limit: number | null;
     minimum_order_cents: number | null;
@@ -29,6 +35,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const togglingId = ref<number | null>(null);
+
 function formatDate(iso: string | null): string {
     if (!iso) { return '—'; }
     return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -37,6 +45,38 @@ function formatDate(iso: string | null): string {
 function formatCurrency(cents: number | null): string {
     if (!cents) { return '—'; }
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+}
+
+function formatCountdown(seconds: number): string {
+    if (seconds <= 0) { return 'Ended'; }
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    if (hours > 24) {
+        const days = Math.floor(hours / 24);
+        return `${days}d ${hours % 24}h`;
+    }
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function discountTypeLabel(type: string): string {
+    const labels: Record<string, string> = {
+        fixed: 'Fixed',
+        percentage: '%',
+        bogo: 'BOGO',
+        tiered: 'Tiered',
+    };
+    return labels[type] ?? type;
+}
+
+function discountTypeBadgeClass(type: string): string {
+    const classes: Record<string, string> = {
+        fixed: 'bg-sky-500/15 text-sky-400 border border-sky-500/20',
+        percentage: 'bg-violet-500/15 text-violet-400 border border-violet-500/20',
+        bogo: 'bg-pink-500/15 text-pink-400 border border-pink-500/20',
+        tiered: 'bg-amber-500/15 text-amber-400 border border-amber-500/20',
+    };
+    return classes[type] ?? 'bg-navy-700/50 text-navy-400 border border-navy-600/30';
 }
 
 function statusClass(promo: PromotionRow): string {
@@ -49,6 +89,26 @@ function statusLabel(promo: PromotionRow): string {
     if (!promo.is_active) { return 'Disabled'; }
     if (!promo.is_valid) { return 'Expired'; }
     return 'Active';
+}
+
+function discountSummary(promo: PromotionRow): string {
+    if (promo.discount_type === 'bogo' && promo.buy_quantity && promo.get_quantity) {
+        return `Buy ${promo.buy_quantity} Get ${promo.get_quantity} Free`;
+    }
+    if (promo.discount_type === 'tiered' && promo.tiers?.length) {
+        const tiers = [...promo.tiers].sort((a, b) => b.min_cents - a.min_cents);
+        const top = tiers[0];
+        return `Up to ${(top.discount_bps / 100).toFixed(0)}% off`;
+    }
+    return promo.formatted_discount;
+}
+
+function toggleActive(promo: PromotionRow): void {
+    togglingId.value = promo.id;
+    router.patch(`/vendor/promotions/${promo.id}/toggle`, {}, {
+        preserveScroll: true,
+        onFinish: () => { togglingId.value = null; },
+    });
 }
 </script>
 
@@ -108,7 +168,7 @@ function statusLabel(promo: PromotionRow): string {
                             <th class="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-navy-500">Usage</th>
                             <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-navy-500">Validity</th>
                             <th class="px-5 py-3 text-center text-xs font-semibold uppercase tracking-wider text-navy-500">Status</th>
-                            <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-navy-500">Edit</th>
+                            <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-navy-500">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-navy-800/30">
@@ -118,8 +178,18 @@ function statusLabel(promo: PromotionRow): string {
                             class="hover:bg-navy-800/30 transition-colors"
                         >
                             <td class="px-5 py-3.5">
-                                <div class="font-medium text-white">{{ promo.name }}</div>
-                                <div class="text-xs text-navy-500 capitalize">{{ promo.scope }} · {{ promo.auto_apply ? 'Auto-apply' : 'Manual' }}</div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-white">{{ promo.name }}</span>
+                                    <!-- Flash sale badge -->
+                                    <span
+                                        v-if="promo.is_flash_sale && promo.is_valid"
+                                        class="inline-flex items-center gap-1 rounded-full bg-red-500/15 border border-red-500/20 px-2 py-0.5 text-xs font-semibold text-red-400"
+                                    >
+                                        <span class="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse"></span>
+                                        {{ formatCountdown(promo.time_remaining_seconds) }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-navy-500 capitalize mt-0.5">{{ promo.scope }} · {{ promo.auto_apply ? 'Auto-apply' : 'Manual' }}</div>
                             </td>
                             <td class="px-5 py-3.5">
                                 <span v-if="promo.code" class="font-mono text-xs bg-navy-700/50 border border-navy-600/30 rounded px-2 py-0.5 text-navy-200">
@@ -127,7 +197,17 @@ function statusLabel(promo: PromotionRow): string {
                                 </span>
                                 <span v-else class="text-navy-600 text-xs">—</span>
                             </td>
-                            <td class="px-5 py-3.5 text-accent-400 font-medium text-xs">{{ promo.formatted_discount }}</td>
+                            <td class="px-5 py-3.5">
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
+                                        :class="discountTypeBadgeClass(promo.discount_type)"
+                                    >
+                                        {{ discountTypeLabel(promo.discount_type) }}
+                                    </span>
+                                    <span class="text-accent-400 font-medium text-xs">{{ discountSummary(promo) }}</span>
+                                </div>
+                            </td>
                             <td class="px-5 py-3.5 text-center">
                                 <span class="text-white text-xs">{{ promo.usage_count }}</span>
                                 <span class="text-navy-500 text-xs">{{ promo.usage_limit ? ` / ${promo.usage_limit}` : '' }}</span>
@@ -148,13 +228,25 @@ function statusLabel(promo: PromotionRow): string {
                                 </span>
                             </td>
                             <td class="px-5 py-3.5 text-right">
-                                <a
-                                    :href="`/admin/promotions/${promo.id}/edit`"
-                                    target="_blank"
-                                    class="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
-                                >
-                                    Edit
-                                </a>
+                                <div class="flex items-center justify-end gap-3">
+                                    <!-- Toggle active/inactive -->
+                                    <button
+                                        type="button"
+                                        :disabled="togglingId === promo.id"
+                                        class="text-xs font-medium transition-colors disabled:opacity-50"
+                                        :class="promo.is_active ? 'text-orange-400 hover:text-orange-300' : 'text-accent-400 hover:text-accent-300'"
+                                        @click="toggleActive(promo)"
+                                    >
+                                        {{ promo.is_active ? 'Disable' : 'Enable' }}
+                                    </button>
+                                    <a
+                                        :href="`/admin/promotions/${promo.id}/edit`"
+                                        target="_blank"
+                                        class="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
+                                    >
+                                        Edit
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

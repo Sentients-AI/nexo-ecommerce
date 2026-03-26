@@ -201,4 +201,44 @@ final class PromotionFactory extends Factory
             'usage_count' => 10,
         ]);
     }
+
+    /**
+     * Set as a BOGO (Buy X Get Y) promotion.
+     */
+    public function bogo(int $buyQuantity = 2, int $getQuantity = 1): self
+    {
+        return $this->state(fn (array $attributes): array => [
+            'discount_type' => DiscountType::Bogo,
+            'discount_value' => 0,
+            'buy_quantity' => $buyQuantity,
+            'get_quantity' => $getQuantity,
+        ]);
+    }
+
+    /**
+     * Set as a tiered discount promotion.
+     *
+     * @param  array<array{min_cents: int, discount_bps: int}>  $tiers
+     */
+    public function tiered(array $tiers = []): self
+    {
+        return $this->state(fn (array $attributes): array => [
+            'discount_type' => DiscountType::Tiered,
+            'discount_value' => 0,
+            'tiers' => $tiers ?: [
+                ['min_cents' => 5000, 'discount_bps' => 500],
+                ['min_cents' => 10000, 'discount_bps' => 1000],
+            ],
+        ]);
+    }
+
+    /**
+     * Mark as a flash sale (shows countdown on storefront).
+     */
+    public function flashSale(): self
+    {
+        return $this->state(fn (array $attributes): array => [
+            'is_flash_sale' => true,
+        ]);
+    }
 }

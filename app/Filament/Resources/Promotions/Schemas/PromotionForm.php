@@ -10,6 +10,7 @@ use App\Domain\Promotion\Enums\DiscountType;
 use App\Domain\Promotion\Enums\PromotionScope;
 use App\Domain\Promotion\Models\Promotion;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -51,6 +52,11 @@ final class PromotionForm
                         Toggle::make('is_active')
                             ->label('Active')
                             ->default(true),
+
+                        Toggle::make('is_flash_sale')
+                            ->label('Flash Sale')
+                            ->helperText('Show a countdown timer on the storefront')
+                            ->default(false),
                     ]),
 
                 Section::make('Discount Configuration')
@@ -58,10 +64,9 @@ final class PromotionForm
                     ->schema([
                         Select::make('discount_type')
                             ->label('Discount Type')
-                            ->options([
-                                DiscountType::Fixed->value => DiscountType::Fixed->label(),
-                                DiscountType::Percentage->value => DiscountType::Percentage->label(),
-                            ])
+                            ->options(collect(DiscountType::cases())->mapWithKeys(
+                                fn (DiscountType $type) => [$type->value => $type->label()]
+                            ))
                             ->required()
                             ->live(),
 
@@ -70,18 +75,67 @@ final class PromotionForm
                                 ? 'Discount Percentage (basis points, 1000 = 10%)'
                                 : 'Discount Amount (cents)')
                             ->numeric()
-                            ->required()
+                            ->required(fn (Get $get): bool => in_array($get('discount_type'), [
+                                DiscountType::Fixed->value,
+                                DiscountType::Percentage->value,
+                            ], true))
                             ->minValue(1)
                             ->helperText(fn (Get $get): string => $get('discount_type') === DiscountType::Percentage->value
                                 ? 'Enter 1000 for 10%, 500 for 5%, etc.'
-                                : 'Enter amount in cents (1000 = $10.00)'),
+                                : 'Enter amount in cents (1000 = $10.00)')
+                            ->visible(fn (Get $get): bool => in_array($get('discount_type'), [
+                                DiscountType::Fixed->value,
+                                DiscountType::Percentage->value,
+                            ], true)),
 
                         TextInput::make('maximum_discount_cents')
                             ->label('Maximum Discount (cents)')
                             ->numeric()
                             ->nullable()
-                            ->helperText('Cap the discount amount (useful for percentage discounts)')
-                            ->visible(fn (Get $get): bool => $get('discount_type') === DiscountType::Percentage->value),
+                            ->helperText('Cap the discount amount')
+                            ->visible(fn (Get $get): bool => in_array($get('discount_type'), [
+                                DiscountType::Percentage->value,
+                                DiscountType::Bogo->value,
+                                DiscountType::Tiered->value,
+                            ], true)),
+
+                        TextInput::make('buy_quantity')
+                            ->label('Buy Quantity')
+                            ->numeric()
+                            ->minValue(1)
+                            ->required(fn (Get $get): bool => $get('discount_type') === DiscountType::Bogo->value)
+                            ->helperText('Number of items customer must buy')
+                            ->visible(fn (Get $get): bool => $get('discount_type') === DiscountType::Bogo->value),
+
+                        TextInput::make('get_quantity')
+                            ->label('Get Quantity (Free)')
+                            ->numeric()
+                            ->minValue(1)
+                            ->required(fn (Get $get): bool => $get('discount_type') === DiscountType::Bogo->value)
+                            ->helperText('Number of items customer gets for free')
+                            ->visible(fn (Get $get): bool => $get('discount_type') === DiscountType::Bogo->value),
+
+                        Repeater::make('tiers')
+                            ->label('Discount Tiers')
+                            ->schema([
+                                TextInput::make('min_cents')
+                                    ->label('Minimum Subtotal (cents)')
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(0)
+                                    ->helperText('e.g. 5000 = $50.00'),
+
+                                TextInput::make('discount_bps')
+                                    ->label('Discount (basis points)')
+                                    ->numeric()
+                                    ->required()
+                                    ->minValue(1)
+                                    ->helperText('e.g. 1000 = 10%, 500 = 5%'),
+                            ])
+                            ->columns(2)
+                            ->addActionLabel('Add Tier')
+                            ->columnSpanFull()
+                            ->visible(fn (Get $get): bool => $get('discount_type') === DiscountType::Tiered->value),
                     ]),
 
                 Section::make('Scope')

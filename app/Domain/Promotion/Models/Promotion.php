@@ -42,6 +42,10 @@ final class Promotion extends BaseModel
         'usage_count',
         'per_user_limit',
         'is_active',
+        'buy_quantity',
+        'get_quantity',
+        'tiers',
+        'is_flash_sale',
     ];
 
     /**
@@ -111,21 +115,104 @@ final class Promotion extends BaseModel
     }
 
     /**
-     * Calculate the discount for a given subtotal.
+     * Calculate the discount for a given subtotal (Fixed / Percentage).
+     * BOGO and Tiered have dedicated methods called directly by CalculateDiscountAction.
      */
     public function calculateDiscount(int $eligibleSubtotalCents): int
     {
         $discount = match ($this->discount_type) {
             DiscountType::Fixed => min($this->discount_value, $eligibleSubtotalCents),
             DiscountType::Percentage => (int) floor(($eligibleSubtotalCents * $this->discount_value) / 10000),
+            DiscountType::Bogo, DiscountType::Tiered => 0, // handled separately
         };
 
-        // Apply maximum discount cap if set
         if ($this->maximum_discount_cents !== null) {
             $discount = min($discount, $this->maximum_discount_cents);
         }
 
         return max(0, $discount);
+    }
+
+    /**
+     * Calculate BOGO discount given a list of eligible item unit prices (cents, any order).
+     * For every (buy_quantity + get_quantity) units, the get_quantity cheapest are free.
+     *
+     * @param  array<int>  $unitPricesCents  One entry per item quantity unit
+     */
+    public function calculateBogoDiscount(array $unitPricesCents): int
+    {
+        if (! $this->buy_quantity || ! $this->get_quantity) {
+            return 0;
+        }
+
+        $groupSize = $this->buy_quantity + $this->get_quantity;
+        $totalUnits = count($unitPricesCents);
+        $freeUnitsCount = (int) floor($totalUnits / $groupSize) * $this->get_quantity;
+
+        if ($freeUnitsCount === 0) {
+            return 0;
+        }
+
+        // Free items are the cheapest ones
+        sort($unitPricesCents);
+        $discount = array_sum(array_slice($unitPricesCents, 0, $freeUnitsCount));
+
+        if ($this->maximum_discount_cents !== null) {
+            $discount = min($discount, $this->maximum_discount_cents);
+        }
+
+        return max(0, $discount);
+    }
+
+    /**
+     * Calculate tiered discount for the given subtotal.
+     * Picks the highest qualifying tier and applies its discount_bps.
+     *
+     * @param  array<array{min_cents: int, discount_bps: int}>  $tiers
+     */
+    public function calculateTieredDiscount(int $subtotalCents): int
+    {
+        $tiers = $this->tiers ?? [];
+        if (empty($tiers)) {
+            return 0;
+        }
+
+        // Sort tiers descending by min_cents to find the highest qualifying one first
+        usort($tiers, fn ($a, $b) => $b['min_cents'] <=> $a['min_cents']);
+
+        foreach ($tiers as $tier) {
+            if ($subtotalCents >= $tier['min_cents']) {
+                $discount = (int) floor(($subtotalCents * $tier['discount_bps']) / 10000);
+
+                if ($this->maximum_discount_cents !== null) {
+                    $discount = min($discount, $this->maximum_discount_cents);
+                }
+
+                return max(0, $discount);
+            }
+        }
+
+        return 0;
+    }
+
+    /**
+     * Whether this promotion is a flash sale (shows countdown on frontend).
+     */
+    public function isFlashSale(): bool
+    {
+        return (bool) $this->is_flash_sale;
+    }
+
+    /**
+     * Seconds remaining until this promotion ends. Returns 0 if already expired.
+     */
+    public function timeRemainingSeconds(): int
+    {
+        if (! $this->ends_at) {
+            return 0;
+        }
+
+        return max(0, (int) now()->diffInSeconds($this->ends_at, false));
     }
 
     /**
@@ -156,6 +243,8 @@ final class Promotion extends BaseModel
         return match ($this->discount_type) {
             DiscountType::Fixed => '$'.number_format($this->discount_value / 100, 2),
             DiscountType::Percentage => number_format($this->discount_value / 100, 2).'%',
+            DiscountType::Bogo => "Buy {$this->buy_quantity} Get {$this->get_quantity} Free",
+            DiscountType::Tiered => 'Tiered Discount',
         };
     }
 
@@ -187,6 +276,10 @@ final class Promotion extends BaseModel
             'usage_count' => 'integer',
             'per_user_limit' => 'integer',
             'is_active' => 'boolean',
+            'buy_quantity' => 'integer',
+            'get_quantity' => 'integer',
+            'tiers' => 'array',
+            'is_flash_sale' => 'boolean',
         ];
     }
 
