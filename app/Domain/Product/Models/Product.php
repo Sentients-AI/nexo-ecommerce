@@ -68,6 +68,30 @@ final class Product extends BaseModel
     }
 
     /**
+     * Get the variants for this product.
+     */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
+    }
+
+    /**
+     * Get the active variants for this product.
+     */
+    public function activeVariants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->where('is_active', true)->orderBy('sort_order');
+    }
+
+    /**
+     * Determine if this product has variants.
+     */
+    public function hasVariants(): bool
+    {
+        return $this->variants()->exists();
+    }
+
+    /**
      * Get the reviews for the product.
      */
     public function reviews(): HasMany

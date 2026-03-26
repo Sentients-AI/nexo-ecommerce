@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Inventory\Models;
 
 use App\Domain\Product\Models\Product;
+use App\Domain\Product\Models\ProductVariant;
 use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\StockFactory;
@@ -37,6 +38,7 @@ final class Stock extends BaseModel
      */
     protected $fillable = [
         'product_id',
+        'variant_id',
         'quantity_available',
         'quantity_reserved',
         'updated_at',
@@ -48,6 +50,14 @@ final class Stock extends BaseModel
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the variant that owns the stock (if variant-level stock).
+     */
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
     /**

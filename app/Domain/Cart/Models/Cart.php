@@ -32,6 +32,7 @@ final class Cart extends BaseModel
         'user_id',
         'session_id',
         'completed_at',
+        'recovery_email_sent_at',
     ];
 
     /**
@@ -123,6 +124,7 @@ final class Cart extends BaseModel
     {
         return [
             'completed_at' => 'datetime',
+            'recovery_email_sent_at' => 'datetime',
         ];
     }
 }

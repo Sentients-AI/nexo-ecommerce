@@ -15,6 +15,7 @@ final readonly class CheckoutRequest
         public string $currency = 'MYR',
         public ?string $idempotencyKey = null,
         public ?string $promotionCode = null,
+        public ?int $redeemPoints = null,
     ) {}
 
     /**
@@ -30,6 +31,7 @@ final readonly class CheckoutRequest
             currency: $data['currency'] ?? 'MYR',
             idempotencyKey: $data['idempotency_key'] ?? null,
             promotionCode: $data['promotion_code'] ?? null,
+            redeemPoints: isset($data['redeem_points']) ? (int) $data['redeem_points'] : null,
         );
     }
 }

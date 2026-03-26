@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Models\CartItem;
 use App\Domain\Product\Models\Product;
+use App\Domain\Product\Models\ProductVariant;
 use App\Domain\Shared\Enums\ErrorCode;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +18,7 @@ final class CartController extends Controller
     public function show(Request $request): JsonResponse
     {
         $cart = $this->getOrCreateCart($request);
-        $cart->load('items.product');
+        $cart->load('items.product', 'items.variant.attributeValues.attributeType');
 
         return response()->json([
             'cart' => $this->formatCart($cart),
@@ -28,6 +29,7 @@ final class CartController extends Controller
     {
         $validated = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
+            'variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
             'quantity' => ['required', 'integer', 'min:1', 'max:100'],
         ]);
 
@@ -40,14 +42,34 @@ final class CartController extends Controller
             return $this->errorResponse(ErrorCode::ProductNotFound);
         }
 
+        $variant = null;
+        if (! empty($validated['variant_id'])) {
+            $variant = ProductVariant::query()
+                ->where('id', $validated['variant_id'])
+                ->where('product_id', $product->id)
+                ->where('is_active', true)
+                ->first();
+
+            if (! $variant) {
+                return $this->errorResponse(ErrorCode::ProductNotFound, 'Variant not found or does not belong to this product');
+            }
+        }
+
         $cart = $this->getOrCreateCart($request);
 
         if ($cart->isCompleted()) {
             return $this->errorResponse(ErrorCode::CartAlreadyCompleted);
         }
 
-        // Check if item already exists in cart
-        $existingItem = $cart->items()->where('product_id', $product->id)->first();
+        $price = $variant
+            ? (int) ($variant->sale_price ?? $variant->price_cents ?? $product->sale_price ?? $product->price_cents)
+            : (int) ($product->sale_price ?? $product->price_cents);
+
+        // Check if identical item (same product + variant combination) already exists in cart
+        $existingItem = $cart->items()
+            ->where('product_id', $product->id)
+            ->where('variant_id', $variant?->id)
+            ->first();
 
         if ($existingItem) {
             $existingItem->update([
@@ -56,13 +78,14 @@ final class CartController extends Controller
         } else {
             $cart->items()->create([
                 'product_id' => $product->id,
+                'variant_id' => $variant?->id,
                 'quantity' => $validated['quantity'],
-                'price_cents_snapshot' => (int) ($product->sale_price ?? $product->price_cents),
+                'price_cents_snapshot' => $price,
                 'tax_cents_snapshot' => 0,
             ]);
         }
 
-        $cart->load('items.product');
+        $cart->load('items.product', 'items.variant.attributeValues.attributeType');
 
         return response()->json([
             'cart' => $this->formatCart($cart),
@@ -93,7 +116,7 @@ final class CartController extends Controller
             $item->update(['quantity' => $validated['quantity']]);
         }
 
-        $cart->load('items.product');
+        $cart->load('items.product', 'items.variant.attributeValues.attributeType');
 
         return response()->json([
             'cart' => $this->formatCart($cart),
@@ -115,7 +138,7 @@ final class CartController extends Controller
         }
 
         $item->delete();
-        $cart->load('items.product');
+        $cart->load('items.product', 'items.variant.attributeValues.attributeType');
 
         return response()->json([
             'cart' => $this->formatCart($cart),
@@ -131,7 +154,7 @@ final class CartController extends Controller
         }
 
         $cart->items()->delete();
-        $cart->load('items.product');
+        $cart->load('items.product', 'items.variant.attributeValues.attributeType');
 
         return response()->json([
             'cart' => $this->formatCart($cart),
@@ -166,6 +189,7 @@ final class CartController extends Controller
             'items' => $cart->items->map(fn (CartItem $item) => [
                 'id' => $item->id,
                 'product_id' => $item->product_id,
+                'variant_id' => $item->variant_id,
                 'quantity' => $item->quantity,
                 'price' => $item->price,
                 'product' => $item->product ? [
@@ -176,6 +200,18 @@ final class CartController extends Controller
                     'images' => $item->product->images,
                     'price_cents' => $item->product->price_cents,
                     'sale_price' => $item->product->sale_price,
+                ] : null,
+                'variant' => $item->variant ? [
+                    'id' => $item->variant->id,
+                    'sku' => $item->variant->sku,
+                    'price_cents' => $item->variant->price_cents,
+                    'sale_price' => $item->variant->sale_price,
+                    'attributes' => $item->variant->attributeValues->map(fn ($v) => [
+                        'type' => $v->attributeType->name,
+                        'value' => $v->value,
+                        'slug' => $v->slug,
+                        'metadata' => $v->metadata,
+                    ])->toArray(),
                 ] : null,
             ])->toArray(),
             'total_items' => $cart->total_items,

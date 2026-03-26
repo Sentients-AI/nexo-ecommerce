@@ -79,9 +79,13 @@ final readonly class CreateOrderFromCart
             $subtotalCents = $cart->subtotal;
             $discountCents = $data->discountCents;
 
-            // Apply discount to subtotal (discount cannot exceed subtotal)
+            // Apply promotion discount (cannot exceed subtotal)
             $discountCents = min($discountCents, (int) $subtotalCents);
-            $subtotalAfterDiscount = $subtotalCents - $discountCents;
+
+            // Apply loyalty discount on top of promotion discount
+            $loyaltyDiscountCents = min($data->loyaltyDiscountCents, max(0, (int) $subtotalCents - $discountCents));
+
+            $subtotalAfterDiscount = $subtotalCents - $discountCents - $loyaltyDiscountCents;
 
             $taxCents = $this->calculateTax->execute(
                 new TaxCalculationData((int) $subtotalAfterDiscount)
@@ -103,6 +107,7 @@ final readonly class CreateOrderFromCart
                 'currency' => $data->currency,
                 'promotion_id' => $data->promotionId,
                 'discount_cents' => $discountCents,
+                'loyalty_discount_cents' => $loyaltyDiscountCents,
             ]);
 
             // STEP 3: Create order items and reserve stock (already validated)

@@ -9,6 +9,9 @@ use App\Application\DTOs\Response\CheckoutResponse;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Specifications\CartHasItems;
 use App\Domain\Cart\Specifications\CartIsNotCompleted;
+use App\Domain\Loyalty\Actions\RedeemPointsAction;
+use App\Domain\Loyalty\DTOs\RedeemPointsData;
+use App\Domain\Loyalty\Models\LoyaltyAccount;
 use App\Domain\Order\Actions\CreateOrderFromCart;
 use App\Domain\Order\DTOs\CreateOrderData;
 use App\Domain\Payment\Actions\CreatePaymentIntentAction;
@@ -28,6 +31,7 @@ final readonly class CheckoutUseCase
         private CreatePaymentIntentAction $createPaymentIntent,
         private FindBestPromotionAction $findBestPromotion,
         private RecordPromotionUsageAction $recordPromotionUsage,
+        private RedeemPointsAction $redeemPoints,
     ) {}
 
     public function execute(CheckoutRequest $request): CheckoutResponse
@@ -64,6 +68,23 @@ final readonly class CheckoutUseCase
                 $discountCents = $discountResult->discountCents;
             }
 
+            // Validate and calculate loyalty discount if redeem_points requested
+            $loyaltyDiscountCents = 0;
+            if ($request->redeemPoints !== null && $request->redeemPoints > 0) {
+                $loyaltyAccount = LoyaltyAccount::query()
+                    ->where('user_id', $request->userId->toInt())
+                    ->first();
+
+                if ($loyaltyAccount === null || ! $loyaltyAccount->canRedeem($request->redeemPoints)) {
+                    throw new \App\Domain\Loyalty\Exceptions\InsufficientPointsException(
+                        $loyaltyAccount?->points_balance ?? 0,
+                        $request->redeemPoints
+                    );
+                }
+
+                $loyaltyDiscountCents = $request->redeemPoints * (int) config('loyalty.points_value_cents');
+            }
+
             // Create order through domain action
             $order = $this->createOrderFromCart->execute(
                 new CreateOrderData(
@@ -72,6 +93,7 @@ final readonly class CheckoutUseCase
                     currency: $request->currency,
                     promotionId: $promotionId,
                     discountCents: $discountCents,
+                    loyaltyDiscountCents: $loyaltyDiscountCents,
                 )
             );
 
@@ -83,6 +105,17 @@ final readonly class CheckoutUseCase
                     $order,
                     $discountCents
                 );
+            }
+
+            // Redeem loyalty points after order creation (inside same transaction for atomicity)
+            if ($request->redeemPoints !== null && $request->redeemPoints > 0) {
+                $this->redeemPoints->execute(new RedeemPointsData(
+                    userId: $request->userId->toInt(),
+                    points: $request->redeemPoints,
+                    description: "Redeemed {$request->redeemPoints} points for order {$order->order_number}",
+                    referenceType: 'orders',
+                    referenceId: $order->id,
+                ));
             }
 
             // Create payment intent

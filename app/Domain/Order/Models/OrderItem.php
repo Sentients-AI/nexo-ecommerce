@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Order\Models;
 
 use App\Domain\Product\Models\Product;
+use App\Domain\Product\Models\ProductVariant;
 use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
 use Database\Factories\OrderItemFactory;
@@ -30,6 +31,7 @@ final class OrderItem extends BaseModel
     protected $fillable = [
         'order_id',
         'product_id',
+        'variant_id',
         'price_cents_snapshot',
         'tax_cents_snapshot',
         'quantity',
@@ -51,6 +53,14 @@ final class OrderItem extends BaseModel
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /**
+     * Get the variant (if applicable).
+     */
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(ProductVariant::class, 'variant_id');
     }
 
     /**

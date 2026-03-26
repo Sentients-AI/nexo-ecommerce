@@ -20,6 +20,7 @@ final class OrderResource extends JsonResource
             'status' => $this->status->value,
             'subtotal_cents' => $this->subtotal_cents,
             'discount_cents' => $this->discount_cents ?? 0,
+            'loyalty_discount_cents' => $this->loyalty_discount_cents ?? 0,
             'tax_cents' => $this->tax_cents,
             'shipping_cost_cents' => $this->shipping_cost_cents,
             'total_cents' => $this->total_cents,

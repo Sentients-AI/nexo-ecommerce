@@ -12,6 +12,7 @@ use App\Domain\Cart\ValueObjects\CartId;
 use App\Domain\Idempotency\Actions\EnsureIdempotentAction;
 use App\Domain\Idempotency\Actions\StoreIdempotencyResultAction;
 use App\Domain\Inventory\Exceptions\InsufficientStockException;
+use App\Domain\Loyalty\Exceptions\InsufficientPointsException;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Actions\ConfirmPaymentIntentAction;
 use App\Domain\Payment\Models\PaymentIntent;
@@ -68,6 +69,9 @@ final class CheckoutController extends Controller
                     currency: $request->validated('currency'),
                     idempotencyKey: $idempotencyKey,
                     promotionCode: $request->validated('promotion_code'),
+                    redeemPoints: $request->validated('redeem_points') !== null
+                        ? (int) $request->validated('redeem_points')
+                        : null,
                 )
             );
 
@@ -94,6 +98,8 @@ final class CheckoutController extends Controller
 
         } catch (EmptyCartException) {
             return $this->errorResponse(ErrorCode::CartEmpty, 'Cannot checkout with an empty cart.');
+        } catch (InsufficientPointsException $e) {
+            return $this->errorResponse(ErrorCode::InsufficientPoints, $e->getMessage());
         } catch (InsufficientStockException $e) {
             return $this->errorResponse(
                 ErrorCode::InsufficientStock,

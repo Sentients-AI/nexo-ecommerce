@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Inventory\Models\Stock;
+use App\Domain\Loyalty\Models\LoyaltyAccount;
 use App\Domain\Order\Models\Order;
 use App\Domain\Payment\Contracts\PaymentGatewayService;
 use App\Domain\Payment\DTOs\ProviderResponse;
@@ -176,6 +177,100 @@ describe('Checkout API', function () {
 
         $response2->assertSuccessful();
         expect($response2->json('order.id'))->toBe($orderId1);
+    });
+
+    it('applies loyalty points discount at checkout', function () {
+        $user = User::factory()->create();
+        $product = Product::factory()->create();
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'price_cents_snapshot' => 10000,
+            'tax_cents_snapshot' => 500,
+            'quantity' => 1,
+        ]);
+
+        Stock::factory()->create([
+            'product_id' => $product->id,
+            'quantity_available' => 10,
+            'quantity_reserved' => 0,
+        ]);
+
+        LoyaltyAccount::factory()->withPoints(500)->create(['user_id' => $user->id]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/checkout', [
+            'cart_id' => $cart->id,
+            'currency' => 'USD',
+            'redeem_points' => 200,
+        ]);
+
+        $response->assertSuccessful();
+        $response->assertJsonPath('order.loyalty_discount_cents', 200); // 200 points * 1 cent each
+
+        // Verify points were deducted
+        expect(LoyaltyAccount::query()->where('user_id', $user->id)->first()->points_balance)->toBe(300);
+    });
+
+    it('rejects checkout when loyalty points are insufficient', function () {
+        $user = User::factory()->create();
+        $product = Product::factory()->create();
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'price_cents_snapshot' => 5000,
+            'tax_cents_snapshot' => 500,
+            'quantity' => 1,
+        ]);
+
+        Stock::factory()->create([
+            'product_id' => $product->id,
+            'quantity_available' => 10,
+            'quantity_reserved' => 0,
+        ]);
+
+        LoyaltyAccount::factory()->withPoints(100)->create(['user_id' => $user->id]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/checkout', [
+            'cart_id' => $cart->id,
+            'currency' => 'USD',
+            'redeem_points' => 500,
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonPath('error.code', 'INSUFFICIENT_POINTS');
+    });
+
+    it('rejects checkout when user has no loyalty account but requests point redemption', function () {
+        $user = User::factory()->create();
+        $product = Product::factory()->create();
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'price_cents_snapshot' => 5000,
+            'tax_cents_snapshot' => 500,
+            'quantity' => 1,
+        ]);
+
+        Stock::factory()->create([
+            'product_id' => $product->id,
+            'quantity_available' => 10,
+            'quantity_reserved' => 0,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/checkout', [
+            'cart_id' => $cart->id,
+            'currency' => 'USD',
+            'redeem_points' => 100,
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonPath('error.code', 'INSUFFICIENT_POINTS');
     });
 
     it('rejects checkout with insufficient stock', function () {

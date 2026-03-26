@@ -21,6 +21,7 @@ final class CreateOrderData extends BaseData
         public string $currency = 'MYR',
         public ?int $promotionId = null,
         public int $discountCents = 0,
+        public int $loyaltyDiscountCents = 0,
     ) {}
 
     /**
