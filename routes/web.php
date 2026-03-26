@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\AddressController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
+use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\ProductController;
 use App\Http\Controllers\Web\ReferralWebController;
@@ -41,6 +42,7 @@ Route::prefix('vendor')
         Route::get('/customers', [VendorCustomerController::class, 'index'])->name('customers.index');
         Route::get('/analytics', [VendorAnalyticsController::class, 'index'])->name('analytics.index');
         Route::get('/promotions', [VendorPromotionController::class, 'index'])->name('promotions.index');
+        Route::patch('/promotions/{promotion}/toggle', [VendorPromotionController::class, 'toggle'])->name('promotions.toggle');
         Route::get('/settings', [VendorSettingsController::class, 'index'])->name('settings.index');
     });
 
@@ -104,5 +106,11 @@ Route::prefix('{locale}')
             // Refunds
             Route::get('/orders/{orderId}/refund', [RefundController::class, 'create'])->name('refunds.create');
             Route::get('/refunds/{refund}', [RefundController::class, 'show'])->name('refunds.show');
+
+            // Notifications
+            Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+            Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+            Route::patch('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+            Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
         });
     });

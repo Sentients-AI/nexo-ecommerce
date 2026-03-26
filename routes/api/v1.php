@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\ConversationController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\MessageController;
+use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PromotionController;
 use App\Http\Controllers\Api\V1\ReferralController;
@@ -72,6 +73,9 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
         Route::post('/apply', [ReferralController::class, 'apply'])->name('api.v1.referral.apply');
         Route::post('/regenerate', [ReferralController::class, 'regenerate'])->name('api.v1.referral.regenerate');
     });
+
+    // Notifications
+    Route::get('/notifications/recent', [NotificationController::class, 'recent'])->name('api.v1.notifications.recent');
 
     // Chat
     Route::get('/conversations', [ConversationController::class, 'index'])->name('api.v1.conversations.index');

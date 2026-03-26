@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import MobileNav from '@/Components/Layout/MobileNav.vue';
 import CartBadge from '@/Components/Layout/CartBadge.vue';
+import NotificationBell from '@/Components/Layout/NotificationBell.vue';
 import UserDropdown from '@/Components/Layout/UserDropdown.vue';
 import ChatWidget from '@/Components/Chat/ChatWidget.vue';
 import { useLocale } from '@/Composables/useLocale';
@@ -93,8 +94,9 @@ onUnmounted(() => {
                         </div>
                     </div>
 
-                    <!-- Right: Cart + User -->
+                    <!-- Right: Notifications + Cart + User -->
                     <div class="flex items-center gap-2">
+                        <NotificationBell />
                         <CartBadge />
                         <div class="hidden sm:block sm:ml-1">
                             <UserDropdown />

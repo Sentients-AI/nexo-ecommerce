@@ -21,7 +21,7 @@ final class OrderShippedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return ['mail', 'database', 'broadcast'];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -52,10 +52,13 @@ final class OrderShippedNotification extends Notification implements ShouldQueue
     public function toArray(object $notifiable): array
     {
         return [
+            'type' => 'order_shipped',
             'order_id' => $this->order->id,
             'order_number' => $this->order->order_number,
             'carrier' => $this->order->carrier,
             'tracking_number' => $this->order->tracking_number,
+            'message' => "Your order #{$this->order->order_number} has shipped via {$this->order->carrier}.",
+            'url' => "/en/orders/{$this->order->id}",
         ];
     }
 }
