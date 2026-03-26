@@ -9,6 +9,7 @@ use App\Http\Middleware\SetLocaleFromUrl;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -20,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectGuestsTo(function (Request $request): string {
+            $locale = $request->route('locale', app()->getLocale());
+
+            return route('login', ['locale' => $locale]);
+        });
+
         $middleware->alias([
             'tenant.subdomain' => ResolveTenantFromSubdomain::class,
             'tenant.user' => ResolveTenantFromUser::class,
