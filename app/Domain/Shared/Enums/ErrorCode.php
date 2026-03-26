@@ -49,6 +49,8 @@ enum ErrorCode: string
 
     // Review errors
     case ReviewAlreadySubmitted = 'REVIEW_ALREADY_SUBMITTED';
+    case ReviewNotFound = 'REVIEW_NOT_FOUND';
+    case ReviewVoteNotAllowed = 'REVIEW_VOTE_NOT_ALLOWED';
 
     // Idempotency errors
     case IdempotencyConflict = 'IDEMPOTENCY_CONFLICT';
@@ -77,6 +79,7 @@ enum ErrorCode: string
             self::RefundAmountExceedsLimit,
             self::RefundAlreadyProcessed,
             self::ReviewAlreadySubmitted,
+            self::ReviewVoteNotAllowed,
             self::ConversationClosed,
             self::InsufficientPoints,
             self::BelowMinimumRedemption,

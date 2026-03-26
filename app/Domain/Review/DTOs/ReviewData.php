@@ -12,5 +12,7 @@ final readonly class ReviewData
         public int $rating,
         public string $title,
         public string $body,
+        /** @var array<int, \Illuminate\Http\UploadedFile> */
+        public array $photos = [],
     ) {}
 }

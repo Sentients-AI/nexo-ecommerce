@@ -12,6 +12,7 @@ use Database\Factories\ReviewFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 final class Review extends BaseModel
 {
@@ -45,6 +46,30 @@ final class Review extends BaseModel
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class)->withoutGlobalScopes();
+    }
+
+    /**
+     * Get the photos attached to this review.
+     */
+    public function photos(): HasMany
+    {
+        return $this->hasMany(ReviewPhoto::class)->orderBy('order');
+    }
+
+    /**
+     * Get the replies to this review.
+     */
+    public function replies(): HasMany
+    {
+        return $this->hasMany(ReviewReply::class)->orderBy('created_at');
+    }
+
+    /**
+     * Get the votes on this review.
+     */
+    public function votes(): HasMany
+    {
+        return $this->hasMany(ReviewVote::class);
     }
 
     /**

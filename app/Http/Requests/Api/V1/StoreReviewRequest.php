@@ -22,6 +22,8 @@ final class StoreReviewRequest extends FormRequest
             'rating' => ['required', 'integer', 'min:1', 'max:5'],
             'title' => ['required', 'string', 'max:255'],
             'body' => ['required', 'string', 'max:5000'],
+            'photos' => ['nullable', 'array', 'max:5'],
+            'photos.*' => ['image', 'mimes:jpeg,png,webp', 'max:5120'],
         ];
     }
 
@@ -38,6 +40,10 @@ final class StoreReviewRequest extends FormRequest
             'title.max' => 'Review title cannot exceed 255 characters.',
             'body.required' => 'A review body is required.',
             'body.max' => 'Review body cannot exceed 5000 characters.',
+            'photos.max' => 'You may upload a maximum of 5 photos.',
+            'photos.*.image' => 'Each file must be an image.',
+            'photos.*.mimes' => 'Photos must be JPEG, PNG, or WebP.',
+            'photos.*.max' => 'Each photo must be under 5MB.',
         ];
     }
 }

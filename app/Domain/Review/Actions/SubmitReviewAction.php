@@ -6,6 +6,7 @@ namespace App\Domain\Review\Actions;
 
 use App\Domain\Review\DTOs\ReviewData;
 use App\Domain\Review\Models\Review;
+use App\Domain\Review\Models\ReviewPhoto;
 use App\Domain\Shared\Enums\ErrorCode;
 use Illuminate\Http\JsonResponse;
 
@@ -29,12 +30,24 @@ final class SubmitReviewAction
             ], ErrorCode::ReviewAlreadySubmitted->httpStatus());
         }
 
-        return Review::create([
+        $review = Review::create([
             'product_id' => $data->productId,
             'user_id' => $data->userId,
             'rating' => $data->rating,
             'title' => $data->title,
             'body' => $data->body,
         ]);
+
+        foreach ($data->photos as $index => $file) {
+            $path = $file->store('review-photos', 'public');
+            ReviewPhoto::create([
+                'review_id' => $review->id,
+                'path' => $path,
+                'disk' => 'public',
+                'order' => $index,
+            ]);
+        }
+
+        return $review;
     }
 }
