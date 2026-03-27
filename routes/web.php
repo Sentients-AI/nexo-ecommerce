@@ -6,6 +6,7 @@ use App\Http\Controllers\Web\AddressController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
+use App\Http\Controllers\Web\DownloadController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\ProductController;
@@ -23,6 +24,9 @@ use App\Http\Controllers\Web\VendorPromotionController;
 use App\Http\Controllers\Web\VendorSettingsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Secure file downloads — no auth required, token is the credential
+Route::get('/downloads/{token}', [DownloadController::class, 'show'])->name('downloads.show');
 
 // Root redirects to default locale
 Route::get('/', fn () => redirect('/en'));

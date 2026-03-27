@@ -11,6 +11,7 @@ use App\Domain\Notification\Listeners\NotifyUserOnRefundApproved;
 use App\Domain\Order\Events\OrderCancelled;
 use App\Domain\Order\Events\OrderPaid;
 use App\Domain\Order\Events\OrderRefunded;
+use App\Domain\Order\Listeners\GenerateDownloadsOnOrderPaid;
 use App\Domain\Payment\Contracts\PaymentGatewayService;
 use App\Domain\Refund\Events\RefundApproved;
 use App\Infrastructure\Payment\Stripe\PaymentGatewayService as StripePaymentGatewayService;
@@ -51,6 +52,7 @@ final class AppServiceProvider extends ServiceProvider
     private function registerNotificationListeners(): void
     {
         Event::listen([OrderPaid::class, OrderCancelled::class, OrderRefunded::class], NotifyUserOnOrderStatusChange::class);
+        Event::listen(OrderPaid::class, GenerateDownloadsOnOrderPaid::class);
         Event::listen(RefundApproved::class, NotifyUserOnRefundApproved::class);
         Event::listen(PointsEarned::class, NotifyUserOnLoyaltyPointsEarned::class);
     }

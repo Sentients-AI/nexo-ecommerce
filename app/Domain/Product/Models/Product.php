@@ -36,6 +36,8 @@ final class Product extends BaseModel
         'category_id',
         'is_active',
         'is_featured',
+        'is_downloadable',
+        'download_file_path',
         'view_count',
         'images',
         'meta_title',
@@ -89,6 +91,14 @@ final class Product extends BaseModel
     public function hasVariants(): bool
     {
         return $this->variants()->exists();
+    }
+
+    /**
+     * Get the download tokens for this product.
+     */
+    public function downloads(): HasMany
+    {
+        return $this->hasMany(ProductDownload::class);
     }
 
     /**
@@ -198,6 +208,7 @@ final class Product extends BaseModel
             'sale_price' => 'decimal:2',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'is_downloadable' => 'boolean',
             'view_count' => 'integer',
             'images' => 'array',
             'meta_description' => 'json',

@@ -6,6 +6,7 @@ namespace App\Filament\Resources\Products\Schemas;
 
 use App\Domain\Category\Models\Category;
 use App\Domain\Product\Models\Product;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -130,6 +131,27 @@ final class ProductForm
                             ->required(),
                     ])
                     ->visible(fn (?Product $record): bool => ! $record instanceof Product),
+
+                Section::make('Digital Product')
+                    ->description('Enable for downloadable products (e-books, software, assets). Files are stored privately and served via secure expiring links after payment.')
+                    ->collapsed()
+                    ->schema([
+                        Toggle::make('is_downloadable')
+                            ->label('Downloadable Product')
+                            ->default(false)
+                            ->live(),
+
+                        FileUpload::make('download_file_path')
+                            ->label('Downloadable File')
+                            ->disk('private')
+                            ->directory('downloads')
+                            ->visibility('private')
+                            ->preserveFilenames()
+                            ->maxSize(102400) // 100 MB
+                            ->visible(fn (Get $get): bool => (bool) $get('is_downloadable'))
+                            ->required(fn (Get $get): bool => (bool) $get('is_downloadable'))
+                            ->columnSpanFull(),
+                    ]),
 
                 Section::make('SEO')
                     ->collapsed()
