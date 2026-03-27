@@ -26,7 +26,7 @@ final class CreateProductVariant
                 'images' => $data->images,
             ]);
 
-            if (! empty($data->attributeValueIds)) {
+            if ($data->attributeValueIds !== []) {
                 $variant->attributeValues()->sync($data->attributeValueIds);
             }
 

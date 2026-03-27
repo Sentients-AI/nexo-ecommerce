@@ -26,10 +26,12 @@ final class SendAbandonedCartRecoveryEmailsAction
         $sent = 0;
 
         foreach ($carts as $cart) {
-            if ($cart->user === null || $cart->user->email === null) {
+            if ($cart->user === null) {
                 continue;
             }
-
+            if ($cart->user->email === null) {
+                continue;
+            }
             $cart->user->notify(new AbandonedCartNotification($cart));
 
             $cart->update(['recovery_email_sent_at' => now()]);

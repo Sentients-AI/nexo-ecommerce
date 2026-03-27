@@ -36,11 +36,11 @@ final class ImportProductsFromCsvAction
             return ['imported' => 0, 'skipped' => 0, 'errors' => ['CSV file is empty.']];
         }
 
-        $headers = array_map('trim', array_map('strtolower', $headers));
+        $headers = array_map(trim(...), array_map(strtolower(...), $headers));
 
         $missingHeaders = array_diff(self::REQUIRED_HEADERS, $headers);
 
-        if (! empty($missingHeaders)) {
+        if ($missingHeaders !== []) {
             fclose($handle);
 
             return [
@@ -65,7 +65,7 @@ final class ImportProductsFromCsvAction
                 continue;
             }
 
-            $data = array_combine($headers, array_map('trim', $values));
+            $data = array_combine($headers, array_map(trim(...), $values));
 
             $result = $this->importRow($row, $data);
 

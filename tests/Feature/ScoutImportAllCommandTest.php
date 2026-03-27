@@ -13,6 +13,8 @@ uses(TestCase::class, RefreshDatabase::class, WithTenant::class);
 
 beforeEach(function () {
     $this->setUpTenant();
+    // Force collection driver so tests do not require a live Typesense server.
+    config(['scout.driver' => 'collection']);
 });
 
 it('imports all searchable models successfully', function () {

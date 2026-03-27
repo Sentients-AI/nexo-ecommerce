@@ -62,15 +62,7 @@ final class ProductVariant extends BaseModel
      */
     public function getEffectivePriceAttribute(): string
     {
-        if ($this->sale_price !== null) {
-            return $this->sale_price;
-        }
-
-        if ($this->price_cents !== null) {
-            return $this->price_cents;
-        }
-
-        return $this->product->price_cents;
+        return ($this->sale_price ?? $this->price_cents) ?? $this->product->price_cents;
     }
 
     /**

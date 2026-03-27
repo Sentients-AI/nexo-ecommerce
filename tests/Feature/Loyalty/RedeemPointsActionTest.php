@@ -78,11 +78,9 @@ it('dispatches PointsRedeemed event when redeeming', function () {
         description: 'Event test',
     ));
 
-    Event::assertDispatched(PointsRedeemed::class, function (PointsRedeemed $event) use ($user): bool {
-        return $event->userId === $user->id
-            && $event->points === 100
-            && $event->newBalance === 400;
-    });
+    Event::assertDispatched(PointsRedeemed::class, fn (PointsRedeemed $event): bool => $event->userId === $user->id
+        && $event->points === 100
+        && $event->newBalance === 400);
 });
 
 it('does not modify balance when redeeming fails', function () {

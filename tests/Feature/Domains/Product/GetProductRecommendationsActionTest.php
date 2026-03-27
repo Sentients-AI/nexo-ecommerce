@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Domain\Category\Models\Category;
 use App\Domain\Order\Models\Order;
 use App\Domain\Order\Models\OrderItem;
 use App\Domain\Product\Actions\GetProductRecommendationsAction;
 use App\Domain\Product\Models\Product;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
@@ -73,7 +75,7 @@ describe('GetProductRecommendationsAction', function () {
     });
 
     it('falls back to same-category products when co-purchase data is insufficient', function () {
-        $category = App\Domain\Category\Models\Category::factory()->create();
+        $category = Category::factory()->create();
         $target = Product::factory()->create(['category_id' => $category->id, 'is_active' => true]);
         $categoryProduct = Product::factory()->create(['category_id' => $category->id, 'is_active' => true]);
         $otherCategory = Product::factory()->create(['is_active' => true]);
@@ -93,7 +95,7 @@ describe('GetProductRecommendationsAction', function () {
 
         $results = app(GetProductRecommendationsAction::class)->execute($target);
 
-        expect($results)->toBeInstanceOf(Illuminate\Database\Eloquent\Collection::class);
+        expect($results)->toBeInstanceOf(Collection::class);
     });
 
     it('returns at most 8 recommendations', function () {
@@ -144,6 +146,6 @@ describe('ProductController show page', function () {
         $results = app(GetProductRecommendationsAction::class)
             ->execute($product);
 
-        expect($results)->toBeInstanceOf(Illuminate\Database\Eloquent\Collection::class);
+        expect($results)->toBeInstanceOf(Collection::class);
     });
 });

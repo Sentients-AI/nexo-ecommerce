@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Domain\Category\Models\Category;
+use App\Domain\Order\Models\Order;
+use App\Domain\Product\Models\Product;
+
 return [
 
     /*
@@ -183,7 +187,7 @@ return [
         ],
         // 'max_total_results' => env('TYPESENSE_MAX_TOTAL_RESULTS', 1000),
         'model-settings' => [
-            App\Domain\Product\Models\Product::class => [
+            Product::class => [
                 'collection-schema' => [
                     'fields' => [
                         ['name' => 'id', 'type' => 'string'],
@@ -209,7 +213,7 @@ return [
                     'query_by' => 'name,sku,description,short_description',
                 ],
             ],
-            App\Domain\Category\Models\Category::class => [
+            Category::class => [
                 'collection-schema' => [
                     'fields' => [
                         ['name' => 'id', 'type' => 'string'],
@@ -227,7 +231,7 @@ return [
                     'query_by' => 'name,description',
                 ],
             ],
-            App\Domain\Order\Models\Order::class => [
+            Order::class => [
                 'collection-schema' => [
                     'fields' => [
                         ['name' => 'id', 'type' => 'string'],

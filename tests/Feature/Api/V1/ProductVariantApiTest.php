@@ -7,6 +7,7 @@ use App\Domain\Product\DTOs\ProductVariantData;
 use App\Domain\Product\Models\Product;
 use App\Domain\Product\Models\VariantAttributeType;
 use App\Domain\Product\Models\VariantAttributeValue;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
@@ -15,6 +16,7 @@ uses(TestCase::class, RefreshDatabase::class, WithTenant::class);
 
 beforeEach(function () {
     $this->setUpTenant();
+    $this->withoutMiddleware(ValidateCsrfToken::class);
 
     $this->product = Product::factory()->create(['is_active' => true]);
 
@@ -90,7 +92,6 @@ describe('CreateProductVariant action', function () {
             productId: (string) $this->product->id,
             sku: 'VAR-INHERIT-PRICE',
             attributeValueIds: [$this->blueValue->id],
-            priceCents: null,
         ));
 
         expect($variant->price_cents)->toBeNull()
@@ -222,7 +223,6 @@ describe('Cart API with variants', function () {
             productId: (string) $this->product->id,
             sku: 'NO-PRICE-VAR',
             attributeValueIds: [],
-            priceCents: null,
         ));
 
         $response = $this->postJson('/api/v1/cart/items', [

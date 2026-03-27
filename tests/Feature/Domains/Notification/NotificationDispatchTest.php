@@ -27,18 +27,18 @@ beforeEach(function () {
 
 describe('OrderStatusChangedNotification', function () {
     it('notifies user when order is paid', function () {
+        $order = Order::factory()->create(['user_id' => $this->user->id]);
+
         event(new OrderPaid(
-            orderId: 1,
+            orderId: $order->id,
             userId: $this->user->id,
-            tenantId: 1,
+            tenantId: $order->tenant_id,
             orderNumber: 'ORD-001',
             totalCents: 10000,
         ));
 
-        Notification::assertSentTo($this->user, OrderStatusChangedNotification::class, function ($n) {
-            return $n->toArray($this->user)['status'] === 'paid'
-                && $n->toArray($this->user)['order_number'] === 'ORD-001';
-        });
+        Notification::assertSentTo($this->user, OrderStatusChangedNotification::class, fn ($n) => $n->toArray($this->user)['status'] === 'paid'
+            && $n->toArray($this->user)['order_number'] === 'ORD-001');
     });
 
     it('notifies user when order is cancelled', function () {
@@ -49,9 +49,7 @@ describe('OrderStatusChangedNotification', function () {
             orderNumber: 'ORD-002',
         ));
 
-        Notification::assertSentTo($this->user, OrderStatusChangedNotification::class, function ($n) {
-            return $n->toArray($this->user)['status'] === 'cancelled';
-        });
+        Notification::assertSentTo($this->user, OrderStatusChangedNotification::class, fn ($n) => $n->toArray($this->user)['status'] === 'cancelled');
     });
 
     it('notifies user when order is refunded', function () {
@@ -63,9 +61,7 @@ describe('OrderStatusChangedNotification', function () {
             refundedAmountCents: 5000,
         ));
 
-        Notification::assertSentTo($this->user, OrderStatusChangedNotification::class, function ($n) {
-            return $n->toArray($this->user)['status'] === 'refunded';
-        });
+        Notification::assertSentTo($this->user, OrderStatusChangedNotification::class, fn ($n) => $n->toArray($this->user)['status'] === 'refunded');
     });
 
     it('uses database and broadcast channels', function () {
@@ -88,10 +84,8 @@ describe('RefundApprovedNotification', function () {
             approvedBy: 99,
         ));
 
-        Notification::assertSentTo($this->user, RefundApprovedNotification::class, function ($n) {
-            return $n->toArray($this->user)['amount_cents'] === 5000
-                && $n->toArray($this->user)['currency'] === 'USD';
-        });
+        Notification::assertSentTo($this->user, RefundApprovedNotification::class, fn ($n) => $n->toArray($this->user)['amount_cents'] === 5000
+            && $n->toArray($this->user)['currency'] === 'USD');
     });
 
     it('toArray includes message and url', function () {
@@ -112,10 +106,8 @@ describe('LoyaltyPointsEarnedNotification', function () {
             newBalance: 500,
         ));
 
-        Notification::assertSentTo($this->user, LoyaltyPointsEarnedNotification::class, function ($n) {
-            return $n->toArray($this->user)['points'] === 150
-                && $n->toArray($this->user)['new_balance'] === 500;
-        });
+        Notification::assertSentTo($this->user, LoyaltyPointsEarnedNotification::class, fn ($n) => $n->toArray($this->user)['points'] === 150
+            && $n->toArray($this->user)['new_balance'] === 500);
     });
 
     it('toArray includes message with points and balance', function () {

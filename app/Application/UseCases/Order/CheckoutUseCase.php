@@ -11,6 +11,7 @@ use App\Domain\Cart\Specifications\CartHasItems;
 use App\Domain\Cart\Specifications\CartIsNotCompleted;
 use App\Domain\Loyalty\Actions\RedeemPointsAction;
 use App\Domain\Loyalty\DTOs\RedeemPointsData;
+use App\Domain\Loyalty\Exceptions\InsufficientPointsException;
 use App\Domain\Loyalty\Models\LoyaltyAccount;
 use App\Domain\Order\Actions\CreateOrderFromCart;
 use App\Domain\Order\DTOs\CreateOrderData;
@@ -76,7 +77,7 @@ final readonly class CheckoutUseCase
                     ->first();
 
                 if ($loyaltyAccount === null || ! $loyaltyAccount->canRedeem($request->redeemPoints)) {
-                    throw new \App\Domain\Loyalty\Exceptions\InsufficientPointsException(
+                    throw new InsufficientPointsException(
                         $loyaltyAccount?->points_balance ?? 0,
                         $request->redeemPoints
                     );

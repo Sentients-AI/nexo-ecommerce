@@ -178,7 +178,7 @@ final class Promotion extends BaseModel
         }
 
         // Sort tiers descending by min_cents to find the highest qualifying one first
-        usort($tiers, fn ($a, $b) => $b['min_cents'] <=> $a['min_cents']);
+        usort($tiers, fn (array $a, array $b) => $b['min_cents'] <=> $a['min_cents']);
 
         foreach ($tiers as $tier) {
             if ($subtotalCents >= $tier['min_cents']) {

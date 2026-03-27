@@ -90,9 +90,7 @@ it('dispatches PointsEarned event when awarding points', function () {
         description: 'Event test',
     ));
 
-    Event::assertDispatched(PointsEarned::class, function (PointsEarned $event) use ($user): bool {
-        return $event->userId === $user->id
-            && $event->points === 100
-            && $event->newBalance === 100;
-    });
+    Event::assertDispatched(PointsEarned::class, fn (PointsEarned $event): bool => $event->userId === $user->id
+        && $event->points === 100
+        && $event->newBalance === 100);
 });

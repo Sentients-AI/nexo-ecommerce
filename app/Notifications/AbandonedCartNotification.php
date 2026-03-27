@@ -35,15 +35,13 @@ final class AbandonedCartNotification extends Notification implements ShouldQueu
             return "• {$name} × {$item->quantity} — \${$price}";
         })->implode("\n");
 
-        $message = (new MailMessage)
+        return (new MailMessage)
             ->subject('You left something in your cart!')
             ->greeting("Hi {$notifiable->name},")
             ->line('You have items waiting in your cart. Come back and complete your purchase!')
             ->line($itemLines ?: 'Your cart has items waiting for you.')
             ->action('Return to Cart', $cartUrl)
             ->line('This is a one-time reminder. We hope to see you soon!');
-
-        return $message;
     }
 
     /**

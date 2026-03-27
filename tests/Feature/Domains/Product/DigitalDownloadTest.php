@@ -9,6 +9,7 @@ use App\Domain\Product\Actions\GenerateDownloadTokenAction;
 use App\Domain\Product\Models\Product;
 use App\Domain\Product\Models\ProductDownload;
 use App\Domain\User\Models\User;
+use App\Notifications\DownloadReadyNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
@@ -97,7 +98,7 @@ describe('GenerateDownloadTokenAction', function () {
 
         app(GenerateDownloadTokenAction::class)->execute($order->id);
 
-        Notification::assertSentTo($user, App\Notifications\DownloadReadyNotification::class);
+        Notification::assertSentTo($user, DownloadReadyNotification::class);
     });
 });
 

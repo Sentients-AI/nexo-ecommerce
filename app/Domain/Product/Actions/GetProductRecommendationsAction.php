@@ -37,7 +37,7 @@ final readonly class GetProductRecommendationsAction
             $recommendations = $this->getCoPurchaseRecommendations($product);
 
             if ($recommendations->count() < self::MIN_CO_PURCHASE_RESULTS) {
-                $recommendations = $this->getCategoryFallback($product, $recommendations->pluck('id')->all());
+                return $this->getCategoryFallback($product, $recommendations->pluck('id')->all());
             }
 
             return $recommendations;

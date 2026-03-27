@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Category\Models\Category;
 use App\Domain\Inventory\Models\Stock;
 use App\Domain\Product\Models\Product;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -14,6 +15,7 @@ uses(TestCase::class, RefreshDatabase::class, WithTenant::class);
 
 beforeEach(function () {
     $this->actingAsUserInTenant();
+    $this->withoutMiddleware(ValidateCsrfToken::class);
     // Ensure a fallback category exists (category_id is NOT NULL on products)
     Category::factory()->create(['name' => 'General']);
 });

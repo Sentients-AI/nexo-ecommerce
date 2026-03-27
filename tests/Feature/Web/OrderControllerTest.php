@@ -6,6 +6,7 @@ use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Models\CartItem;
 use App\Domain\Order\Models\Order;
 use App\Domain\Order\Models\OrderItem;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
@@ -14,6 +15,7 @@ uses(TestCase::class, RefreshDatabase::class, WithTenant::class);
 
 beforeEach(function () {
     $this->actingAsUserInTenant();
+    $this->withoutMiddleware(ValidateCsrfToken::class);
 });
 
 describe('Customer orders list', function () {

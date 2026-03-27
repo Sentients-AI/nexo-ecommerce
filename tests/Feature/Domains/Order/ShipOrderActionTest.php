@@ -78,7 +78,7 @@ describe('ShipOrderAction', function () {
 
     it('ships without estimated delivery date', function () {
         $order = Order::factory()->create(['status' => OrderStatus::Paid]);
-        $data = new ShipOrderData(carrier: 'USPS', trackingNumber: 'USPS555', estimatedDeliveryAt: null);
+        $data = new ShipOrderData(carrier: 'USPS', trackingNumber: 'USPS555');
 
         $result = app(ShipOrderAction::class)->execute($order, $data);
 

@@ -9,9 +9,12 @@ use App\Shared\Alerting\AlertTrigger;
 use App\Shared\Alerting\Enums\AlertTriggerStatus;
 use BackedEnum;
 use Exception;
+use Filament\Actions\Action;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use SplFileObject;
 use UnitEnum;
@@ -157,5 +160,45 @@ final class SystemHealth extends Page
         return AlertTrigger::query()
             ->where('status', AlertTriggerStatus::Active)
             ->count();
+    }
+
+    /**
+     * @return array<int, Action>
+     */
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('reindex_search')
+                ->label('Re-index Search')
+                ->icon(Heroicon::OutlinedArrowPath)
+                ->color('primary')
+                ->requiresConfirmation()
+                ->modalHeading('Re-index Search')
+                ->modalDescription('This will re-import all searchable models (Products, Categories, Orders) into the search index. Existing index data is preserved.')
+                ->action(function (): void {
+                    Artisan::call('scout:import-all');
+                    Notification::make()
+                        ->title('Search index updated')
+                        ->body('All searchable models have been re-indexed successfully.')
+                        ->success()
+                        ->send();
+                }),
+
+            Action::make('reindex_search_fresh')
+                ->label('Fresh Re-index')
+                ->icon(Heroicon::OutlinedArrowPathRoundedSquare)
+                ->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Fresh Re-index')
+                ->modalDescription('This will flush all existing search indexes and re-import all data from scratch. This cannot be undone and may take a while on large datasets.')
+                ->action(function (): void {
+                    Artisan::call('scout:import-all', ['--fresh' => true]);
+                    Notification::make()
+                        ->title('Search index rebuilt')
+                        ->body('All search indexes have been flushed and re-imported successfully.')
+                        ->success()
+                        ->send();
+                }),
+        ];
     }
 }

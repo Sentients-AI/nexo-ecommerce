@@ -18,7 +18,7 @@ final class DeleteProductVariant
     {
         DB::transaction(function () use ($variant) {
             $variant->attributeValues()->detach();
-            $variant->stock()?->delete();
+            $variant->stock()->delete();
             $variant->delete();
         });
     }

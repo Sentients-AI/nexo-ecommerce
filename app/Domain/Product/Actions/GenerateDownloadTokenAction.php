@@ -34,10 +34,12 @@ final readonly class GenerateDownloadTokenAction
         $tokens = [];
 
         foreach ($order->items as $item) {
-            if (! $item->product?->is_downloadable || ! $item->product->download_file_path) {
+            if (! $item->product?->is_downloadable) {
                 continue;
             }
-
+            if (! $item->product->download_file_path) {
+                continue;
+            }
             $plain = bin2hex(random_bytes(32));
 
             ProductDownload::query()->create([
@@ -54,7 +56,7 @@ final readonly class GenerateDownloadTokenAction
             $tokens[$item->id] = $plain;
         }
 
-        if (! empty($tokens) && $order->user) {
+        if ($tokens !== [] && $order->user) {
             $order->user->notify(new DownloadReadyNotification(
                 orderId: $order->id,
                 orderNumber: $order->order_number,

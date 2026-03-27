@@ -105,9 +105,7 @@ final class OrderController extends Controller
         $tenant = Context::get('tenant');
         $currency = $order->currency ?? 'MYR';
 
-        $formatPrice = function (int|float $cents) use ($currency): string {
-            return number_format($cents / 100, 2).' '.$currency;
-        };
+        $formatPrice = (fn (int|float $cents): string => number_format($cents / 100, 2).' '.$currency);
 
         $pdf = Pdf::loadView('pdf.invoice', [
             'order' => $order,

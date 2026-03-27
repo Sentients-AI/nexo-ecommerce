@@ -8,6 +8,7 @@ use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 use Tests\Traits\WithTenant;
 
@@ -33,7 +34,7 @@ function sendTestNotification(User $user): DatabaseNotification
     $notification = new OrderStatusChangedNotification(1, 'ORD-001', 'paid');
 
     return DatabaseNotification::create([
-        'id' => Illuminate\Support\Str::uuid()->toString(),
+        'id' => Str::uuid()->toString(),
         'type' => OrderStatusChangedNotification::class,
         'notifiable_type' => $user->getMorphClass(),
         'notifiable_id' => $user->getKey(),

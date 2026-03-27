@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Domain\Review\DTOs;
 
+use Illuminate\Http\UploadedFile;
+
 final readonly class ReviewData
 {
     public function __construct(
@@ -12,7 +14,7 @@ final readonly class ReviewData
         public int $rating,
         public string $title,
         public string $body,
-        /** @var array<int, \Illuminate\Http\UploadedFile> */
+        /** @var array<int, UploadedFile> */
         public array $photos = [],
     ) {}
 }

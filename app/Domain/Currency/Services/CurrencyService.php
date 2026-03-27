@@ -67,7 +67,7 @@ final class CurrencyService
 
         $fresh = $this->fetchFromApi($baseCurrency);
 
-        if (! empty($fresh)) {
+        if ($fresh !== []) {
             Cache::put($cacheKey, $fresh, $ttl);
             Cache::put($staleCacheKey, $fresh, $ttl * 24);
 

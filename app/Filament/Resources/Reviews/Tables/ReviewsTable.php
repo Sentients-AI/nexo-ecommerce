@@ -7,6 +7,7 @@ namespace App\Filament\Resources\Reviews\Tables;
 use App\Domain\Review\Actions\ApproveReviewAction;
 use App\Domain\Review\Actions\DeleteReviewAction;
 use App\Domain\Review\Actions\RejectReviewAction;
+use App\Domain\Review\Models\Review;
 use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\DeleteBulkAction;
@@ -78,7 +79,7 @@ final class ReviewsTable
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->visible(fn ($record): bool => ! $record->is_approved)
-                    ->action(fn ($record) => (new ApproveReviewAction)->execute($record))
+                    ->action(fn (Review $record) => (new ApproveReviewAction)->execute($record))
                     ->requiresConfirmation(),
 
                 Action::make('reject')
@@ -86,31 +87,31 @@ final class ReviewsTable
                     ->icon('heroicon-o-x-circle')
                     ->color('warning')
                     ->visible(fn ($record): bool => $record->is_approved)
-                    ->action(fn ($record) => (new RejectReviewAction)->execute($record))
+                    ->action(fn (Review $record) => (new RejectReviewAction)->execute($record))
                     ->requiresConfirmation(),
 
                 Action::make('delete')
                     ->label('Delete')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
-                    ->action(fn ($record) => (new DeleteReviewAction)->execute($record))
+                    ->action(fn (Review $record) => (new DeleteReviewAction)->execute($record))
                     ->requiresConfirmation(),
             ])
             ->bulkActions([
                 BulkAction::make('approve_selected')
                     ->label('Approve Selected')
                     ->icon('heroicon-o-check-circle')
-                    ->action(fn (Collection $records) => $records->each(fn ($r) => (new ApproveReviewAction)->execute($r)))
+                    ->action(fn (Collection $records) => $records->each(fn (Review $r) => (new ApproveReviewAction)->execute($r)))
                     ->requiresConfirmation(),
 
                 BulkAction::make('reject_selected')
                     ->label('Reject Selected')
                     ->icon('heroicon-o-x-circle')
-                    ->action(fn (Collection $records) => $records->each(fn ($r) => (new RejectReviewAction)->execute($r)))
+                    ->action(fn (Collection $records) => $records->each(fn (Review $r) => (new RejectReviewAction)->execute($r)))
                     ->requiresConfirmation(),
 
                 DeleteBulkAction::make()
-                    ->action(fn (Collection $records) => $records->each(fn ($r) => (new DeleteReviewAction)->execute($r))),
+                    ->action(fn (Collection $records) => $records->each(fn (Review $r) => (new DeleteReviewAction)->execute($r))),
             ]);
     }
 }

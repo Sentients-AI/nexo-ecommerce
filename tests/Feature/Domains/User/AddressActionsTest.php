@@ -10,6 +10,7 @@ use App\Domain\User\DTOs\CreateAddressData;
 use App\Domain\User\DTOs\UpdateAddressData;
 use App\Domain\User\Models\Address;
 use App\Domain\User\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -146,7 +147,7 @@ describe('DeleteAddress action', function () {
         $action = app(DeleteAddress::class);
 
         expect(fn () => $action->execute($address->id, $user->id))
-            ->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            ->toThrow(ModelNotFoundException::class);
     });
 });
 
