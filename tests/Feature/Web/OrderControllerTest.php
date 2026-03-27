@@ -58,3 +58,36 @@ describe('Customer order detail', function () {
             ->assertNotFound();
     });
 });
+
+describe('Order invoice PDF', function () {
+    it('downloads a PDF invoice for the authenticated users order', function () {
+        $order = Order::factory()->create(['user_id' => auth()->id()]);
+
+        $response = $this->get("/en/orders/{$order->id}/invoice");
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/pdf');
+        $response->assertHeader('Content-Disposition', "attachment; filename=invoice-{$order->order_number}.pdf");
+    });
+
+    it('returns 404 when trying to download another users invoice', function () {
+        $order = Order::factory()->create();
+
+        $this->get("/en/orders/{$order->id}/invoice")
+            ->assertNotFound();
+    });
+
+    it('returns 404 for a non-existent order invoice', function () {
+        $this->get('/en/orders/99999/invoice')
+            ->assertNotFound();
+    });
+
+    it('redirects guests to login', function () {
+        auth()->logout();
+
+        $order = Order::factory()->create();
+
+        $this->get("/en/orders/{$order->id}/invoice")
+            ->assertRedirect();
+    });
+});

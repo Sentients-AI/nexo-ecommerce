@@ -6,7 +6,10 @@ namespace App\Http\Controllers\Web;
 
 use App\Domain\Order\Models\Order;
 use App\Http\Controllers\Controller;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
+use Illuminate\Support\Facades\Context;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -43,6 +46,33 @@ final class OrderController extends Controller
                 ],
             ],
         ]);
+    }
+
+    public function invoice(Request $request): HttpResponse
+    {
+        $orderId = (int) $request->route('orderId');
+
+        $order = Order::query()
+            ->where('id', $orderId)
+            ->where('user_id', $request->user()->id)
+            ->with(['user', 'items.product'])
+            ->firstOrFail();
+
+        $tenant = Context::get('tenant');
+        $currency = $order->currency ?? 'MYR';
+
+        $formatPrice = function (int|float $cents) use ($currency): string {
+            return number_format($cents / 100, 2).' '.$currency;
+        };
+
+        $pdf = Pdf::loadView('pdf.invoice', [
+            'order' => $order,
+            'tenant' => $tenant,
+            'shippingAddress' => $order->shipping_address,
+            'formatPrice' => $formatPrice,
+        ]);
+
+        return $pdf->download("invoice-{$order->order_number}.pdf");
     }
 
     public function show(Request $request): Response
