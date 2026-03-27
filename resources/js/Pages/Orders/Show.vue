@@ -180,7 +180,7 @@ async function handleReorder() {
 
     // Add all items to cart
     // This would typically call an API endpoint that adds all order items to cart
-    router.post(`/orders/${props.order.id}/reorder`, {}, {
+    router.post(localePath(`/orders/${props.order.id}/reorder`), {}, {
         onFinish: () => {
             isReordering.value = false;
         },

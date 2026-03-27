@@ -107,6 +107,7 @@ Route::prefix('{locale}')
             Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
             Route::get('/orders/{orderId}', [OrderController::class, 'show'])->name('orders.show');
             Route::get('/orders/{orderId}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
+            Route::post('/orders/{orderId}/reorder', [OrderController::class, 'reorder'])->name('orders.reorder');
 
             // Refunds
             Route::get('/orders/{orderId}/refund', [RefundController::class, 'create'])->name('refunds.create');

@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\Cart\Actions\AddItemToCart;
+use App\Domain\Cart\DTOs\CartItemData;
+use App\Domain\Cart\Models\Cart;
 use App\Domain\Order\Models\Order;
 use App\Http\Controllers\Controller;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Context;
@@ -46,6 +51,45 @@ final class OrderController extends Controller
                 ],
             ],
         ]);
+    }
+
+    public function reorder(Request $request, AddItemToCart $addItemToCart): RedirectResponse
+    {
+        $orderId = (int) $request->route('orderId');
+
+        $order = Order::query()
+            ->where('id', $orderId)
+            ->where('user_id', $request->user()->id)
+            ->with('items')
+            ->firstOrFail();
+
+        $user = $request->user();
+        $sessionId = $request->session()->getId();
+
+        try {
+            $cart = Cart::firstOrCreate(
+                ['user_id' => $user->id, 'completed_at' => null],
+                ['session_id' => $sessionId]
+            );
+        } catch (UniqueConstraintViolationException) {
+            $cart = Cart::where('user_id', $user->id)->whereNull('completed_at')->firstOrFail();
+        }
+
+        foreach ($order->items as $item) {
+            if ($item->product_id === null) {
+                continue;
+            }
+
+            $addItemToCart->execute($cart, new CartItemData(
+                productId: (string) $item->product_id,
+                quantity: $item->quantity,
+            ));
+        }
+
+        $locale = $request->route('locale') ?? 'en';
+
+        return redirect()->route('cart.index', ['locale' => $locale])
+            ->with('success', 'Items from your previous order have been added to your cart.');
     }
 
     public function invoice(Request $request): HttpResponse
