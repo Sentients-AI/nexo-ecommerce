@@ -47,17 +47,45 @@ final class CurrencyService
     /**
      * Fetch and cache all exchange rates for the given base currency.
      *
+     * On API failure, the last known rates are served from a long-lived stale cache
+     * rather than falling back to an empty array (which would produce incorrect 1.0 rates).
+     *
      * @return array<string, float>
      */
     public function getRatesFor(string $baseCurrency): array
     {
         $baseCurrency = mb_strtoupper($baseCurrency);
         $cacheKey = "currency_rates_{$baseCurrency}";
+        $staleCacheKey = "currency_rates_{$baseCurrency}_stale";
         $ttl = config('currency.cache_ttl', 3600);
 
-        return Cache::remember($cacheKey, $ttl, function () use ($baseCurrency): array {
-            return $this->fetchFromApi($baseCurrency);
-        });
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $fresh = $this->fetchFromApi($baseCurrency);
+
+        if (! empty($fresh)) {
+            Cache::put($cacheKey, $fresh, $ttl);
+            Cache::put($staleCacheKey, $fresh, $ttl * 24);
+
+            return $fresh;
+        }
+
+        // API failed — serve last known rates to avoid silent 1.0 fallback
+        $stale = Cache::get($staleCacheKey);
+
+        if ($stale !== null) {
+            Log::warning('CurrencyService: Serving stale exchange rates after API failure', [
+                'base' => $baseCurrency,
+            ]);
+
+            return $stale;
+        }
+
+        return [];
     }
 
     /**

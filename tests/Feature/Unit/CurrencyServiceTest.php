@@ -81,7 +81,7 @@ describe('CurrencyService', function () {
         expect($service->convertCents(3, 'MYR', 'USD'))->toBe(1);
     });
 
-    it('returns 1.0 fallback rate when API fails', function () {
+    it('returns 1.0 fallback rate when API fails and no stale cache exists', function () {
         Http::fake([
             '*/latest*' => Http::response([], 500),
         ]);
@@ -91,15 +91,38 @@ describe('CurrencyService', function () {
         expect($service->getRate('MYR', 'USD'))->toBe(1.0);
     });
 
-    it('returns same amount when API fails on convertCents', function () {
+    it('returns same amount when API fails and no stale cache exists', function () {
         Http::fake([
             '*/latest*' => Http::response([], 500),
         ]);
 
         $service = app(CurrencyService::class);
 
-        // Falls back to rate 1.0, so conversion returns original amount
         expect($service->convertCents(1000, 'MYR', 'USD'))->toBe(1000);
+    });
+
+    it('serves stale cached rates when API fails instead of returning empty', function () {
+        // First: prime the stale cache with a successful fetch
+        Http::fake([
+            '*/latest*' => Http::response([
+                'base' => 'MYR',
+                'rates' => ['USD' => 0.22, 'EUR' => 0.21],
+            ]),
+        ]);
+
+        $service = app(CurrencyService::class);
+        $service->getRatesFor('MYR'); // warms both caches
+
+        // Expire the normal cache but keep the stale cache
+        Cache::forget('currency_rates_MYR');
+
+        // Now simulate API failure
+        Http::fake([
+            '*/latest*' => Http::response([], 500),
+        ]);
+
+        // Should return last known rate from stale cache, not 1.0
+        expect($service->getRate('MYR', 'USD'))->toBe(0.22);
     });
 
     it('returns 1.0 when rate not found in response', function () {

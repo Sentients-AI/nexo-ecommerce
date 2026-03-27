@@ -26,6 +26,7 @@ final class ReserveStock
         return DB::transaction(function () use ($data) {
             $stock = Stock::query()
                 ->where('product_id', $data->productId)
+                ->when($data->variantId !== null, fn ($q) => $q->where('variant_id', $data->variantId))
                 ->lockForUpdate()
                 ->firstOrFail();
 

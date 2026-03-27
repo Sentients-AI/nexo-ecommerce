@@ -133,6 +133,7 @@ final readonly class CreateOrderFromCart
             foreach ($cart->items as $cartItem) {
                 $order->items()->create([
                     'product_id' => $cartItem->product_id,
+                    'variant_id' => $cartItem->variant_id,
                     'price_cents_snapshot' => $cartItem->price_cents_snapshot,
                     'tax_cents_snapshot' => $cartItem->tax_cents_snapshot,
                     'quantity' => $cartItem->quantity,
@@ -142,6 +143,7 @@ final readonly class CreateOrderFromCart
                 $this->reserveStock->execute(new ReserveStockData(
                     productId: $cartItem->product_id,
                     quantity: $cartItem->quantity,
+                    variantId: $cartItem->variant_id,
                     orderId: $order->id,
                 ));
             }
@@ -183,6 +185,7 @@ final readonly class CreateOrderFromCart
         foreach ($cart->items as $cartItem) {
             $stock = Stock::query()
                 ->where('product_id', $cartItem->product_id)
+                ->when($cartItem->variant_id !== null, fn ($q) => $q->where('variant_id', $cartItem->variant_id))
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -194,7 +197,10 @@ final readonly class CreateOrderFromCart
                 );
             }
 
-            $stockRecords[$cartItem->product_id] = $stock;
+            $key = $cartItem->variant_id !== null
+                ? "{$cartItem->product_id}_{$cartItem->variant_id}"
+                : (string) $cartItem->product_id;
+            $stockRecords[$key] = $stock;
         }
 
         return $stockRecords;

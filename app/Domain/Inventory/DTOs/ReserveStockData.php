@@ -11,6 +11,7 @@ final class ReserveStockData extends BaseData
     public function __construct(
         public int $productId,
         public int $quantity,
+        public ?int $variantId = null,
         public ?int $orderId = null,
         public ?string $reason = null,
         public ?string $statusReason = null,

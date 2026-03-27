@@ -10,6 +10,7 @@ use App\Domain\Payment\Contracts\PaymentGatewayService;
 use App\Domain\Payment\DTOs\ProviderResponse;
 use App\Domain\Payment\Models\PaymentIntent;
 use App\Domain\Product\Models\Product;
+use App\Domain\Product\Models\ProductVariant;
 use App\Domain\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -271,6 +272,59 @@ describe('Checkout API', function () {
 
         $response->assertUnprocessable();
         $response->assertJsonPath('error.code', 'INSUFFICIENT_POINTS');
+    });
+
+    it('reserves stock for the correct variant row when cart item has a variant', function () {
+        $user = User::factory()->create();
+        $product = Product::factory()->create();
+
+        $variantA = ProductVariant::factory()->forProduct($product)->create();
+        $variantB = ProductVariant::factory()->forProduct($product)->create();
+
+        // Two separate stock rows — one per variant
+        $stockA = Stock::factory()->create([
+            'product_id' => $product->id,
+            'variant_id' => $variantA->id,
+            'quantity_available' => 10,
+            'quantity_reserved' => 0,
+        ]);
+        $stockB = Stock::factory()->create([
+            'product_id' => $product->id,
+            'variant_id' => $variantB->id,
+            'quantity_available' => 5,
+            'quantity_reserved' => 0,
+        ]);
+
+        $cart = Cart::factory()->create(['user_id' => $user->id]);
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'variant_id' => $variantA->id,
+            'price_cents_snapshot' => 5000,
+            'tax_cents_snapshot' => 500,
+            'quantity' => 3,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson('/api/v1/checkout', [
+            'cart_id' => $cart->id,
+            'currency' => 'MYR',
+        ]);
+
+        $response->assertSuccessful();
+
+        // Only variant A's stock should be decremented
+        expect($stockA->fresh()->quantity_available)->toBe(7)
+            ->and($stockB->fresh()->quantity_available)->toBe(5);
+
+        // Order item should carry the variant_id
+        $orderId = $response->json('order.id');
+        $this->assertDatabaseHas('order_items', [
+            'order_id' => $orderId,
+            'product_id' => $product->id,
+            'variant_id' => $variantA->id,
+            'quantity' => 3,
+        ]);
     });
 
     it('rejects checkout with insufficient stock', function () {
