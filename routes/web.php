@@ -20,6 +20,7 @@ use App\Http\Controllers\Web\VendorDashboardController;
 use App\Http\Controllers\Web\VendorInventoryController;
 use App\Http\Controllers\Web\VendorOrderController;
 use App\Http\Controllers\Web\VendorProductController;
+use App\Http\Controllers\Web\VendorProductImportController;
 use App\Http\Controllers\Web\VendorPromotionController;
 use App\Http\Controllers\Web\VendorSettingsController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,8 @@ Route::prefix('vendor')
         Route::patch('/orders/{order}/status', [VendorOrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::post('/orders/{order}/ship', [VendorOrderController::class, 'shipOrder'])->name('orders.ship');
         Route::get('/products', [VendorProductController::class, 'index'])->name('products.index');
+        Route::get('/products/import', [VendorProductImportController::class, 'create'])->name('products.import');
+        Route::post('/products/import', [VendorProductImportController::class, 'store'])->name('products.import.store');
         Route::get('/inventory', [VendorInventoryController::class, 'index'])->name('inventory.index');
         Route::patch('/inventory/{stock}', [VendorInventoryController::class, 'update'])->name('inventory.update');
         Route::get('/customers', [VendorCustomerController::class, 'index'])->name('customers.index');
