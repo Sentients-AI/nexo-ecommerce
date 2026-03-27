@@ -6,16 +6,23 @@ A Domain-Driven Design (DDD) **multi-tenant** e-commerce platform built with Lar
 
 - **Multi-tenancy** — Shared database with subdomain isolation (`store.yourdomain.com`)
 - **Product Catalog** — Products, categories, price history, sale pricing
+- **Product Variants** — Size/colour/material options per product; variant-level SKU, price, and stock
 - **Shopping Cart** — Anonymous + authenticated carts with session merging
+- **Abandoned Cart Recovery** — Detect carts idle 24 h+ and send automated recovery email sequences
 - **Checkout** — Idempotent checkout with Stripe PaymentIntent flow
+- **Multi-Currency** — Per-tenant base currency with live exchange rates (Frankfurter/ECB); all prices converted at checkout; full audit trail (`base_total_cents`, `exchange_rate`, `base_currency`) on every order
 - **Inventory Management** — Pessimistic locking, stock movements audit trail
 - **Order Processing** — Full lifecycle (pending → paid → shipped → fulfilled)
+- **Shipment Tracking** — Tracking numbers, carrier links, and customer-facing tracking page
 - **Refund Workflow** — Approval-gated refund processing with compensation actions
-- **Promotions & Discounts** — Code-based and rule-based promotion system
-- **Loyalty Points** — Earn points on orders, redeem for discounts; full transaction ledger
+- **Promotions & Discounts** — BOGO, tiered, bundle, flash-sale, and code-based promotions
+- **Loyalty Points** — Earn points on orders, redeem for discounts; full transaction ledger with expiry
 - **Referral Links** — Time-limited, usage-capped shareable codes; both sides rewarded
-- **Product Reviews** — Customer ratings and reviews per tenant
+- **Product Reviews** — Customer ratings, photos, replies, and helpful-vote system
 - **Wishlist** — Per-user product wishlists
+- **Saved Addresses** — Multiple shipping addresses per user with default selection
+- **Vendor Dashboard** — Full self-service: manage products, view orders, fulfilment, analytics, promotions
+- **Notification Center** — In-app notifications for order updates, refund approvals, loyalty milestones; real-time via Reverb
 - **Store Browsing** — Public tenant store pages
 - **Full-text Search** — Typesense-powered search via Laravel Scout (Products, Categories, Orders)
 - **Real-time Chat** — WebSocket-powered customer-support conversations (Laravel Reverb)
@@ -55,22 +62,23 @@ app/
 │   ├── Category/            # Product categorization
 │   ├── Chat/                # Real-time customer conversations
 │   ├── Config/              # System configuration management
+│   ├── Currency/            # Exchange rate service (Frankfurter/ECB)
 │   ├── FeatureFlag/         # Runtime feature toggles
 │   ├── Idempotency/         # Duplicate request prevention
 │   ├── Inventory/           # Stock management & movements
 │   ├── Order/               # Order processing & state machine
 │   ├── Payment/             # Payment handling & Stripe integration
-│   ├── Product/             # Product catalog
+│   ├── Product/             # Product catalog & variants
 │   ├── Projections/         # Read-optimized event projections
 │   ├── Loyalty/             # Loyalty points — earn, redeem, ledger
 │   ├── Promotion/           # Discounts and promotional codes
 │   ├── Referral/            # Referral links & reward distribution
 │   ├── Refund/              # Refund management & approval workflow
-│   ├── Review/              # Product reviews & ratings
+│   ├── Review/              # Product reviews, photos, replies, votes
 │   ├── Role/                # RBAC roles
 │   ├── Tax/                 # Tax calculation
 │   ├── Tenant/              # Multi-tenancy (tenant isolation)
-│   └── User/                # User management
+│   └── User/                # User management & address book
 │   └── {Domain}/
 │       ├── Actions/         # Domain services/commands
 │       ├── DTOs/            # Domain data transfer objects
@@ -256,6 +264,10 @@ TYPESENSE_PORT=8108
 GOOGLE_CLIENT_ID=xxx
 GOOGLE_CLIENT_SECRET=xxx
 GOOGLE_REDIRECT_URI=http://localhost/auth/google/callback
+
+# Multi-currency (optional — defaults to https://api.frankfurter.app, no key required)
+CURRENCY_API_URL=https://api.frankfurter.app
+CURRENCY_CACHE_TTL=3600
 ```
 
 ### Demo Tenants (after seeding)

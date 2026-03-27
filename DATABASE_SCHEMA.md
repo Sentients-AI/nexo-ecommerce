@@ -38,15 +38,16 @@ updated_at          TIMESTAMP
 **Tenant-Scoped Tables**
 
 The following tables include a nullable `tenant_id` foreign key for data isolation:
-- users, products, categories, stocks, stock_movements
+- users, user_addresses, products, product_variants, categories, stocks, stock_movements
 - orders, order_items, carts, cart_items
 - payment_intents, refunds, refund_events
 - promotions, promotion_usages
-- reviews, conversations, chat_messages
+- reviews, review_photos, review_replies, review_votes, conversations, chat_messages
 - feature_flags, system_configs, idempotency_keys
 - price_histories, order_financial_projections, refund_projections
 - loyalty_accounts, loyalty_transactions
 - referral_codes, referral_usages
+- variant_attribute_types, variant_attribute_values, product_variant_attribute_values
 
 **Tables WITHOUT tenant_id**
 
@@ -295,9 +296,14 @@ user_id                 BIGINT FK → users.id INDEX
 status                  ENUM('pending','paid','shipped','completed','cancelled')
 subtotal_cents          BIGINT
 tax_cents               BIGINT
+shipping_cost_cents     BIGINT DEFAULT 0
 discount_cents          BIGINT DEFAULT 0
+loyalty_discount_cents  BIGINT DEFAULT 0
 total_cents             BIGINT
-currency                CHAR(3)
+currency                CHAR(3)           -- checkout currency (may differ from base)
+base_currency           CHAR(3)           -- tenant's base currency at time of order
+exchange_rate           DECIMAL(10,6)     -- rate used: base → currency
+base_total_cents        BIGINT            -- total in base currency (for reporting)
 refunded_amount_cents   BIGINT DEFAULT 0
 promotion_id            BIGINT FK → promotions.id NULLABLE
 created_at              TIMESTAMP
@@ -307,8 +313,10 @@ updated_at              TIMESTAMP
 **Invariants**
 
 - Totals are immutable after `paid`
-- Currency cannot change
+- `currency`, `base_currency`, and `exchange_rate` cannot change once set
 - `discount_cents` reflects promotion applied at checkout
+- `base_total_cents * exchange_rate ≈ total_cents` (rounded to integer)
+- When `currency == base_currency`, `exchange_rate = 1.000000` exactly
 
 ---
 
@@ -770,7 +778,123 @@ updated_at          TIMESTAMP
 
 ---
 
-## 14. Indexing Strategy
+## 14. Product Variants
+
+### variant_attribute_types
+
+```sql
+id              BIGINT PK
+tenant_id       BIGINT FK → tenants.id NULLABLE INDEX
+name            VARCHAR(100)    -- e.g. "Size", "Colour"
+created_at      TIMESTAMP
+updated_at      TIMESTAMP
+```
+
+### variant_attribute_values
+
+```sql
+id                          BIGINT PK
+variant_attribute_type_id   BIGINT FK → variant_attribute_types.id INDEX
+value                       VARCHAR(100)    -- e.g. "Large", "Red"
+created_at                  TIMESTAMP
+updated_at                  TIMESTAMP
+```
+
+### product_variants
+
+```sql
+id              BIGINT PK
+tenant_id       BIGINT FK → tenants.id NULLABLE INDEX
+product_id      BIGINT FK → products.id INDEX
+sku             VARCHAR(100) NULLABLE
+price_cents     BIGINT NULLABLE        -- overrides product price when set
+is_active       BOOLEAN DEFAULT true
+created_at      TIMESTAMP
+updated_at      TIMESTAMP
+```
+
+**Invariants**
+
+- A variant belongs to exactly one product
+- `sku` is unique per tenant when set
+- `stocks` rows may reference a `variant_id` for variant-level inventory
+
+### product_variant_attribute_values (pivot)
+
+```sql
+product_variant_id          BIGINT FK → product_variants.id INDEX
+variant_attribute_value_id  BIGINT FK → variant_attribute_values.id INDEX
+PRIMARY KEY (product_variant_id, variant_attribute_value_id)
+```
+
+---
+
+## 15. User Addresses
+
+### user_addresses
+
+```sql
+id          BIGINT PK
+tenant_id   BIGINT FK → tenants.id NULLABLE INDEX
+user_id     BIGINT FK → users.id INDEX
+label       VARCHAR(100) NULLABLE    -- e.g. "Home", "Office"
+line1       VARCHAR(255)
+line2       VARCHAR(255) NULLABLE
+city        VARCHAR(100)
+state       VARCHAR(100) NULLABLE
+postcode    VARCHAR(20) NULLABLE
+country     CHAR(2)
+is_default  BOOLEAN DEFAULT false
+created_at  TIMESTAMP
+updated_at  TIMESTAMP
+```
+
+**Invariants**
+
+- Each user has at most one `is_default = true` address per tenant
+- Deleting the default address requires another address to be promoted first
+
+---
+
+## 16. Review Enhancements
+
+### review_photos
+
+```sql
+id          BIGINT PK
+review_id   BIGINT FK → reviews.id INDEX
+path        VARCHAR(255)
+disk        VARCHAR(50) DEFAULT 'public'
+created_at  TIMESTAMP
+updated_at  TIMESTAMP
+```
+
+### review_replies
+
+```sql
+id          BIGINT PK
+review_id   BIGINT FK → reviews.id INDEX
+user_id     BIGINT FK → users.id INDEX
+body        TEXT
+created_at  TIMESTAMP
+updated_at  TIMESTAMP
+```
+
+### review_votes
+
+```sql
+id          BIGINT PK
+review_id   BIGINT FK → reviews.id INDEX
+user_id     BIGINT FK → users.id INDEX
+is_helpful  BOOLEAN
+UNIQUE (review_id, user_id)
+created_at  TIMESTAMP
+updated_at  TIMESTAMP
+```
+
+---
+
+## 17. Indexing Strategy
 
 Recommended composite indexes:
 
@@ -784,14 +908,16 @@ chat_messages (conversation_id, created_at)
 reviews (product_id, created_at)
 domain_events (event_type, occurred_at)
 metrics (name, recorded_at)
+product_variants (product_id, is_active)
+user_addresses (user_id, is_default)
 ```
 
 ---
 
-## 15. Things Intentionally NOT in the Database
+## 18. Things Intentionally NOT in the Database
 
 - Calculated totals (derived at order creation, snapshotted)
-- Cached catalog responses
+- Cached catalog responses (stored in Redis via `currency_rates_{base}` cache keys)
 - Session state
 - Real-time presence data
 

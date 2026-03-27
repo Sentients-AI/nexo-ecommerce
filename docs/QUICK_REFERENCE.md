@@ -10,8 +10,8 @@ Fast lookup for common tasks and code locations.
 
 | What | Where | Example |
 |------|-------|---------|
-| Create order | `app/Domain/Order/Actions/CreateOrderFromCartAction.php` | `$action->execute($data)` |
-| Reserve stock | `app/Domain/Inventory/Actions/ReserveStockAction.php` | `$action->execute($data)` |
+| Create order | `app/Domain/Order/Actions/CreateOrderFromCart.php` | `$action->execute($data)` |
+| Reserve stock | `app/Domain/Inventory/Actions/ReserveStock.php` | `$action->execute($data)` |
 | Process payment | `app/Domain/Payment/Actions/CreatePaymentIntentAction.php` | Creates Stripe PaymentIntent |
 | Apply promotion | `app/Domain/Promotion/Actions/FindBestPromotionAction.php` | Find best discount |
 | Request refund | `app/Domain/Refund/Actions/RequestRefundAction.php` | Creates refund request |
@@ -20,8 +20,12 @@ Fast lookup for common tasks and code locations.
 | Generate referral code | `app/Domain/Referral/Actions/GenerateReferralCodeAction.php` | Idempotent — returns existing if active |
 | Apply referral code | `app/Domain/Referral/Actions/ApplyReferralCodeAction.php` | Awards points + coupon in one transaction |
 | Start conversation | `app/Domain/Chat/Actions/` | Real-time chat actions |
-| Submit review | `app/Domain/Review/Models/Review.php` | Product rating/body |
+| Submit review | `app/Domain/Review/Actions/SubmitReviewAction.php` | Product rating/body |
 | Calculate tax | `app/Domain/Tax/Actions/CalculateTax.php` | `$action->execute($data)` |
+| Convert currency | `app/Domain/Currency/Services/CurrencyService.php` | `$service->convertCents(int, from, to)` |
+| Save address | `app/Domain/User/Actions/CreateAddress.php` | `$action->execute($data)` |
+| Set default address | `app/Domain/User/Actions/SetDefaultAddress.php` | Atomic — clears others in transaction |
+| Send abandoned cart email | `app/Domain/Cart/Actions/SendAbandonedCartRecoveryEmailsAction.php` | Stamps `recovery_email_sent_at` |
 
 ### Multi-Tenancy
 
@@ -41,15 +45,20 @@ Fast lookup for common tasks and code locations.
 | What | Where | Key Fields |
 |------|-------|-----------|
 | Tenant model | `app/Domain/Tenant/Models/Tenant.php` | name, slug, email, is_active, settings |
-| Order model | `app/Domain/Order/Models/Order.php` | tenant_id, status, total_cents, discount_cents, items |
-| Product model | `app/Domain/Product/Models/Product.php` | tenant_id, name, slug, price_cents, sale_price_cents |
-| Cart model | `app/Domain/Cart/Models/Cart.php` | tenant_id, user_id, status, completed_at |
-| Stock model | `app/Domain/Inventory/Models/Stock.php` | tenant_id, quantity_available, quantity_reserved |
-| User model | `app/Domain/User/Models/User.php` | tenant_id, name, email, roles |
-| Review model | `app/Domain/Review/Models/Review.php` | product_id, user_id, rating, body |
+| Order model | `app/Domain/Order/Models/Order.php` | status, total_cents, currency, base_currency, exchange_rate, base_total_cents |
+| Product model | `app/Domain/Product/Models/Product.php` | name, slug, price_cents, sale_price_cents, variants |
+| ProductVariant | `app/Domain/Product/Models/ProductVariant.php` | product_id, sku, price_cents, attributeValues |
+| Cart model | `app/Domain/Cart/Models/Cart.php` | user_id, status, completed_at, recovery_email_sent_at |
+| Stock model | `app/Domain/Inventory/Models/Stock.php` | product_id, variant_id, quantity_available, quantity_reserved |
+| User model | `app/Domain/User/Models/User.php` | tenant_id, name, email, roles, addresses |
+| Address model | `app/Domain/User/Models/Address.php` | user_id, label, line1, city, country, is_default |
+| Review model | `app/Domain/Review/Models/Review.php` | product_id, user_id, rating, body, photos, replies, votes |
+| ReviewPhoto | `app/Domain/Review/Models/ReviewPhoto.php` | review_id, path, disk |
+| ReviewReply | `app/Domain/Review/Models/ReviewReply.php` | review_id, user_id, body |
+| ReviewVote | `app/Domain/Review/Models/ReviewVote.php` | review_id, user_id, is_helpful |
 | Conversation | `app/Domain/Chat/Models/Conversation.php` | user_id, subject, status |
 | ChatMessage | `app/Domain/Chat/Models/ChatMessage.php` | conversation_id, sender_id, body, read_at |
-| LoyaltyAccount | `app/Domain/Loyalty/Models/LoyaltyAccount.php` | tenant_id, user_id, points_balance, total_points_earned |
+| LoyaltyAccount | `app/Domain/Loyalty/Models/LoyaltyAccount.php` | user_id, points_balance, total_points_earned |
 | LoyaltyTransaction | `app/Domain/Loyalty/Models/LoyaltyTransaction.php` | type, points, balance_after, reference_type/id |
 | ReferralCode | `app/Domain/Referral/Models/ReferralCode.php` | code, max_uses, used_count, expires_at, is_active |
 | ReferralUsage | `app/Domain/Referral/Models/ReferralUsage.php` | referrer_user_id, referee_user_id, coupon_code |
@@ -66,13 +75,15 @@ Fast lookup for common tasks and code locations.
 
 | Endpoint | Controller | Purpose |
 |----------|------------|---------|
-| POST /api/v1/checkout | `CheckoutController@checkout` | Create order + payment |
-| POST /api/v1/cart/items | `CartController@addItem` | Add item to cart |
+| POST /api/v1/checkout | `CheckoutController@checkout` | Create order + payment (pass `currency`) |
+| POST /api/v1/cart/items | `CartController@addItem` | Add item to cart (pass `variant_id` for variants) |
 | GET /api/v1/orders | `OrderController@index` | List user's orders |
 | POST /api/v1/orders/{order}/refunds | `RefundController@store` | Request refund |
 | POST /api/v1/cart/apply-promotion | `PromotionController@apply` | Apply promo code |
 | GET /api/v1/products/{slug}/reviews | `ReviewController@index` | List product reviews |
 | POST /api/v1/products/{slug}/reviews | `ReviewController@store` | Submit a review |
+| POST /api/v1/products/{slug}/reviews/{id}/reply | `ReviewController@reply` | Vendor reply to review |
+| POST /api/v1/products/{slug}/reviews/{id}/vote | `ReviewController@vote` | Mark review helpful/unhelpful |
 | GET /api/v1/conversations | `ConversationController@index` | List conversations |
 | POST /api/v1/conversations | `ConversationController@store` | Start conversation |
 | POST /api/v1/conversations/{id}/messages | `MessageController@store` | Send message |
@@ -86,6 +97,16 @@ Fast lookup for common tasks and code locations.
 | GET /api/v1/search/products | `SearchController@products` | Typesense product search (public) |
 | GET /api/v1/search/categories | `SearchController@categories` | Typesense category search (public) |
 | GET /api/v1/search/orders | `SearchController@orders` | Typesense order search (auth) |
+| GET /api/v1/notifications | `NotificationController@index` | Recent notifications |
+| POST /api/v1/notifications/{id}/read | `NotificationController@markRead` | Mark one read |
+| DELETE /api/v1/notifications/{id} | `NotificationController@destroy` | Delete one |
+| POST /api/v1/notifications/read-all | `NotificationController@markAllRead` | Mark all read |
+| DELETE /api/v1/notifications | `NotificationController@destroyAll` | Clear all |
+| GET /api/v1/addresses | `AddressController@index` | List saved addresses |
+| POST /api/v1/addresses | `AddressController@store` | Create address |
+| PUT /api/v1/addresses/{id} | `AddressController@update` | Update address |
+| DELETE /api/v1/addresses/{id} | `AddressController@destroy` | Delete address |
+| PATCH /api/v1/addresses/{id}/default | `AddressController@setDefault` | Set as default |
 
 ### Web Routes (Inertia)
 
@@ -99,6 +120,15 @@ Fast lookup for common tasks and code locations.
 | `/{locale}/checkout` | `CheckoutController@summary` | `Checkout/Summary.vue` |
 | `/{locale}/orders` | `OrderController@index` | `Orders/Index.vue` |
 | `/{locale}/orders/{order}` | `OrderController@show` | `Orders/Show.vue` |
+| `/{locale}/refunds/{order}` | `RefundController@request` | `Refunds/Request.vue` |
+| `/{locale}/refunds/{refund}/status` | `RefundController@status` | `Refunds/Status.vue` |
+| `/{locale}/profile/addresses` | `AddressController@index` | `Profile/Addresses/Index.vue` |
+| `/{locale}/vendor` | `VendorDashboardController@index` | `Vendor/Dashboard.vue` |
+| `/{locale}/vendor/products` | `VendorProductController@index` | `Vendor/Products.vue` |
+| `/{locale}/vendor/orders` | `VendorOrderController@index` | `Vendor/Orders.vue` |
+| `/{locale}/vendor/analytics` | `VendorAnalyticsController@index` | `Vendor/Analytics.vue` |
+| `/{locale}/vendor/customers` | `VendorCustomerController@index` | `Vendor/Customers.vue` |
+| `/{locale}/vendor/promotions` | `VendorPromotionController@index` | `Vendor/Promotions.vue` |
 
 ### Frontend Pages
 
@@ -106,13 +136,24 @@ Fast lookup for common tasks and code locations.
 |------|------|-------|
 | Home | `resources/js/Pages/Home.vue` | — |
 | Product listing | `resources/js/Pages/Products/Index.vue` | products, categories, filters |
-| Product detail | `resources/js/Pages/Products/Show.vue` | product, reviews |
+| Product detail | `resources/js/Pages/Products/Show.vue` | product, variants, reviews |
 | Store page | `resources/js/Pages/Stores/Show.vue` | tenant, products |
 | Shopping cart | `resources/js/Pages/Cart/Index.vue` | cart |
 | Wishlist | `resources/js/Pages/Wishlist/Index.vue` | wishlisted products |
-| Checkout | `resources/js/Pages/Checkout/Summary.vue` | cart, clientSecret |
+| Checkout summary | `resources/js/Pages/Checkout/Summary.vue` | cart |
+| Checkout pending | `resources/js/Pages/Checkout/Pending.vue` | order, clientSecret |
+| Checkout result | `resources/js/Pages/Checkout/Result.vue` | order |
 | Order history | `resources/js/Pages/Orders/Index.vue` | orders |
 | Order detail | `resources/js/Pages/Orders/Show.vue` | order |
+| Refund request | `resources/js/Pages/Refunds/Request.vue` | order |
+| Refund status | `resources/js/Pages/Refunds/Status.vue` | refund |
+| Saved addresses | `resources/js/Pages/Profile/Addresses/Index.vue` | addresses |
+| Vendor dashboard | `resources/js/Pages/Vendor/Dashboard.vue` | stats, recentOrders |
+| Vendor products | `resources/js/Pages/Vendor/Products.vue` | products |
+| Vendor orders | `resources/js/Pages/Vendor/Orders.vue` | orders |
+| Vendor analytics | `resources/js/Pages/Vendor/Analytics.vue` | revenue, topProducts |
+| Vendor customers | `resources/js/Pages/Vendor/Customers.vue` | customers |
+| Vendor promotions | `resources/js/Pages/Vendor/Promotions.vue` | promotions |
 
 ---
 
@@ -193,6 +234,35 @@ final class EntityGuards
 
 // Usage
 EntityGuards::canDoAction($entity);
+```
+
+---
+
+## Frontend Composables
+
+| Composable | File | Exports |
+|------------|------|---------|
+| `useApi` | `resources/js/Composables/useApi.ts` | `get`, `post`, `put`, `destroy`, `loading`, `error` |
+| `useCart` | `resources/js/Composables/useCart.ts` | `cart`, `addToCart`, `updateItem`, `removeItem`, `formatPrice` |
+| `useCurrency` | `resources/js/Composables/useCurrency.ts` | `currency` (reactive, from Inertia prop), `formatPrice(cents, overrideCurrency?)` |
+| `useOrders` | `resources/js/Composables/useOrders.ts` | `fetchOrders`, `fetchOrder`, `formatPrice`, `formatDate` |
+| `useRefunds` | `resources/js/Composables/useRefunds.ts` | `requestRefund`, `fetchRefund`, `formatPrice` |
+| `useCheckout` | `resources/js/Composables/useCheckout.ts` | `initiateCheckout(cartId, currency)` |
+| `useWishlist` | `resources/js/Composables/useWishlist.ts` | `isInWishlist`, `toggleWishlist` |
+| `useLocale` | `resources/js/Composables/useLocale.ts` | `locale`, `localePath(path)` |
+
+**Currency formatting** — always use `useCurrency`, never hardcode `currency: 'USD'`:
+
+```typescript
+// ✅ Correct
+const { currency, formatPrice } = useCurrency();
+formatPrice(1999); // uses tenant currency from Inertia shared prop
+
+// ✅ Also correct — override per display
+formatPrice(1999, 'USD');
+
+// ❌ Wrong — hardcodes currency
+new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(19.99);
 ```
 
 ---

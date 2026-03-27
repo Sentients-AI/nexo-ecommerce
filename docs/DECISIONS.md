@@ -515,3 +515,95 @@ Replace `LIKE '%query%'` searches with Typesense via Laravel Scout. Product, Cat
 - Tests use `SCOUT_DRIVER=collection` (in-memory) — no real Typesense needed in CI
 - After deploy, run `php artisan scout:import` for each model to seed the index
 - All three searchable models include `tenant_id` in `toSearchableArray()` for safe filtering
+
+---
+
+## 2026-03-25 — Product variants as a first-class entity
+
+**Decision**
+Add a `ProductVariant` model with a polymorphic attribute system (`VariantAttributeType` / `VariantAttributeValue`). Variants carry optional `sku` and `price_cents` overrides and link to their own `Stock` rows via a `variant_id` column.
+
+**Reason**
+Products such as clothing or electronics have size/colour/material combinations that need independent pricing and inventory. A flat product model cannot represent these without data duplication.
+
+**Trade-offs**
+- Cart and order items now optionally reference a `variant_id`, so any code reading `CartItem` or `OrderItem` must handle the nullable variant
+- Stocks table relaxed its unique constraint from `(product_id)` to `(product_id, variant_id)` — existing single-variant products keep the old behaviour
+
+**Consequences**
+- `lockAndValidateStock` in `CreateOrderFromCart` must filter by `variant_id` when present
+- Filament admin panel has a `ProductVariantsRelationManager` for inline variant management
+
+---
+
+## 2026-03-26 — User address book (multiple shipping addresses)
+
+**Decision**
+Add a `user_addresses` table with `label`, full address fields, and an `is_default` flag. Four actions (`CreateAddress`, `UpdateAddress`, `DeleteAddress`, `SetDefaultAddress`) enforce the single-default invariant atomically.
+
+**Reason**
+Customers need to save multiple delivery addresses (home, office, etc.) and designate one as the default to pre-fill checkout.
+
+**Trade-offs**
+- Orders now optionally store a `shipping_address_id` FK — historical orders without an address are unaffected
+- The default-address invariant (`at most one is_default = true per user`) is enforced in application code, not a DB partial unique index, to stay compatible with MySQL 5.7
+
+**Consequences**
+- `SetDefaultAddress` action wraps in a transaction: clears all `is_default`, then sets the target
+- Address deletion is rejected if the address is the user's only default (front-end must prompt the user to set a new default first)
+
+---
+
+## 2026-03-26 — Abandoned cart recovery via scheduled emails
+
+**Decision**
+A `SendAbandonedCartRecoveryCommand` scheduled daily identifies carts idle ≥ 24 h that have not yet received a recovery email, then dispatches `AbandonedCartRecovery` notifications and stamps `recovery_email_sent_at`.
+
+**Reason**
+Abandoned carts represent lost revenue. A single well-timed recovery email recovers a meaningful fraction without requiring a third-party tool.
+
+**Trade-offs**
+- Only one recovery email per cart — no drip sequence — to avoid spam complaints
+- Does not personalise with product images (plain text + product names only) to keep deliverability high
+
+**Consequences**
+- `carts` table gains `recovery_email_sent_at TIMESTAMP NULLABLE`
+- The command is idempotent: re-running it on the same day sends no duplicate emails
+
+---
+
+## 2026-03-27 — Multi-currency support with live exchange rates
+
+**Decision**
+Add a `CurrencyService` backed by the free Frankfurter.app API (ECB data, no API key). Rates are cached per base currency for one hour. At checkout the order stores the converted amounts **plus** the original `base_total_cents` and `exchange_rate` for a full audit trail.
+
+**Reason**
+The platform is multi-tenant; different tenants operate in different countries and currencies. Buyers in a USD store should not see MYR prices. Locking the exchange rate at checkout prevents revenue discrepancies if the rate moves between order and payment confirmation.
+
+**Trade-offs**
+- Frankfurter.app is a free, unguaranteed service; the service falls back to rate `1.0` on failure rather than blocking checkout
+- Rates are cached 1 hour, so intra-hour fluctuations are not reflected
+- Supported currencies are an allow-list (`config/currency.supported`) — adding a new one is a one-line config change
+
+**Consequences**
+- `orders` table gains `base_currency CHAR(3)`, `exchange_rate DECIMAL(10,6)`, `base_total_cents BIGINT`
+- `FetchExchangeRatesCommand` (`currency:fetch-rates`) runs hourly via the scheduler to warm the cache proactively
+- All Vue components use the shared `useCurrency` composable (Inertia prop `currency`) instead of hardcoded USD formatting
+- `CheckoutRequest` validates `currency` against `config('currency.supported')`
+
+---
+
+## 2026-03-27 — Notification Center with real-time delivery
+
+**Decision**
+Use Laravel's built-in `DatabaseNotification` model (UUID PK) for persistence and broadcast notifications over Reverb for real-time badge updates. A `NotificationController` handles CRUD; an `unread_notifications_count` Inertia shared prop keeps the UI badge live.
+
+**Reason**
+Customers need in-app awareness of order status changes, refund decisions, and loyalty milestones without refreshing the page.
+
+**Trade-offs**
+- `RouteDependencyResolverTrait` in Laravel injects route parameters positionally, which conflicts with locale-prefixed routes — `markRead` and `destroy` use `$request->route('id')` directly instead of a `string $id` parameter
+
+**Consequences**
+- The `unread_notifications_count` shared prop is lazy (`fn ()`) so it adds zero overhead on pages that don't render the badge
+- Notification types are plain PHP classes with a `toArray()` for storage and `toBroadcast()` for WebSocket push

@@ -313,6 +313,24 @@ Initiate checkout process. Creates order from cart with stock reservation.
 - **Headers:** `Authorization: Bearer {token}`
 - **Headers:** `Idempotency-Key: {uuid}` (required for duplicate detection)
 
+**Request:**
+
+```json
+{
+  "cart_id": 1,
+  "currency": "USD",
+  "promotion_code": "SAVE10",
+  "redeem_points": 500
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `cart_id` | integer | Yes | Cart to check out |
+| `currency` | string (3) | Yes | Checkout currency — must be one of `USD`, `MYR`, `EUR`, `GBP`, `SGD`, `AUD`, `JPY`, `CAD` |
+| `promotion_code` | string | No | Promotion code to apply |
+| `redeem_points` | integer | No | Loyalty points to redeem for a discount |
+
 **Response 201:**
 
 ```json
@@ -321,26 +339,37 @@ Initiate checkout process. Creates order from cart with stock reservation.
     "order": {
       "id": 1,
       "status": "pending",
-      "subtotal_cents": 3000,
-      "tax_cents": 300,
-      "discount_cents": 600,
-      "total_cents": 2700,
+      "currency": "USD",
+      "base_currency": "MYR",
+      "exchange_rate": 0.22,
+      "subtotal_cents": 660,
+      "tax_cents": 66,
+      "discount_cents": 0,
+      "total_cents": 726,
+      "base_total_cents": 3300,
       "items": [...]
     },
     "payment_intent": {
       "id": 1,
       "client_secret": "pi_xxx_secret_xxx",
       "status": "requires_payment_method",
-      "amount_cents": 2700
+      "amount_cents": 726
     }
   }
 }
 ```
 
+**Multi-currency notes:**
+- `total_cents` and all amount fields are in the requested `currency`
+- `base_total_cents` is the original amount in the tenant's base currency (useful for reporting)
+- `exchange_rate` is the rate used at the time of checkout (locked in — never changes)
+- When `currency` equals the tenant's base currency, `exchange_rate` is always `1.0`
+
 **Errors:**
 - 422 `CART_EMPTY` - Cart has no items
 - 422 `CART_ALREADY_COMPLETED` - Cart already checked out
 - 422 `INSUFFICIENT_STOCK` - Stock no longer available
+- 422 validation - `currency` not in supported list
 - 409 `INVALID_IDEMPOTENCY_KEY` - Idempotency key reused with different payload
 
 ---
@@ -1014,6 +1043,157 @@ Mark all messages in a conversation as read.
 - **Headers:** `Authorization: Bearer {token}`
 
 **Response:** 204 No Content
+
+---
+
+## Notifications
+
+All endpoints require authentication. Notification objects include:
+
+```json
+{
+  "id": "uuid",
+  "type": "App\\Notifications\\OrderStatusChanged",
+  "data": { "order_id": 42, "status": "paid", "message": "Your order has been paid." },
+  "read_at": null,
+  "created_at": "2026-03-15T10:00:00Z"
+}
+```
+
+### GET /api/v1/notifications
+
+List recent notifications (up to 20, sorted newest first).
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response 200:** `{ "data": [ ...notifications ] }`
+
+---
+
+### POST /api/v1/notifications/{id}/read
+
+Mark a single notification as read.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response:** 204 No Content
+
+---
+
+### DELETE /api/v1/notifications/{id}
+
+Delete a notification.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response:** 204 No Content
+
+---
+
+### POST /api/v1/notifications/read-all
+
+Mark all unread notifications as read.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response:** 204 No Content
+
+---
+
+### DELETE /api/v1/notifications
+
+Clear all notifications for the authenticated user.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response:** 204 No Content
+
+---
+
+## Addresses
+
+Manage the user's saved shipping address book.
+
+### GET /api/v1/addresses
+
+List all saved addresses.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "label": "Home",
+      "line1": "123 Main St",
+      "line2": null,
+      "city": "Kuala Lumpur",
+      "state": "Selangor",
+      "postcode": "50000",
+      "country": "MY",
+      "is_default": true
+    }
+  ]
+}
+```
+
+---
+
+### POST /api/v1/addresses
+
+Create a new address.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Request:**
+
+```json
+{
+  "label": "Office",
+  "line1": "456 Business Park",
+  "city": "Petaling Jaya",
+  "state": "Selangor",
+  "postcode": "47810",
+  "country": "MY"
+}
+```
+
+**Response 201:** Created address object.
+
+---
+
+### PUT /api/v1/addresses/{id}
+
+Update an existing address.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Request:** Same fields as POST (all optional).
+
+**Response 200:** Updated address object.
+
+---
+
+### DELETE /api/v1/addresses/{id}
+
+Delete an address. Cannot delete the default address while others exist.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response:** 204 No Content
+
+---
+
+### PATCH /api/v1/addresses/{id}/default
+
+Set an address as the user's default shipping address.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response 200:** Updated address object with `is_default: true`.
 
 ---
 
