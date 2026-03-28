@@ -41,9 +41,9 @@ final class ReviewFactory extends Factory
             'user_id' => $tenantId
                 ? User::query()->inRandomOrder()->first()?->id ?? User::factory()->create()->id
                 : User::factory()->create()->id,
-            'rating' => $this->faker->numberBetween(1, 5),
-            'title' => $this->faker->sentence(4),
-            'body' => $this->faker->paragraph(),
+            'rating' => fake()->numberBetween(1, 5),
+            'title' => fake()->sentence(4),
+            'body' => fake()->paragraph(),
             'is_approved' => true,
         ];
     }

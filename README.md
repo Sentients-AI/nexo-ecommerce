@@ -1,4 +1,6 @@
-# Modular E-Commerce System
+# Nexo — Modular E-Commerce System
+
+**Live:** https://store.aljebal-albeedos.com
 
 A Domain-Driven Design (DDD) **multi-tenant** e-commerce platform built with Laravel 12, featuring strict invariant enforcement, event-driven architecture, real-time chat, product reviews, internationalization, and comprehensive business rule validation.
 
@@ -181,8 +183,10 @@ final readonly class RecordPromotionUsageAction { public function execute(...): 
 - PHP 8.4+
 - Composer
 - Node.js 20+
-- MySQL 8+ or PostgreSQL 15+
-- Redis (for queues and cache)
+- MySQL 8+ / MariaDB 10.6+ / PostgreSQL 15+
+- Redis (optional — defaults to database driver for queues and cache)
+
+> **Shared hosting (MariaDB):** Set `DB_ENGINE=InnoDB` in your `.env` if the server defaults to MyISAM.
 
 ### Installation
 
@@ -247,14 +251,14 @@ STRIPE_SECRET=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 
 # Multi-tenancy
-TENANCY_BASE_DOMAIN=localhost
+APP_BASE_DOMAIN=localhost
 
 # WebSockets (Reverb)
 REVERB_APP_ID=xxx
 REVERB_APP_KEY=xxx
 REVERB_APP_SECRET=xxx
 
-# Search (Typesense)
+# Search (Typesense — set to "database" to disable Typesense and use DB full-text search)
 SCOUT_DRIVER=typesense
 TYPESENSE_API_KEY=masterKey
 TYPESENSE_HOST=localhost

@@ -32,7 +32,7 @@ final class VariantAttributeValueFactory extends Factory
     public function definition(): array
     {
         $tenantId = Context::get('tenant_id');
-        $value = $this->faker->unique()->word();
+        $value = fake()->unique()->word();
 
         return [
             'tenant_id' => $tenantId ?? Tenant::factory(),
@@ -41,7 +41,7 @@ final class VariantAttributeValueFactory extends Factory
                 : VariantAttributeType::factory()->create()->id,
             'value' => ucfirst($value),
             'slug' => Str::slug($value),
-            'sort_order' => $this->faker->numberBetween(0, 20),
+            'sort_order' => fake()->numberBetween(0, 20),
             'metadata' => null,
         ];
     }

@@ -34,9 +34,9 @@ final class CartItemFactory extends Factory
         return [
             'cart_id' => Cart::factory(),
             'product_id' => Product::factory(),
-            'price_cents_snapshot' => $this->faker->numberBetween(1000, 50000),
-            'tax_cents_snapshot' => $this->faker->numberBetween(0, 5000),
-            'quantity' => $this->faker->numberBetween(1, 5),
+            'price_cents_snapshot' => fake()->numberBetween(1000, 50000),
+            'tax_cents_snapshot' => fake()->numberBetween(0, 5000),
+            'quantity' => fake()->numberBetween(1, 5),
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
     }

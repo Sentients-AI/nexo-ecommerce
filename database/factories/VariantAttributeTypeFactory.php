@@ -30,13 +30,13 @@ final class VariantAttributeTypeFactory extends Factory
      */
     public function definition(): array
     {
-        $name = $this->faker->unique()->randomElement(['Color', 'Size', 'Material', 'Style', 'Finish', 'Weight', 'Length']);
+        $name = fake()->unique()->randomElement(['Color', 'Size', 'Material', 'Style', 'Finish', 'Weight', 'Length']);
 
         return [
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
             'name' => $name,
             'slug' => Str::slug($name),
-            'sort_order' => $this->faker->numberBetween(0, 10),
+            'sort_order' => fake()->numberBetween(0, 10),
         ];
     }
 

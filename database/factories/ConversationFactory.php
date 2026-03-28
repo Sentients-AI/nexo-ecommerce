@@ -26,7 +26,7 @@ final class ConversationFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'subject' => $this->faker->optional()->sentence(4),
+            'subject' => fake()->optional()->sentence(4),
             'status' => ConversationStatus::Open,
             'type' => ConversationType::Store,
             'last_message_at' => now(),

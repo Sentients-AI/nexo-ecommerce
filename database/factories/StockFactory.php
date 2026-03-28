@@ -32,9 +32,9 @@ final class StockFactory extends Factory
     {
         return [
             'product_id' => Product::factory(),
-            'quantity_available' => $this->faker->numberBetween(1, 100),
-            'quantity_reserved' => $this->faker->numberBetween(1, 100),
-            'updated_at' => $this->faker->dateTimeBetween('-1 years', 'now'),
+            'quantity_available' => fake()->numberBetween(1, 100),
+            'quantity_reserved' => fake()->numberBetween(1, 100),
+            'updated_at' => fake()->dateTimeBetween('-1 years', 'now'),
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
     }

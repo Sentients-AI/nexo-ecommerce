@@ -24,15 +24,15 @@ final class OrderFactory extends Factory
      */
     public function definition(): array
     {
-        $subtotalCents = $this->faker->numberBetween(10000, 100000);
+        $subtotalCents = fake()->numberBetween(10000, 100000);
         $taxCents = (int) ($subtotalCents * 0.1);
-        $shippingCents = $this->faker->numberBetween(500, 2000);
+        $shippingCents = fake()->numberBetween(500, 2000);
         $totalCents = $subtotalCents + $taxCents + $shippingCents;
 
         return [
             'user_id' => User::factory(),
-            'order_number' => 'ORD-'.$this->faker->unique()->bothify('########'),
-            'status' => $this->faker->randomElement(['pending', 'paid', 'cancelled', 'shipped', 'delivered']),
+            'order_number' => 'ORD-'.fake()->unique()->bothify('########'),
+            'status' => fake()->randomElement(['pending', 'paid', 'cancelled', 'shipped', 'delivered']),
             'subtotal_cents' => $subtotalCents,
             'tax_cents' => $taxCents,
             'shipping_cost_cents' => $shippingCents,

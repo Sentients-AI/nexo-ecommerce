@@ -37,11 +37,11 @@ final class ProductVariantFactory extends Factory
             'product_id' => $tenantId
                 ? Product::query()->inRandomOrder()->first()?->id ?? Product::factory()->create()->id
                 : Product::factory()->create()->id,
-            'sku' => $this->faker->unique()->bothify('VAR-####-????'),
-            'price_cents' => $this->faker->optional(0.6)->numberBetween(1000, 100000),
-            'sale_price' => $this->faker->optional(0.2)->numberBetween(500, 50000),
-            'is_active' => $this->faker->boolean(90),
-            'sort_order' => $this->faker->numberBetween(0, 20),
+            'sku' => fake()->unique()->bothify('VAR-####-????'),
+            'price_cents' => fake()->optional(0.6)->numberBetween(1000, 100000),
+            'sale_price' => fake()->optional(0.2)->numberBetween(500, 50000),
+            'is_active' => fake()->boolean(90),
+            'sort_order' => fake()->numberBetween(0, 20),
             'images' => null,
         ];
     }

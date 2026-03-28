@@ -30,7 +30,7 @@ final class PromotionUsageFactory extends Factory
             'promotion_id' => Promotion::factory(),
             'user_id' => User::factory(),
             'order_id' => Order::factory(),
-            'discount_cents' => $this->faker->numberBetween(500, 5000),
+            'discount_cents' => fake()->numberBetween(500, 5000),
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
     }

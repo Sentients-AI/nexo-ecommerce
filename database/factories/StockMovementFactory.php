@@ -29,11 +29,11 @@ final class StockMovementFactory extends Factory
         return [
             'product_id' => Product::factory()->create(),
             'stock_id' => Stock::factory(),
-            'type' => $this->faker->randomElement(StockMovementType::getTypes()),
-            'quantity' => $this->faker->numberBetween(1, 100),
-            'reference_type' => $this->faker->optional()->randomElement([\App\Domain\Order\Models\Order::class, \App\Domain\Cart\Models\Cart::class]),
-            'reference_id' => $this->faker->optional()->numberBetween(1, 100),
-            'reason' => $this->faker->text,
+            'type' => fake()->randomElement(StockMovementType::getTypes()),
+            'quantity' => fake()->numberBetween(1, 100),
+            'reference_type' => fake()->optional()->randomElement([\App\Domain\Order\Models\Order::class, \App\Domain\Cart\Models\Cart::class]),
+            'reference_id' => fake()->optional()->numberBetween(1, 100),
+            'reason' => fake()->text,
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
     }

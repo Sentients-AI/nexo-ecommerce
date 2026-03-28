@@ -25,14 +25,14 @@ final class IdempotencyKeyFactory extends Factory
     public function definition(): array
     {
         return [
-            'key' => $this->faker->unique()->uuid(),
+            'key' => fake()->unique()->uuid(),
             'user_id' => User::factory(),
-            'response_body' => hash('sha256', $this->faker->text()),
-            'response_code' => $this->faker->randomElement([200, 201]),
-            'created_at' => $this->faker->dateTime(),
-            'expires_at' => $this->faker->dateTime('+1 month'),
-            'request_fingerprint' => $this->faker->sha256(),
-            'action' => $this->faker->word(),
+            'response_body' => hash('sha256', fake()->text()),
+            'response_code' => fake()->randomElement([200, 201]),
+            'created_at' => fake()->dateTime(),
+            'expires_at' => fake()->dateTime('+1 month'),
+            'request_fingerprint' => fake()->sha256(),
+            'action' => fake()->word(),
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
     }

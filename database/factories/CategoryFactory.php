@@ -30,8 +30,8 @@ final class CategoryFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->words(2, true),
-            'slug' => $this->faker->unique()->slug(),
+            'name' => fake()->words(2, true),
+            'slug' => fake()->unique()->slug(),
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
         ];
     }

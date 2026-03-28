@@ -26,11 +26,11 @@ final class PromotionFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->words(3, true).' Promotion',
-            'code' => mb_strtoupper($this->faker->unique()->lexify('????-????')),
-            'description' => $this->faker->optional()->sentence(),
-            'discount_type' => $this->faker->randomElement(DiscountType::cases()),
-            'discount_value' => $this->faker->numberBetween(500, 2500), // 500 cents or 5%
+            'name' => fake()->words(3, true).' Promotion',
+            'code' => mb_strtoupper(fake()->unique()->lexify('????-????')),
+            'description' => fake()->optional()->sentence(),
+            'discount_type' => fake()->randomElement(DiscountType::cases()),
+            'discount_value' => fake()->numberBetween(500, 2500), // 500 cents or 5%
             'scope' => PromotionScope::All,
             'auto_apply' => false,
             'starts_at' => now(),

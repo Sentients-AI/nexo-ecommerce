@@ -24,7 +24,7 @@ final class ChatMessageFactory extends Factory
         return [
             'conversation_id' => Conversation::factory(),
             'sender_id' => User::factory(),
-            'body' => $this->faker->paragraph(),
+            'body' => fake()->paragraph(),
             'read_at' => null,
         ];
     }

@@ -26,7 +26,7 @@ final class LoyaltyTransactionFactory extends Factory
      */
     public function definition(): array
     {
-        $points = $this->faker->numberBetween(10, 500);
+        $points = fake()->numberBetween(10, 500);
 
         return [
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
@@ -35,7 +35,7 @@ final class LoyaltyTransactionFactory extends Factory
             'type' => TransactionType::Earned,
             'points' => $points,
             'balance_after' => $points,
-            'description' => $this->faker->sentence(),
+            'description' => fake()->sentence(),
         ];
     }
 
