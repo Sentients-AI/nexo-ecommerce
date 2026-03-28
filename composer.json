@@ -22,11 +22,11 @@
         "nunomaduro/essentials": "^1.0",
         "stripe/stripe-php": "*",
         "symfony/process": "^7.4.5",
+        "fakerphp/faker": "^1.23",
         "typesense/typesense-php": "^6.0"
     },
     "require-dev": {
         "carthage-software/mago": "1.1.0",
-        "fakerphp/faker": "^1.23",
         "laravel/boost": "^1.8",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
