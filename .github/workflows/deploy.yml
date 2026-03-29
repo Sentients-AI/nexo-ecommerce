@@ -80,7 +80,8 @@ jobs:
             git pull origin main
 
             echo "==> Installing PHP dependencies"
-            \$PHP /usr/local/bin/composer install --no-dev --no-interaction --optimize-autoloader --prefer-dist
+            COMPOSER=\$(which composer 2>/dev/null || ls \$HOME/bin/composer 2>/dev/null || echo "composer")
+            \$PHP \$COMPOSER install --no-dev --no-interaction --optimize-autoloader --prefer-dist
 
             echo "==> Building frontend assets"
             npm ci --prefer-offline
