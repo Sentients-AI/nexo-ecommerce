@@ -201,14 +201,16 @@ describe('Checkout API', function () {
 
         Sanctum::actingAs($user);
 
+        $baseCurrency = $this->tenant->settings['currency'];
+
         $response = $this->postJson('/api/v1/checkout', [
             'cart_id' => $cart->id,
-            'currency' => 'USD',
+            'currency' => $baseCurrency,
             'redeem_points' => 200,
         ]);
 
         $response->assertSuccessful();
-        $response->assertJsonPath('order.loyalty_discount_cents', 200); // 200 points * 1 cent each
+        $response->assertJsonPath('order.loyalty_discount_cents', 200); // 200 points * 1 cent each (no conversion when using base currency)
 
         // Verify points were deducted
         expect(LoyaltyAccount::query()->where('user_id', $user->id)->first()->points_balance)->toBe(300);
