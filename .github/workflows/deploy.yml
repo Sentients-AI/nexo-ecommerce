@@ -44,6 +44,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ── Build frontend assets on CI runner (npm not available on server) ──
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build frontend assets
+        run: npm run build
+
       # ── SSH deploy ──────────────────────────────────────────
       # Required GitHub secrets:
       #   DEPLOY_HOST    — server hostname or IP (e.g. aljebal-albeedos.com)
@@ -60,6 +73,15 @@ jobs:
 
       - name: Add server to known hosts
         run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload built assets
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          scp -P $DEPLOY_PORT -r public/build $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/public/
 
       - name: Deploy
         env:
@@ -80,12 +102,8 @@ jobs:
             git pull origin main
 
             echo "==> Installing PHP dependencies"
-            COMPOSER=\$(which composer 2>/dev/null || ls \$HOME/bin/composer 2>/dev/null || echo "composer")
+            COMPOSER=\$(which composer 2>/dev/null || echo "\$HOME/bin/composer")
             \$PHP \$COMPOSER install --no-dev --no-interaction --optimize-autoloader --prefer-dist
-
-            echo "==> Building frontend assets"
-            npm ci --prefer-offline
-            npm run build
 
             echo "==> Caching configuration"
             \$PHP artisan config:cache
