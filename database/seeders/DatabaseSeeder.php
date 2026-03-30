@@ -25,6 +25,7 @@ final class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             TenantSeeder::class,
+            ShippingMethodSeeder::class,
         ]);
 
         // 2. Create hardcoded users
