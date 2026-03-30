@@ -51,7 +51,7 @@ final class CreateTenantWithAdminUser
                 'email_verified_at' => now(),
             ]);
 
-            return compact('tenant', 'user');
+            return ['tenant' => $tenant, 'user' => $user];
         });
     }
 }

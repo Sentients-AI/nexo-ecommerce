@@ -39,9 +39,7 @@ final class ShippingMethodsTable
 
                 TextColumn::make('estimated_days_min')
                     ->label('Est. Delivery')
-                    ->formatStateUsing(function ($record): string {
-                        return $record->estimatedDeliveryLabel();
-                    }),
+                    ->formatStateUsing(fn ($record): string => $record->estimatedDeliveryLabel()),
 
                 IconColumn::make('is_active')
                     ->boolean()

@@ -22,6 +22,7 @@ use App\Domain\Promotion\Actions\RecordPromotionUsageAction;
 use App\Domain\Promotion\DTOs\DiscountCalculationResult;
 use App\Domain\Promotion\Models\Promotion;
 use App\Domain\User\Models\User;
+use App\Domain\User\ValueObjects\UserId;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -48,7 +49,7 @@ final readonly class CheckoutUseCase
             $cartSpec->assertSatisfiedBy($cart);
 
             // Load user if authenticated (null for guest checkout)
-            $user = $request->userId !== null
+            $user = $request->userId instanceof UserId
                 ? User::query()->findOrFail($request->userId->toInt())
                 : null;
 

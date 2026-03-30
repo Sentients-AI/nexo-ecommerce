@@ -33,7 +33,7 @@ final class OrderConfirmedNotification extends Notification implements ShouldQue
     {
         $order = $this->order->load('items.product', 'items.variant');
         $orderUrl = url("/en/orders/{$order->id}");
-        $currency = mb_strtoupper($order->currency);
+        $currency = mb_strtoupper((string) $order->currency);
         $total = number_format($order->total_cents / 100, 2);
 
         $name = $notifiable instanceof AnonymousNotifiable

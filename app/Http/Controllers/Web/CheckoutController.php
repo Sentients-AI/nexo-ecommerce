@@ -93,7 +93,7 @@ final class CheckoutController extends Controller
 
         $order = $this->findOrderForRequest($request, (int) $orderId);
 
-        if (! $order) {
+        if (! $order instanceof Order) {
             return redirect()->route('checkout.summary', ['locale' => app()->getLocale()])
                 ->with('error', 'Order not found.');
         }
@@ -124,7 +124,7 @@ final class CheckoutController extends Controller
 
         $order = $this->findOrderForRequest($request, (int) $orderId);
 
-        if (! $order) {
+        if (! $order instanceof Order) {
             return redirect()->route('home', ['locale' => app()->getLocale()])
                 ->with('error', 'Order not found.');
         }

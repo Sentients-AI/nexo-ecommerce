@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Domain\Role\Models\Role;
 use App\Domain\Tenant\Models\Tenant;
 use App\Domain\User\Models\User;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Tests\TestCase;
@@ -13,7 +14,7 @@ uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
     // Seed roles so admin role is available
-    $this->seed(Database\Seeders\RoleSeeder::class);
+    $this->seed(RoleSeeder::class);
 });
 
 function validOnboardingPayload(array $overrides = []): array
