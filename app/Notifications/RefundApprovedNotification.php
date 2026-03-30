@@ -6,6 +6,7 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 final class RefundApprovedNotification extends Notification implements ShouldQueue
@@ -23,7 +24,22 @@ final class RefundApprovedNotification extends Notification implements ShouldQue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['mail', 'database', 'broadcast'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $formatted = number_format($this->amountCents / 100, 2);
+        $currency = mb_strtoupper($this->currency);
+        $orderUrl = url("/en/orders/{$this->orderId}");
+
+        return (new MailMessage)
+            ->subject('Your Refund Has Been Approved')
+            ->greeting("Hi {$notifiable->name},")
+            ->line("Great news — your refund of **{$currency} {$formatted}** has been approved and is being processed.")
+            ->line('Refunds typically appear on your original payment method within 5–10 business days.')
+            ->action('View Order', $orderUrl)
+            ->line('Thank you for your patience.');
     }
 
     /**

@@ -6,6 +6,7 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 final class LoyaltyPointsEarnedNotification extends Notification implements ShouldQueue
@@ -22,7 +23,20 @@ final class LoyaltyPointsEarnedNotification extends Notification implements Shou
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'broadcast'];
+        return ['mail', 'database', 'broadcast'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $loyaltyUrl = url('/en/profile/loyalty');
+
+        return (new MailMessage)
+            ->subject("You Earned {$this->points} Loyalty Points!")
+            ->greeting("Hi {$notifiable->name},")
+            ->line("You just earned **{$this->points} loyalty points** from your recent purchase!")
+            ->line("Your new balance is **{$this->newBalance} points**.")
+            ->line('Keep shopping to unlock exclusive rewards and discounts.')
+            ->action('View My Points', $loyaltyUrl);
     }
 
     /**
