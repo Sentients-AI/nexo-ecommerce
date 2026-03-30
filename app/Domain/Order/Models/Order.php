@@ -30,6 +30,9 @@ final class Order extends BaseModel
      */
     protected $fillable = [
         'user_id',
+        'guest_email',
+        'guest_name',
+        'guest_token',
         'order_number',
         'status',
         'subtotal_cents',
@@ -45,6 +48,7 @@ final class Order extends BaseModel
         'discount_cents',
         'loyalty_discount_cents',
         'shipping_address',
+        'shipping_method_id',
         'carrier',
         'tracking_number',
         'shipped_at',

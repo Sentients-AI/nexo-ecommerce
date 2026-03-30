@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\DownloadController;
 use App\Http\Controllers\Web\NotificationController;
+use App\Http\Controllers\Web\OnboardingController;
 use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\ProductController;
 use App\Http\Controllers\Web\ReferralWebController;
@@ -23,14 +24,24 @@ use App\Http\Controllers\Web\VendorProductController;
 use App\Http\Controllers\Web\VendorProductImportController;
 use App\Http\Controllers\Web\VendorPromotionController;
 use App\Http\Controllers\Web\VendorSettingsController;
+use App\Http\Controllers\Webhooks\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+
+// Stripe webhook — no auth/CSRF (signature verification is done in controller)
+Route::post('/webhooks/stripe', StripeWebhookController::class)->name('webhooks.stripe');
 
 // Secure file downloads — no auth required, token is the credential
 Route::get('/downloads/{token}', [DownloadController::class, 'show'])->name('downloads.show');
 
 // Root redirects to default locale
 Route::get('/', fn () => redirect('/en'));
+
+// Tenant self-service onboarding (guest only)
+Route::middleware('guest')->group(function () {
+    Route::get('/start', [OnboardingController::class, 'show'])->name('onboarding.show');
+    Route::post('/start', [OnboardingController::class, 'store'])->name('onboarding.store');
+});
 
 // Vendor dashboard (authenticated, no locale prefix for clean URLs)
 Route::prefix('vendor')
@@ -91,13 +102,13 @@ Route::prefix('{locale}')
             Route::post('/register', [AuthController::class, 'register']);
         });
 
+        // Checkout — accessible to both guests and authenticated users
+        Route::get('/checkout', [CheckoutController::class, 'summary'])->name('checkout.summary');
+        Route::get('/checkout/pending', [CheckoutController::class, 'pending'])->name('checkout.pending');
+        Route::get('/checkout/result', [CheckoutController::class, 'result'])->name('checkout.result');
+
         Route::middleware('auth')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-            // Checkout
-            Route::get('/checkout', [CheckoutController::class, 'summary'])->name('checkout.summary');
-            Route::get('/checkout/pending', [CheckoutController::class, 'pending'])->name('checkout.pending');
-            Route::get('/checkout/result', [CheckoutController::class, 'result'])->name('checkout.result');
 
             // Addresses
             Route::get('/addresses', [AddressController::class, 'index'])->name('addresses.index');

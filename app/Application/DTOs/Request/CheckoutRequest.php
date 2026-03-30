@@ -10,12 +10,15 @@ use App\Domain\User\ValueObjects\UserId;
 final readonly class CheckoutRequest
 {
     public function __construct(
-        public UserId $userId,
+        public ?UserId $userId,
         public CartId $cartId,
         public string $currency = 'MYR',
         public ?string $idempotencyKey = null,
         public ?string $promotionCode = null,
         public ?int $redeemPoints = null,
+        public ?int $shippingMethodId = null,
+        public ?string $guestEmail = null,
+        public ?string $guestName = null,
     ) {}
 
     /**

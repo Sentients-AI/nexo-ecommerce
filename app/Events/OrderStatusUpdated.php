@@ -17,7 +17,7 @@ final class OrderStatusUpdated implements ShouldBroadcast
 
     public function __construct(
         public readonly int $orderId,
-        public readonly int $userId,
+        public readonly ?int $userId,
         public readonly ?int $tenantId,
         public readonly string $orderNumber,
         public readonly string $status,
@@ -28,7 +28,11 @@ final class OrderStatusUpdated implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
-        $channels = [new PrivateChannel('orders.'.$this->userId)];
+        $channels = [];
+
+        if ($this->userId !== null) {
+            $channels[] = new PrivateChannel('orders.'.$this->userId);
+        }
 
         if ($this->tenantId !== null) {
             $channels[] = new PrivateChannel('tenant.'.$this->tenantId.'.orders');

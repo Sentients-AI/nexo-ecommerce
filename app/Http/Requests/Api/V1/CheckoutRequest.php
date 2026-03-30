@@ -23,6 +23,9 @@ final class CheckoutRequest extends FormRequest
             'currency' => ['required', 'string', 'size:3', 'in:'.implode(',', config('currency.supported', []))],
             'promotion_code' => ['nullable', 'string', 'max:50'],
             'redeem_points' => ['nullable', 'integer', 'min:1'],
+            'shipping_method_id' => ['nullable', 'integer', 'exists:shipping_methods,id'],
+            'guest_email' => $this->user() ? ['nullable'] : ['required', 'email', 'max:255'],
+            'guest_name' => ['nullable', 'string', 'max:100'],
         ];
     }
 

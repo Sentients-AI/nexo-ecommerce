@@ -58,13 +58,14 @@ final class CheckoutController extends Controller
         try {
             $cart = Cart::query()->findOrFail($request->validated('cart_id'));
 
-            if ($cart->user_id !== $user?->id) {
+            // Auth users must own the cart; guests use session carts (no user_id)
+            if ($user !== null && $cart->user_id !== null && $cart->user_id !== $user->id) {
                 return $this->errorResponse(ErrorCode::Forbidden, 'You do not own this cart.');
             }
 
             $response = $this->checkoutUseCase->execute(
                 new CheckoutUseCaseRequest(
-                    userId: UserId::fromInt($user->id),
+                    userId: $user !== null ? UserId::fromInt($user->id) : null,
                     cartId: CartId::fromInt($cart->id),
                     currency: $request->validated('currency'),
                     idempotencyKey: $idempotencyKey,
@@ -72,11 +73,24 @@ final class CheckoutController extends Controller
                     redeemPoints: $request->validated('redeem_points') !== null
                         ? (int) $request->validated('redeem_points')
                         : null,
+                    shippingMethodId: $request->validated('shipping_method_id') !== null
+                        ? (int) $request->validated('shipping_method_id')
+                        : null,
+                    guestEmail: $request->validated('guest_email'),
+                    guestName: $request->validated('guest_name'),
                 )
             );
 
             $order = Order::query()->with('items')->find($response->orderId->toInt());
             $paymentIntent = PaymentIntent::query()->find($response->paymentIntentId?->toInt());
+
+            // Store guest token in session so guest can access order pages (session-based requests only)
+            if ($response->guestToken !== null && $request->hasSession()) {
+                $request->session()->put(
+                    "guest_order_token_{$response->orderId->toInt()}",
+                    $response->guestToken
+                );
+            }
 
             $responseData = [
                 'order' => new OrderResource($order),

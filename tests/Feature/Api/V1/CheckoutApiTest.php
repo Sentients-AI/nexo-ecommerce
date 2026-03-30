@@ -39,13 +39,14 @@ beforeEach(function () {
 });
 
 describe('Checkout API', function () {
-    it('requires authentication', function () {
+    it('requires guest_email when unauthenticated', function () {
         $response = $this->postJson('/api/v1/checkout', [
             'cart_id' => 1,
             'currency' => 'USD',
         ]);
 
-        $response->assertUnauthorized();
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['guest_email']);
     });
 
     it('validates required fields', function () {
@@ -355,6 +356,81 @@ describe('Checkout API', function () {
 
         $response->assertUnprocessable();
         $response->assertJsonPath('error.code', 'INSUFFICIENT_STOCK');
+    });
+
+    it('allows guest checkout with valid guest_email', function () {
+        $product = Product::factory()->create();
+        $cart = Cart::factory()->create(['user_id' => null]);
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'price_cents_snapshot' => 5000,
+            'tax_cents_snapshot' => 500,
+            'quantity' => 1,
+        ]);
+
+        Stock::factory()->create([
+            'product_id' => $product->id,
+            'quantity_available' => 10,
+            'quantity_reserved' => 0,
+        ]);
+
+        $response = $this->postJson('/api/v1/checkout', [
+            'cart_id' => $cart->id,
+            'currency' => 'USD',
+            'guest_email' => 'guest@example.com',
+            'guest_name' => 'Guest User',
+        ]);
+
+        $response->assertSuccessful();
+        $response->assertJsonStructure([
+            'order' => ['id', 'order_number', 'status'],
+            'payment_intent' => ['id', 'status'],
+        ]);
+
+        $orderId = $response->json('order.id');
+        $order = Order::query()->find($orderId);
+        expect($order->user_id)->toBeNull()
+            ->and($order->guest_email)->toBe('guest@example.com')
+            ->and($order->guest_name)->toBe('Guest User')
+            ->and($order->guest_token)->not->toBeNull();
+    });
+
+    it('persists guest_token on the order after guest checkout', function () {
+        $product = Product::factory()->create();
+        $cart = Cart::factory()->create(['user_id' => null]);
+        $cart->items()->create([
+            'product_id' => $product->id,
+            'price_cents_snapshot' => 3000,
+            'tax_cents_snapshot' => 300,
+            'quantity' => 1,
+        ]);
+
+        Stock::factory()->create([
+            'product_id' => $product->id,
+            'quantity_available' => 5,
+            'quantity_reserved' => 0,
+        ]);
+
+        $response = $this->postJson('/api/v1/checkout', [
+            'cart_id' => $cart->id,
+            'currency' => 'USD',
+            'guest_email' => 'guest2@example.com',
+        ]);
+
+        $response->assertSuccessful();
+        $orderId = $response->json('order.id');
+        $order = Order::query()->find($orderId);
+        expect($order->guest_token)->not->toBeNull();
+    });
+
+    it('rejects guest checkout without guest_email', function () {
+        $response = $this->postJson('/api/v1/checkout', [
+            'cart_id' => 1,
+            'currency' => 'USD',
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['guest_email']);
     });
 });
 

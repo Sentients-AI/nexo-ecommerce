@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\ReferralController;
 use App\Http\Controllers\Api\V1\RefundController;
 use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\SearchController;
+use App\Http\Controllers\Api\V1\ShippingMethodController;
 use Illuminate\Support\Facades\Route;
 
 // Cart (works with session, no auth required)
@@ -25,9 +26,24 @@ Route::prefix('v1')->middleware(['web'])->group(function () {
     Route::delete('/cart', [CartController::class, 'clear'])->name('api.v1.cart.clear');
 });
 
+// Shipping methods (public — available per tenant context)
+Route::prefix('v1')->group(function () {
+    Route::get('/shipping-methods', [ShippingMethodController::class, 'index'])->name('api.v1.shipping-methods.index');
+});
+
 // Reviews (public listing)
 Route::prefix('v1')->group(function () {
     Route::get('/products/{product:slug}/reviews', [ReviewController::class, 'index'])->name('api.v1.products.reviews.index');
+});
+
+// Checkout — no auth required (supports both authenticated and guest users)
+Route::prefix('v1')->group(function () {
+    Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('api.v1.checkout');
+});
+
+// Confirm payment — requires authentication
+Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
+    Route::post('/checkout/confirm-payment', [CheckoutController::class, 'confirmPayment'])->name('api.v1.checkout.confirm-payment');
 });
 
 // Search (public: products and categories; authenticated: orders)
@@ -45,9 +61,7 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store'])->name('api.v1.products.reviews.store');
     Route::post('/reviews/{review}/replies', [ReviewController::class, 'storeReply'])->name('api.v1.reviews.replies.store');
     Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('api.v1.reviews.vote');
-    // Checkout
-    Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('api.v1.checkout');
-    Route::post('/checkout/confirm-payment', [CheckoutController::class, 'confirmPayment'])->name('api.v1.checkout.confirm-payment');
+    // Checkout (auth:sanctum removed; guest checkout handled via optional auth)
 
     // Orders
     Route::get('/orders', [OrderController::class, 'index'])->name('api.v1.orders.index');

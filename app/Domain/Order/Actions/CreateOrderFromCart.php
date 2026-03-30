@@ -15,6 +15,7 @@ use App\Domain\Order\DTOs\CreateOrderData;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Events\OrderCreated;
 use App\Domain\Order\Models\Order;
+use App\Domain\Shipping\Actions\CalculateShippingCostAction;
 use App\Domain\Tax\Actions\CalculateTax;
 use App\Domain\Tax\DTOs\TaxCalculationData;
 use App\Events\OrderStatusUpdated;
@@ -22,6 +23,7 @@ use App\Shared\Metrics\MetricsRecorder;
 use Exception;
 use Illuminate\Support\Facades\Context;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Throwable;
 
 final readonly class CreateOrderFromCart
@@ -30,6 +32,7 @@ final readonly class CreateOrderFromCart
         private ReserveStock $reserveStock,
         private CalculateTax $calculateTax,
         private CurrencyService $currencyService,
+        private CalculateShippingCostAction $calculateShipping,
     ) {}
 
     /**
@@ -94,7 +97,10 @@ final readonly class CreateOrderFromCart
                 new TaxCalculationData((int) $subtotalAfterDiscount)
             );
 
-            $shippingCents = 1000;
+            $shippingCents = $this->calculateShipping->execute(
+                $data->shippingMethodId,
+                (int) $subtotalAfterDiscount,
+            );
 
             $totalCents = $subtotalAfterDiscount + $taxCents + $shippingCents;
 
@@ -112,8 +118,13 @@ final readonly class CreateOrderFromCart
             $convertedLoyaltyDiscountCents = $this->currencyService->convertCents($loyaltyDiscountCents, $baseCurrency, $checkoutCurrency);
 
             // STEP 2: Create order AFTER stock validation passes
+            $guestToken = $data->userId === null ? (string) Str::uuid() : null;
+
             $order = Order::query()->create([
                 'user_id' => $data->userId,
+                'guest_email' => $data->guestEmail,
+                'guest_name' => $data->guestName,
+                'guest_token' => $guestToken,
                 'order_number' => Order::generateOrderNumber(),
                 'status' => OrderStatus::Pending,
                 'subtotal_cents' => $convertedSubtotalCents,
@@ -127,6 +138,7 @@ final readonly class CreateOrderFromCart
                 'promotion_id' => $data->promotionId,
                 'discount_cents' => $convertedDiscountCents,
                 'loyalty_discount_cents' => $convertedLoyaltyDiscountCents,
+                'shipping_method_id' => $data->shippingMethodId,
             ]);
 
             // STEP 3: Create order items and reserve stock (already validated)

@@ -8,6 +8,7 @@ use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Models\CartItem;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Order\Models\Order;
+use App\Domain\Shipping\Models\ShippingMethod;
 use App\Domain\User\Models\Address;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -20,27 +21,44 @@ final class CheckoutController extends Controller
     public function summary(Request $request): Response|RedirectResponse
     {
         $user = $request->user();
-        $cart = Cart::query()
-            ->where('user_id', $user->id)
-            ->whereNull('completed_at')
-            ->with('items.product.stock')
-            ->first();
+
+        $cartQuery = Cart::query()->whereNull('completed_at')->with('items.product.stock');
+
+        $cart = $user
+            ? $cartQuery->where('user_id', $user->id)->first()
+            : $cartQuery->where('session_id', $request->session()->getId())->first();
 
         if (! $cart || $cart->items->isEmpty()) {
             return redirect()->route('cart.index', ['locale' => app()->getLocale()])
                 ->with('error', 'Your cart is empty.');
         }
 
-        $savedAddresses = $user->addresses()
-            ->orderByDesc('is_default')
-            ->orderByDesc('created_at')
-            ->get();
+        $savedAddresses = $user
+            ? $user->addresses()->orderByDesc('is_default')->orderByDesc('created_at')->get()
+            : collect();
 
         $defaultAddress = $savedAddresses->firstWhere('is_default', true);
 
+        $shippingMethods = ShippingMethod::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('rate_cents')
+            ->get()
+            ->map(fn (ShippingMethod $m) => [
+                'id' => $m->id,
+                'name' => $m->name,
+                'description' => $m->description,
+                'type' => $m->type->value,
+                'rate_cents' => $m->rate_cents,
+                'cost_cents' => $m->calculateCost((int) $cart->subtotal),
+                'estimated_delivery' => $m->estimatedDeliveryLabel(),
+            ])->toArray();
+
         return Inertia::render('Checkout/Summary', [
+            'isAuthenticated' => $user !== null,
             'savedAddresses' => $savedAddresses->map(fn (Address $a): array => $this->formatAddress($a))->toArray(),
             'defaultAddress' => $defaultAddress ? $this->formatAddress($defaultAddress) : null,
+            'shippingMethods' => $shippingMethods,
             'cart' => [
                 'id' => $cart->id,
                 'items' => $cart->items->map(fn (CartItem $item) => [
@@ -73,11 +91,7 @@ final class CheckoutController extends Controller
             return redirect()->route('checkout.summary', ['locale' => app()->getLocale()]);
         }
 
-        $order = Order::query()
-            ->where('id', $orderId)
-            ->where('user_id', $request->user()->id)
-            ->with(['items', 'paymentIntent'])
-            ->first();
+        $order = $this->findOrderForRequest($request, (int) $orderId);
 
         if (! $order) {
             return redirect()->route('checkout.summary', ['locale' => app()->getLocale()])
@@ -101,24 +115,49 @@ final class CheckoutController extends Controller
         $orderId = $request->query('order_id');
 
         if (! $orderId) {
-            return redirect()->route('orders.index', ['locale' => app()->getLocale()]);
+            $user = $request->user();
+
+            return $user
+                ? redirect()->route('orders.index', ['locale' => app()->getLocale()])
+                : redirect()->route('home', ['locale' => app()->getLocale()]);
         }
 
-        $order = Order::query()
-            ->where('id', $orderId)
-            ->where('user_id', $request->user()->id)
-            ->with(['items', 'paymentIntent'])
-            ->first();
+        $order = $this->findOrderForRequest($request, (int) $orderId);
 
         if (! $order) {
-            return redirect()->route('orders.index', ['locale' => app()->getLocale()])
+            return redirect()->route('home', ['locale' => app()->getLocale()])
                 ->with('error', 'Order not found.');
         }
 
         return Inertia::render('Checkout/Result', [
             'order' => $this->formatOrder($order),
             'success' => in_array($order->status, [OrderStatus::Paid, OrderStatus::Fulfilled, OrderStatus::Shipped, OrderStatus::Delivered], true),
+            'isGuest' => $order->guest_email !== null,
+            'guestEmail' => $order->guest_email,
         ]);
+    }
+
+    /**
+     * Find an order for the current request, supporting both authenticated users and guests.
+     */
+    private function findOrderForRequest(Request $request, int $orderId): ?Order
+    {
+        $user = $request->user();
+
+        $query = Order::query()->where('id', $orderId)->with(['items', 'paymentIntent']);
+
+        if ($user) {
+            return $query->where('user_id', $user->id)->first();
+        }
+
+        // Guest: match via guest_token stored in session after checkout
+        $guestToken = $request->session()->get("guest_order_token_{$orderId}");
+
+        if (! $guestToken) {
+            return null;
+        }
+
+        return $query->where('guest_token', $guestToken)->first();
     }
 
     /**

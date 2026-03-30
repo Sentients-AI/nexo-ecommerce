@@ -13,7 +13,7 @@ final class CreateOrderData extends BaseData
      * @param  array<string, mixed>|null  $billingAddress
      */
     public function __construct(
-        public string|int $userId,
+        public string|int|null $userId,
         public string $cartId,
         public ?array $shippingAddress = null,
         public ?array $billingAddress = null,
@@ -22,6 +22,9 @@ final class CreateOrderData extends BaseData
         public ?int $promotionId = null,
         public int $discountCents = 0,
         public int $loyaltyDiscountCents = 0,
+        public ?int $shippingMethodId = null,
+        public ?string $guestEmail = null,
+        public ?string $guestName = null,
     ) {}
 
     /**

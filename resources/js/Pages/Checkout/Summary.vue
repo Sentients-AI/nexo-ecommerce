@@ -17,9 +17,21 @@ function normalizeImages(images: string | string[] | null | undefined): string[]
     return [];
 }
 
+interface ShippingMethod {
+    id: number;
+    name: string;
+    description: string | null;
+    type: string;
+    rate_cents: number;
+    cost_cents: number;
+    estimated_delivery: string;
+}
+
 interface Props {
     cart: CartApiResource;
     stripePublicKey: string;
+    shippingMethods: ShippingMethod[];
+    isAuthenticated: boolean;
 }
 
 const props = defineProps<Props>();
@@ -34,11 +46,18 @@ const paymentElementRef = ref<HTMLDivElement | null>(null);
 const isSubmitting = ref(false);
 const submitError = ref<string | null>(null);
 const itemsExpanded = ref(true);
+const selectedShippingMethodId = ref<number | null>(props.shippingMethods[0]?.id ?? null);
+const guestEmail = ref('');
+const guestName = ref('');
 
 const isLoading = computed(() => checkoutLoading.value || stripeLoading.value || paymentProcessing.value || isSubmitting.value);
 
 const taxCents = computed(() => Math.round(props.cart.subtotal * 0.08));
-const totalCents = computed(() => props.cart.subtotal + taxCents.value);
+const selectedShipping = computed(() =>
+    props.shippingMethods.find(m => m.id === selectedShippingMethodId.value) ?? null
+);
+const shippingCents = computed(() => selectedShipping.value?.cost_cents ?? 0);
+const totalCents = computed(() => props.cart.subtotal + taxCents.value + shippingCents.value);
 
 async function handleInitiateCheckout() {
     clearError();
@@ -65,6 +84,8 @@ async function handleInitiateCheckout() {
         body: JSON.stringify({
             cart_id: props.cart.id,
             currency: currency.value,
+            shipping_method_id: selectedShippingMethodId.value,
+            ...(!props.isAuthenticated ? { guest_email: guestEmail.value, guest_name: guestName.value } : {}),
         }),
     });
 
@@ -195,6 +216,41 @@ function getIdempotencyKey(operation: string): string {
                         </Transition>
                     </div>
 
+                    <!-- Guest details form -->
+                    <div v-if="!isAuthenticated" class="mt-4 rounded-2xl bg-white dark:bg-navy-900/60 shadow-sm border border-slate-100 dark:border-navy-800/60 p-6">
+                        <h2 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Your Details</h2>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="guest-name" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Full Name</label>
+                                <input
+                                    id="guest-name"
+                                    v-model="guestName"
+                                    type="text"
+                                    placeholder="Jane Doe"
+                                    class="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                />
+                            </div>
+                            <div>
+                                <label for="guest-email" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                                    Email Address <span class="text-red-500">*</span>
+                                </label>
+                                <input
+                                    id="guest-email"
+                                    v-model="guestEmail"
+                                    type="email"
+                                    placeholder="you@example.com"
+                                    required
+                                    class="w-full rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                />
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Your order confirmation will be sent here.</p>
+                            </div>
+                        </div>
+                        <p class="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                            Already have an account?
+                            <Link :href="localePath('/login')" class="font-medium text-brand-600 dark:text-brand-400 hover:underline">Sign in</Link>
+                        </p>
+                    </div>
+
                     <!-- Edit cart link -->
                     <div class="mt-4 text-center">
                         <Link
@@ -214,6 +270,38 @@ function getIdempotencyKey(operation: string): string {
                     <div class="rounded-2xl bg-white dark:bg-navy-900/60 shadow-sm border border-slate-100 dark:border-navy-800/60 p-6 sticky top-24">
                         <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Order Summary</h2>
 
+                        <!-- Shipping method selection -->
+                        <div v-if="shippingMethods.length > 0" class="mt-5">
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Shipping</p>
+                            <div class="space-y-2">
+                                <label
+                                    v-for="method in shippingMethods"
+                                    :key="method.id"
+                                    class="flex items-center justify-between gap-3 rounded-xl border p-3 cursor-pointer transition-colors"
+                                    :class="selectedShippingMethodId === method.id
+                                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-900/20'
+                                        : 'border-slate-200 dark:border-navy-700 hover:border-brand-300'"
+                                >
+                                    <div class="flex items-center gap-3 min-w-0">
+                                        <input
+                                            type="radio"
+                                            :value="method.id"
+                                            v-model="selectedShippingMethodId"
+                                            class="text-brand-500 focus:ring-brand-500"
+                                        />
+                                        <div class="min-w-0">
+                                            <p class="text-sm font-medium text-slate-900 dark:text-white truncate">{{ method.name }}</p>
+                                            <p class="text-xs text-slate-500 dark:text-slate-400">{{ method.estimated_delivery }}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-sm font-semibold shrink-0"
+                                        :class="method.cost_cents === 0 ? 'text-accent-600 dark:text-accent-400' : 'text-slate-900 dark:text-white'">
+                                        {{ method.cost_cents === 0 ? 'Free' : formatPrice(method.cost_cents) }}
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
                         <!-- Price breakdown -->
                         <dl class="mt-6 space-y-4">
                             <div class="flex items-center justify-between">
@@ -230,8 +318,9 @@ function getIdempotencyKey(operation: string): string {
                             </div>
                             <div class="flex items-center justify-between">
                                 <dt class="text-sm text-slate-600 dark:text-slate-400">Shipping</dt>
-                                <dd class="text-sm font-medium text-accent-600 dark:text-accent-400">
-                                    Free
+                                <dd class="text-sm font-medium"
+                                    :class="shippingCents === 0 ? 'text-accent-600 dark:text-accent-400' : 'text-slate-900 dark:text-white'">
+                                    {{ shippingCents === 0 ? 'Free' : formatPrice(shippingCents) }}
                                 </dd>
                             </div>
                             <div class="flex items-center justify-between border-t border-slate-200 dark:border-navy-700 pt-4">

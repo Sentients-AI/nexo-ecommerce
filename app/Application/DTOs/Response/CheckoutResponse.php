@@ -21,6 +21,7 @@ final readonly class CheckoutResponse
         public ?string $providerReference = null,
         public int $discountCents = 0,
         public ?int $promotionId = null,
+        public ?string $guestToken = null,
     ) {}
 
     public static function fromOrder(Order $order, ?PaymentIntent $paymentIntent = null): self
@@ -35,6 +36,7 @@ final readonly class CheckoutResponse
             providerReference: $paymentIntent?->provider_reference,
             discountCents: $order->discount_cents ?? 0,
             promotionId: $order->promotion_id,
+            guestToken: $order->guest_token,
         );
     }
 

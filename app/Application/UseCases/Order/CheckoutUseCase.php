@@ -47,31 +47,35 @@ final readonly class CheckoutUseCase
             $cartSpec = (new CartIsNotCompleted())->and(new CartHasItems());
             $cartSpec->assertSatisfiedBy($cart);
 
-            // Get user for promotion validation
-            $user = User::query()->findOrFail($request->userId->toInt());
+            // Load user if authenticated (null for guest checkout)
+            $user = $request->userId !== null
+                ? User::query()->findOrFail($request->userId->toInt())
+                : null;
 
-            // Find and calculate promotion discount
+            // Find and calculate promotion discount (guests skip promotions)
             $promotionId = null;
             $discountCents = 0;
             $promotion = null;
 
-            $promotionResult = $this->findBestPromotion->execute(
-                $cart,
-                $user,
-                $request->promotionCode
-            );
+            if ($user !== null) {
+                $promotionResult = $this->findBestPromotion->execute(
+                    $cart,
+                    $user,
+                    $request->promotionCode
+                );
 
-            if ($promotionResult !== null) {
-                $promotion = $promotionResult['promotion'];
-                /** @var DiscountCalculationResult $discountResult */
-                $discountResult = $promotionResult['result'];
-                $promotionId = $promotion->id;
-                $discountCents = $discountResult->discountCents;
+                if ($promotionResult !== null) {
+                    $promotion = $promotionResult['promotion'];
+                    /** @var DiscountCalculationResult $discountResult */
+                    $discountResult = $promotionResult['result'];
+                    $promotionId = $promotion->id;
+                    $discountCents = $discountResult->discountCents;
+                }
             }
 
-            // Validate and calculate loyalty discount if redeem_points requested
+            // Loyalty discount only for authenticated users
             $loyaltyDiscountCents = 0;
-            if ($request->redeemPoints !== null && $request->redeemPoints > 0) {
+            if ($user !== null && $request->redeemPoints !== null && $request->redeemPoints > 0) {
                 $loyaltyAccount = LoyaltyAccount::query()
                     ->where('user_id', $request->userId->toInt())
                     ->first();
@@ -89,17 +93,20 @@ final readonly class CheckoutUseCase
             // Create order through domain action
             $order = $this->createOrderFromCart->execute(
                 new CreateOrderData(
-                    userId: $request->userId->toInt(),
+                    userId: $request->userId?->toInt(),
                     cartId: (string) $request->cartId->toInt(),
                     currency: $request->currency,
                     promotionId: $promotionId,
                     discountCents: $discountCents,
                     loyaltyDiscountCents: $loyaltyDiscountCents,
+                    shippingMethodId: $request->shippingMethodId,
+                    guestEmail: $request->guestEmail,
+                    guestName: $request->guestName,
                 )
             );
 
             // Record promotion usage if a promotion was applied
-            if ($promotion instanceof Promotion && $discountCents > 0) {
+            if ($promotion instanceof Promotion && $discountCents > 0 && $user !== null) {
                 $this->recordPromotionUsage->execute(
                     $promotion,
                     $user,
@@ -109,7 +116,7 @@ final readonly class CheckoutUseCase
             }
 
             // Redeem loyalty points after order creation (inside same transaction for atomicity)
-            if ($request->redeemPoints !== null && $request->redeemPoints > 0) {
+            if ($user !== null && $request->redeemPoints !== null && $request->redeemPoints > 0) {
                 $this->redeemPoints->execute(new RedeemPointsData(
                     userId: $request->userId->toInt(),
                     points: $request->redeemPoints,
