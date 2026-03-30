@@ -21,11 +21,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'webhooks/stripe',
+        ]);
+
         $middleware->redirectGuestsTo(function (Request $request): string {
             $locale = $request->route('locale', app()->getLocale());
 
             return route('login', ['locale' => $locale]);
         });
+
+        $middleware->redirectUsersTo('/en');
 
         $middleware->alias([
             'tenant.subdomain' => ResolveTenantFromSubdomain::class,
