@@ -26,6 +26,7 @@ final class PaymentIntent extends BaseModel
         'order_id',
         'provider',
         'provider_reference',
+        'client_secret',
         'amount',
         'currency',
         'status',

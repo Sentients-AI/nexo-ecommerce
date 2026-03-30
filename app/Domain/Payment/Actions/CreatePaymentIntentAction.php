@@ -56,6 +56,7 @@ final readonly class CreatePaymentIntentAction
                 'currency' => $dto->currency,
                 'provider' => $response->provider(),
                 'provider_reference' => $response->reference(),
+                'client_secret' => $response->clientSecret(),
                 'status' => PaymentStatus::Processing,
                 'idempotency_key' => $dto->idempotencyKey,
                 'metadata' => $dto->metadata,
