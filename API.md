@@ -306,11 +306,13 @@ List currently active promotions for the tenant.
 
 ## Checkout
 
+Guest checkout is supported — authentication is optional. Unauthenticated users may pass `guest_email` and `guest_name` in the request body. Shipping method selection is required.
+
 ### POST /api/v1/checkout
 
-Initiate checkout process. Creates order from cart with stock reservation.
+Initiate checkout process. Creates order from cart with stock reservation. Works for both authenticated users and guests.
 
-- **Headers:** `Authorization: Bearer {token}`
+- **Headers:** `Authorization: Bearer {token}` (optional — omit for guest checkout)
 - **Headers:** `Idempotency-Key: {uuid}` (required for duplicate detection)
 
 **Request:**
@@ -1194,6 +1196,59 @@ Set an address as the user's default shipping address.
 - **Headers:** `Authorization: Bearer {token}`
 
 **Response 200:** Updated address object with `is_default: true`.
+
+---
+
+## Shipping Methods
+
+### GET /api/v1/shipping-methods
+
+List available shipping methods for the current tenant. Public — no authentication required.
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Standard Shipping",
+      "description": "3–5 business days",
+      "price_cents": 500,
+      "is_free": false,
+      "min_order_cents": null
+    },
+    {
+      "id": 2,
+      "name": "Free Shipping",
+      "description": "On orders over RM 150",
+      "price_cents": 0,
+      "is_free": true,
+      "min_order_cents": 15000
+    }
+  ]
+}
+```
+
+---
+
+## Waitlist
+
+### POST /api/v1/products/{slug}/waitlist
+
+Subscribe to a back-in-stock email alert for an out-of-stock product. Public — no authentication required.
+
+**Request:**
+
+```json
+{
+  "email": "customer@example.com"
+}
+```
+
+**Response 201:** Empty body (idempotent — re-subscribing with the same email is a no-op).
+
+**Response 404:** Product not found or inactive.
 
 ---
 

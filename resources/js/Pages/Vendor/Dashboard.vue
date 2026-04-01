@@ -28,8 +28,11 @@ interface ChartPoint {
 interface Props {
     stats: {
         revenue_today: number;
+        revenue_yesterday: number;
         revenue_this_month: number;
+        revenue_last_month: number;
         orders_today: number;
+        orders_yesterday: number;
         pending_orders: number;
         total_products: number;
     };
@@ -68,6 +71,17 @@ function getStatusConfig(status: string) {
     return statusConfig[status] ?? { label: status, class: 'bg-navy-700 text-navy-300 border border-navy-600' };
 }
 
+function pctChange(current: number, previous: number): string {
+    if (previous === 0) { return current > 0 ? '+100%' : '—'; }
+    const pct = ((current - previous) / previous) * 100;
+    return (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+}
+
+function trendUp(current: number, previous: number): boolean | null {
+    if (previous === 0 && current === 0) { return null; }
+    return current >= previous;
+}
+
 const kpis = computed(() => [
     {
         label: 'Revenue Today',
@@ -76,8 +90,8 @@ const kpis = computed(() => [
         color: 'text-brand-400',
         bg: 'bg-brand-500/10',
         border: 'border-brand-500/20',
-        trend: '+8.2%',
-        trendUp: true,
+        trend: `${pctChange(props.stats.revenue_today, props.stats.revenue_yesterday)} vs yesterday`,
+        trendUp: trendUp(props.stats.revenue_today, props.stats.revenue_yesterday),
     },
     {
         label: 'This Month',
@@ -86,8 +100,8 @@ const kpis = computed(() => [
         color: 'text-accent-400',
         bg: 'bg-accent-500/10',
         border: 'border-accent-500/20',
-        trend: '+12.5%',
-        trendUp: true,
+        trend: `${pctChange(props.stats.revenue_this_month, props.stats.revenue_last_month)} vs last month`,
+        trendUp: trendUp(props.stats.revenue_this_month, props.stats.revenue_last_month),
     },
     {
         label: 'Orders Today',
@@ -96,8 +110,8 @@ const kpis = computed(() => [
         color: 'text-blue-400',
         bg: 'bg-blue-500/10',
         border: 'border-blue-500/20',
-        trend: `${props.stats.pending_orders} pending`,
-        trendUp: null,
+        trend: `${pctChange(props.stats.orders_today, props.stats.orders_yesterday)} vs yesterday`,
+        trendUp: trendUp(props.stats.orders_today, props.stats.orders_yesterday),
     },
     {
         label: 'Active Products',

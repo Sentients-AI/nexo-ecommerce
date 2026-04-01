@@ -93,8 +93,15 @@ final readonly class CreateOrderFromCart
 
             $subtotalAfterDiscount = $subtotalCents - $discountCents - $loyaltyDiscountCents;
 
+            $shippingCountry = $data->shippingAddress['country'] ?? $data->shippingAddress['country_code'] ?? null;
+            $shippingRegion = $data->shippingAddress['state'] ?? $data->shippingAddress['region_code'] ?? null;
+
             $taxCents = $this->calculateTax->execute(
-                new TaxCalculationData((int) $subtotalAfterDiscount)
+                new TaxCalculationData(
+                    subtotalCents: (int) $subtotalAfterDiscount,
+                    countryCode: is_string($shippingCountry) ? mb_strtoupper($shippingCountry) : null,
+                    regionCode: is_string($shippingRegion) ? mb_strtoupper($shippingRegion) : null,
+                )
             );
 
             $shippingCents = $this->calculateShipping->execute(

@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\V1\RefundController;
 use App\Http\Controllers\Api\V1\ReviewController;
 use App\Http\Controllers\Api\V1\SearchController;
 use App\Http\Controllers\Api\V1\ShippingMethodController;
+use App\Http\Controllers\Api\V1\WaitlistController;
 use Illuminate\Support\Facades\Route;
 
 // Cart (works with session, no auth required)
@@ -34,6 +35,11 @@ Route::prefix('v1')->group(function () {
 // Reviews (public listing)
 Route::prefix('v1')->group(function () {
     Route::get('/products/{product:slug}/reviews', [ReviewController::class, 'index'])->name('api.v1.products.reviews.index');
+});
+
+// Waitlist (public — no auth required)
+Route::prefix('v1')->group(function () {
+    Route::post('/products/{product:slug}/waitlist', [WaitlistController::class, 'store'])->name('api.v1.products.waitlist.store');
 });
 
 // Checkout — no auth required (supports both authenticated and guest users)

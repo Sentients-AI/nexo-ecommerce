@@ -21,9 +21,21 @@ A Domain-Driven Design (DDD) **multi-tenant** e-commerce platform built with Lar
 - **Loyalty Points** — Earn points on orders, redeem for discounts; full transaction ledger with expiry
 - **Referral Links** — Time-limited, usage-capped shareable codes; both sides rewarded
 - **Product Reviews** — Customer ratings, photos, replies, and helpful-vote system
+- **Digital Products / Downloads** — Downloadable files (e-books, software licences) with secure token-gated download links post-payment
+- **AI Product Recommendations** — "Customers also bought" using purchase, browse, and wishlist history
+- **Back-in-Stock Waitlist** — Email subscription per product; `BackInStockNotification` fires when stock is replenished via `StockReplenished` event
+- **Stock Availability Badge** — "Only N left!" urgency indicator on product cards and detail pages
+- **Tax Zones** — Configurable tax zones and rates per tenant; applied automatically at checkout via `CalculateTax` action
+- **Transactional Emails** — Order confirmation, shipped, refund approved, and welcome emails via Laravel Notifications
+- **Shipping Methods & Rates** — Flat-rate and free-shipping rules per tenant; zone/method selection at checkout; cost stored on orders
+- **Guest Checkout** — Unauthenticated checkout; optional account creation post-purchase
+- **Vendor Self-Service Onboarding** — Public `/start` wizard: subdomain picker, store setup, automatic tenant + admin user creation, 14-day trial
+- **Sitemap + SEO** — `/sitemap.xml` for products and categories; Open Graph, Twitter Card, JSON-LD Product structured data, and canonical URLs on product pages
+- **Vendor Order Export** — CSV download of filtered orders from the vendor dashboard
+- **Bulk Product Import** — Vendor/admin CSV upload for mass product creation
 - **Wishlist** — Per-user product wishlists
 - **Saved Addresses** — Multiple shipping addresses per user with default selection
-- **Vendor Dashboard** — Full self-service: manage products, view orders, fulfilment, analytics, promotions
+- **Vendor Dashboard** — Full self-service: manage products, view orders, fulfilment, analytics, promotions, inventory, settings
 - **Notification Center** — In-app notifications for order updates, refund approvals, loyalty milestones; real-time via Reverb
 - **Store Browsing** — Public tenant store pages
 - **Full-text Search** — Typesense-powered search via Laravel Scout (Products, Categories, Orders)

@@ -26,6 +26,8 @@ Fast lookup for common tasks and code locations.
 | Save address | `app/Domain/User/Actions/CreateAddress.php` | `$action->execute($data)` |
 | Set default address | `app/Domain/User/Actions/SetDefaultAddress.php` | Atomic — clears others in transaction |
 | Send abandoned cart email | `app/Domain/Cart/Actions/SendAbandonedCartRecoveryEmailsAction.php` | Stamps `recovery_email_sent_at` |
+| Create tenant + admin | `app/Domain/Tenant/Actions/CreateTenantWithAdminUser.php` | Used by onboarding flow |
+| Subscribe to waitlist | `app/Http/Controllers/Api/V1/WaitlistController.php` | Stores email; fires when stock replenished |
 
 ### Multi-Tenancy
 
@@ -62,6 +64,8 @@ Fast lookup for common tasks and code locations.
 | LoyaltyTransaction | `app/Domain/Loyalty/Models/LoyaltyTransaction.php` | type, points, balance_after, reference_type/id |
 | ReferralCode | `app/Domain/Referral/Models/ReferralCode.php` | code, max_uses, used_count, expires_at, is_active |
 | ReferralUsage | `app/Domain/Referral/Models/ReferralUsage.php` | referrer_user_id, referee_user_id, coupon_code |
+| WaitlistSubscription | `app/Domain/Inventory/Models/WaitlistSubscription.php` | product_id, tenant_id, email, notified_at |
+| TaxZone (+ models) | `app/Domain/Tax/Models/` | Configurable tax zones/rates per tenant |
 
 ### Validation Rules
 
@@ -75,15 +79,18 @@ Fast lookup for common tasks and code locations.
 
 | Endpoint | Controller | Purpose |
 |----------|------------|---------|
-| POST /api/v1/checkout | `CheckoutController@checkout` | Create order + payment (pass `currency`) |
+| POST /api/v1/checkout | `CheckoutController@checkout` | Create order + payment (guest or auth; pass `currency`) |
+| POST /api/v1/checkout/confirm-payment | `CheckoutController@confirmPayment` | Confirm Stripe payment (auth) |
 | POST /api/v1/cart/items | `CartController@addItem` | Add item to cart (pass `variant_id` for variants) |
 | GET /api/v1/orders | `OrderController@index` | List user's orders |
 | POST /api/v1/orders/{order}/refunds | `RefundController@store` | Request refund |
 | POST /api/v1/cart/apply-promotion | `PromotionController@apply` | Apply promo code |
+| GET /api/v1/shipping-methods | `ShippingMethodController@index` | List available shipping methods (public) |
 | GET /api/v1/products/{slug}/reviews | `ReviewController@index` | List product reviews |
 | POST /api/v1/products/{slug}/reviews | `ReviewController@store` | Submit a review |
-| POST /api/v1/products/{slug}/reviews/{id}/reply | `ReviewController@reply` | Vendor reply to review |
-| POST /api/v1/products/{slug}/reviews/{id}/vote | `ReviewController@vote` | Mark review helpful/unhelpful |
+| POST /api/v1/reviews/{id}/replies | `ReviewController@storeReply` | Vendor reply to review |
+| POST /api/v1/reviews/{id}/vote | `ReviewController@vote` | Mark review helpful/unhelpful |
+| POST /api/v1/products/{slug}/waitlist | `WaitlistController@store` | Subscribe to back-in-stock alert (public) |
 | GET /api/v1/conversations | `ConversationController@index` | List conversations |
 | POST /api/v1/conversations | `ConversationController@store` | Start conversation |
 | POST /api/v1/conversations/{id}/messages | `MessageController@store` | Send message |
@@ -110,50 +117,74 @@ Fast lookup for common tasks and code locations.
 
 ### Web Routes (Inertia)
 
+> Storefront routes use a `/{locale}` prefix (en/ar/ms). Vendor routes use `/vendor` with **no locale prefix**.
+
 | URL Pattern | Controller | Page |
 |-------------|------------|------|
+| `/sitemap.xml` | `SitemapController` | XML sitemap (tenant-scoped) |
+| `/start` | `OnboardingController@show/store` | `Onboarding/Create.vue` — new tenant registration |
+| `/r/{code}` | `ReferralWebController@show` | Referral link handler |
+| `/downloads/{token}` | `DownloadController@show` | Secure digital product download |
 | `/{locale}/products` | `ProductController@index` | `Products/Index.vue` |
-| `/{locale}/products/{slug}` | `ProductController@show` | `Products/Show.vue` |
+| `/{locale}/products/{slug}` | `ProductController@show` | `Products/Show.vue` (includes `seo` prop for OG/Twitter/JSON-LD) |
 | `/{locale}/stores/{slug}` | `StoreController@show` | `Stores/Show.vue` |
 | `/{locale}/cart` | `CartController@index` | `Cart/Index.vue` |
 | `/{locale}/wishlist` | `ProductController@wishlist` | `Wishlist/Index.vue` |
-| `/{locale}/checkout` | `CheckoutController@summary` | `Checkout/Summary.vue` |
+| `/{locale}/checkout` | `CheckoutController@summary` | `Checkout/Summary.vue` (guest + auth) |
+| `/{locale}/checkout/pending` | `CheckoutController@pending` | `Checkout/Pending.vue` |
+| `/{locale}/checkout/result` | `CheckoutController@result` | `Checkout/Result.vue` |
 | `/{locale}/orders` | `OrderController@index` | `Orders/Index.vue` |
 | `/{locale}/orders/{order}` | `OrderController@show` | `Orders/Show.vue` |
-| `/{locale}/refunds/{order}` | `RefundController@request` | `Refunds/Request.vue` |
-| `/{locale}/refunds/{refund}/status` | `RefundController@status` | `Refunds/Status.vue` |
-| `/{locale}/profile/addresses` | `AddressController@index` | `Profile/Addresses/Index.vue` |
-| `/{locale}/vendor` | `VendorDashboardController@index` | `Vendor/Dashboard.vue` |
-| `/{locale}/vendor/products` | `VendorProductController@index` | `Vendor/Products.vue` |
-| `/{locale}/vendor/orders` | `VendorOrderController@index` | `Vendor/Orders.vue` |
-| `/{locale}/vendor/analytics` | `VendorAnalyticsController@index` | `Vendor/Analytics.vue` |
-| `/{locale}/vendor/customers` | `VendorCustomerController@index` | `Vendor/Customers.vue` |
-| `/{locale}/vendor/promotions` | `VendorPromotionController@index` | `Vendor/Promotions.vue` |
+| `/{locale}/orders/{order}/invoice` | `OrderController@invoice` | PDF invoice download |
+| `/{locale}/orders/{order}/reorder` | `OrderController@reorder` | POST — one-click reorder |
+| `/{locale}/orders/{order}/refund` | `RefundController@create` | `Refunds/Create.vue` |
+| `/{locale}/refunds/{refund}` | `RefundController@show` | `Refunds/Show.vue` |
+| `/{locale}/addresses` | `AddressController@index` | `Profile/Addresses/Index.vue` |
+| `/{locale}/notifications` | `NotificationController@index` | `Notifications/Index.vue` |
+| `/vendor/dashboard` | `VendorDashboardController@index` | `Vendor/Dashboard.vue` |
+| `/vendor/products` | `VendorProductController@index` | `Vendor/Products.vue` |
+| `/vendor/products/create` | `VendorProductController@create` | `Vendor/Products/Create.vue` |
+| `/vendor/products/{id}/edit` | `VendorProductController@edit` | `Vendor/Products/Edit.vue` |
+| `/vendor/products/bulk-action` | `VendorProductController@bulkAction` | POST — bulk activate/deactivate/delete |
+| `/vendor/products/import` | `VendorProductImportController` | CSV bulk product import |
+| `/vendor/orders` | `VendorOrderController@index` | `Vendor/Orders.vue` |
+| `/vendor/orders/export` | `VendorOrderExportController` | CSV order export download |
+| `/vendor/inventory` | `VendorInventoryController@index` | `Vendor/Inventory.vue` |
+| `/vendor/customers` | `VendorCustomerController@index` | `Vendor/Customers.vue` |
+| `/vendor/analytics` | `VendorAnalyticsController@index` | `Vendor/Analytics.vue` |
+| `/vendor/promotions` | `VendorPromotionController@index` | `Vendor/Promotions.vue` |
+| `/vendor/settings` | `VendorSettingsController@index` | `Vendor/Settings.vue` |
 
 ### Frontend Pages
 
 | Page | File | Props |
 |------|------|-------|
 | Home | `resources/js/Pages/Home.vue` | — |
+| Tenant onboarding | `resources/js/Pages/Onboarding/Create.vue` | baseDomain, reservedSlugs |
 | Product listing | `resources/js/Pages/Products/Index.vue` | products, categories, filters |
-| Product detail | `resources/js/Pages/Products/Show.vue` | product, variants, reviews |
+| Product detail | `resources/js/Pages/Products/Show.vue` | product, variants, reviews, seo, recommendations (deferred) |
 | Store page | `resources/js/Pages/Stores/Show.vue` | tenant, products |
 | Shopping cart | `resources/js/Pages/Cart/Index.vue` | cart |
 | Wishlist | `resources/js/Pages/Wishlist/Index.vue` | wishlisted products |
-| Checkout summary | `resources/js/Pages/Checkout/Summary.vue` | cart |
+| Checkout summary | `resources/js/Pages/Checkout/Summary.vue` | cart, shippingMethods |
 | Checkout pending | `resources/js/Pages/Checkout/Pending.vue` | order, clientSecret |
 | Checkout result | `resources/js/Pages/Checkout/Result.vue` | order |
 | Order history | `resources/js/Pages/Orders/Index.vue` | orders |
 | Order detail | `resources/js/Pages/Orders/Show.vue` | order |
-| Refund request | `resources/js/Pages/Refunds/Request.vue` | order |
-| Refund status | `resources/js/Pages/Refunds/Status.vue` | refund |
+| Refund create | `resources/js/Pages/Refunds/Create.vue` | order |
+| Refund show | `resources/js/Pages/Refunds/Show.vue` | refund |
 | Saved addresses | `resources/js/Pages/Profile/Addresses/Index.vue` | addresses |
+| Notifications | `resources/js/Pages/Notifications/Index.vue` | notifications |
 | Vendor dashboard | `resources/js/Pages/Vendor/Dashboard.vue` | stats, recentOrders |
 | Vendor products | `resources/js/Pages/Vendor/Products.vue` | products |
+| Vendor product create | `resources/js/Pages/Vendor/Products/Create.vue` | categories |
+| Vendor product edit | `resources/js/Pages/Vendor/Products/Edit.vue` | product, categories |
 | Vendor orders | `resources/js/Pages/Vendor/Orders.vue` | orders |
+| Vendor inventory | `resources/js/Pages/Vendor/Inventory.vue` | stocks |
 | Vendor analytics | `resources/js/Pages/Vendor/Analytics.vue` | revenue, topProducts |
 | Vendor customers | `resources/js/Pages/Vendor/Customers.vue` | customers |
 | Vendor promotions | `resources/js/Pages/Vendor/Promotions.vue` | promotions |
+| Vendor settings | `resources/js/Pages/Vendor/Settings.vue` | tenant settings |
 
 ---
 
@@ -604,6 +635,8 @@ new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
 12. **One referral usage per user per code** — DB unique constraint + `ReferralAlreadyUsedException`
 13. **Self-referral is blocked** — `SelfReferralException` enforced before DB write
 14. **Scout searches must filter by tenant_id** — Typesense bypasses Eloquent global scopes
+15. **Tenant slugs must be unique and not reserved** — `OnboardingRequest` validates against `config('tenancy.reserved_subdomains')`
+16. **Back-in-stock emails sent once per subscription** — `notified_at` stamped on `WaitlistSubscription` to prevent duplicates
 
 ---
 

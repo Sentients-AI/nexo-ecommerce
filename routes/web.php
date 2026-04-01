@@ -13,6 +13,7 @@ use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\ProductController;
 use App\Http\Controllers\Web\ReferralWebController;
 use App\Http\Controllers\Web\RefundController;
+use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SocialiteController;
 use App\Http\Controllers\Web\StoreController;
 use App\Http\Controllers\Web\VendorAnalyticsController;
@@ -20,6 +21,7 @@ use App\Http\Controllers\Web\VendorCustomerController;
 use App\Http\Controllers\Web\VendorDashboardController;
 use App\Http\Controllers\Web\VendorInventoryController;
 use App\Http\Controllers\Web\VendorOrderController;
+use App\Http\Controllers\Web\VendorOrderExportController;
 use App\Http\Controllers\Web\VendorProductController;
 use App\Http\Controllers\Web\VendorProductImportController;
 use App\Http\Controllers\Web\VendorPromotionController;
@@ -33,6 +35,9 @@ Route::post('/webhooks/stripe', StripeWebhookController::class)->name('webhooks.
 
 // Secure file downloads — no auth required, token is the credential
 Route::get('/downloads/{token}', [DownloadController::class, 'show'])->name('downloads.show');
+
+// Sitemap — tenant-scoped, no auth required
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 // Root redirects to default locale
 Route::get('/', fn () => redirect('/en'));
@@ -50,11 +55,18 @@ Route::prefix('vendor')
     ->group(function () {
         Route::get('/dashboard', [VendorDashboardController::class, 'index'])->name('dashboard');
         Route::get('/orders', [VendorOrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/export', VendorOrderExportController::class)->name('orders.export');
         Route::patch('/orders/{order}/status', [VendorOrderController::class, 'updateStatus'])->name('orders.update-status');
         Route::post('/orders/{order}/ship', [VendorOrderController::class, 'shipOrder'])->name('orders.ship');
         Route::get('/products', [VendorProductController::class, 'index'])->name('products.index');
+        Route::post('/products/bulk-action', [VendorProductController::class, 'bulkAction'])->name('products.bulk-action');
+        Route::get('/products/create', [VendorProductController::class, 'create'])->name('products.create');
+        Route::post('/products', [VendorProductController::class, 'store'])->name('products.store');
         Route::get('/products/import', [VendorProductImportController::class, 'create'])->name('products.import');
         Route::post('/products/import', [VendorProductImportController::class, 'store'])->name('products.import.store');
+        Route::get('/products/{product}/edit', [VendorProductController::class, 'edit'])->name('products.edit');
+        Route::patch('/products/{product}', [VendorProductController::class, 'update'])->name('products.update');
+        Route::delete('/products/{product}', [VendorProductController::class, 'destroy'])->name('products.destroy');
         Route::get('/inventory', [VendorInventoryController::class, 'index'])->name('inventory.index');
         Route::patch('/inventory/{stock}', [VendorInventoryController::class, 'update'])->name('inventory.update');
         Route::get('/customers', [VendorCustomerController::class, 'index'])->name('customers.index');

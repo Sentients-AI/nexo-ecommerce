@@ -607,3 +607,75 @@ Customers need in-app awareness of order status changes, refund decisions, and l
 **Consequences**
 - The `unread_notifications_count` shared prop is lazy (`fn ()`) so it adds zero overhead on pages that don't render the badge
 - Notification types are plain PHP classes with a `toArray()` for storage and `toBroadcast()` for WebSocket push
+
+
+---
+
+## 2026-03-31 — Guest checkout without mandatory registration
+
+**Decision**
+Allow unauthenticated users to complete checkout by passing `guest_email` and `guest_name` in the checkout request. Account creation is offered (but not required) post-purchase.
+
+**Reason**
+Mandatory registration is a leading cause of cart abandonment. Guest checkout lowers conversion friction while still capturing order data.
+
+**Trade-offs**
+- Guest orders have no user_id; refund / reorder flows require email-based lookup
+- Cannot apply loyalty points or referral codes without an authenticated user
+
+**Consequences**
+- `POST /api/v1/checkout` no longer requires `auth:sanctum`
+- `CreateOrderFromCart` handles nullable `user_id`
+
+---
+
+## 2026-03-31 — Tenant self-service onboarding at /start
+
+**Decision**
+A public wizard at `/start` lets new vendors register: pick a subdomain, name the store, create the admin account. `CreateTenantWithAdminUser` action handles tenant creation + user creation + role assignment + default settings atomically.
+
+**Reason**
+Previously tenants could only be created by super-admins in the Filament control plane, blocking self-serve growth.
+
+**Trade-offs**
+- The slug uniqueness check has a TOCTOU window between validation and creation; a unique DB constraint is the true guard
+- `reserved_subdomains` list in `config/tenancy.php` must be kept up to date
+
+**Consequences**
+- New tenants start on a 14-day trial (`trial_ends_at = now()->addDays(14)`)
+- `OnboardingRequest` validates slug format (lowercase alphanumeric + hyphens, 3–63 chars), uniqueness, and reserved-word check
+
+---
+
+## 2026-03-31 — Back-in-stock waitlist via domain event
+
+**Decision**
+`WaitlistSubscription` stores email + product_id. A `StockReplenished` domain event fires when stock is restocked; a listener queries pending subscriptions, sends `BackInStockNotification`, and stamps `notified_at`.
+
+**Reason**
+Re-engagement without polling. Event-driven approach keeps the inventory domain decoupled from the notification concern.
+
+**Trade-offs**
+- Listener runs synchronously in the default queue worker; for very large waitlists this should be chunked
+
+**Consequences**
+- `waitlist_subscriptions` table added (tenant-scoped)
+- `POST /api/v1/products/{slug}/waitlist` is public (no auth required)
+
+---
+
+## 2026-03-31 — Sitemap and product SEO meta
+
+**Decision**
+`SitemapController` generates a `<urlset>` XML sitemap covering home pages, active products, and category filter URLs for all supported locales (en/ar/ms). `ProductController::show()` passes a `seo` prop; `Products/Show.vue` renders `<Head>` with meta description, Open Graph, Twitter Card, and JSON-LD Product structured data.
+
+**Reason**
+Search engine discoverability is a hard requirement for any public storefront. Centralising SEO data in the controller keeps Vue components free of business logic.
+
+**Trade-offs**
+- Sitemap is generated on every request (no caching beyond HTTP `Cache-Control: public, max-age=3600`)
+- JSON-LD price uses the stored cents value ÷ 100; does not reflect real-time currency conversion
+
+**Consequences**
+- `/sitemap.xml` is tenant-scoped (uses global tenant context, no auth required)
+- `seo.canonical_url` prevents duplicate-content penalties from locale variants

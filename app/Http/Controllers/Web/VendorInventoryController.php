@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\Inventory\Events\StockReplenished;
 use App\Domain\Inventory\Models\Stock;
 use App\Domain\Product\Models\Product;
 use App\Http\Controllers\Controller;
@@ -89,7 +90,17 @@ final class VendorInventoryController extends Controller
             'quantity_available' => ['required', 'integer', 'min:0'],
         ]);
 
+        $wasOutOfStock = ! $stock->isInStock();
+
         $stock->update(['quantity_available' => $validated['quantity_available']]);
+
+        if ($wasOutOfStock && $stock->fresh()?->isInStock()) {
+            StockReplenished::dispatch(
+                $stock->product_id,
+                (int) $stock->tenant_id,
+                $validated['quantity_available'],
+            );
+        }
 
         return back()->with('success', 'Stock updated.');
     }

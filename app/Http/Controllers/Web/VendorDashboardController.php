@@ -14,19 +14,34 @@ final class VendorDashboardController extends Controller
 {
     public function index(): Response
     {
-        $revenueToday = Order::query()
+        $revenueToday = (int) Order::query()
             ->where('status', '!=', 'cancelled')
             ->whereDate('created_at', today())
             ->sum('total_cents');
 
-        $revenueThisMonth = Order::query()
+        $revenueYesterday = (int) Order::query()
+            ->where('status', '!=', 'cancelled')
+            ->whereDate('created_at', today()->subDay())
+            ->sum('total_cents');
+
+        $revenueThisMonth = (int) Order::query()
             ->where('status', '!=', 'cancelled')
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->sum('total_cents');
 
+        $revenueLastMonth = (int) Order::query()
+            ->where('status', '!=', 'cancelled')
+            ->whereMonth('created_at', now()->subMonth()->month)
+            ->whereYear('created_at', now()->subMonth()->year)
+            ->sum('total_cents');
+
         $ordersToday = Order::query()
             ->whereDate('created_at', today())
+            ->count();
+
+        $ordersYesterday = Order::query()
+            ->whereDate('created_at', today()->subDay())
             ->count();
 
         $pendingOrders = Order::query()
@@ -69,8 +84,11 @@ final class VendorDashboardController extends Controller
         return Inertia::render('Vendor/Dashboard', [
             'stats' => [
                 'revenue_today' => $revenueToday,
+                'revenue_yesterday' => $revenueYesterday,
                 'revenue_this_month' => $revenueThisMonth,
+                'revenue_last_month' => $revenueLastMonth,
                 'orders_today' => $ordersToday,
+                'orders_yesterday' => $ordersYesterday,
                 'pending_orders' => $pendingOrders,
                 'total_products' => $totalProducts,
             ],

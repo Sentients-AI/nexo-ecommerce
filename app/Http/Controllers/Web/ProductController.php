@@ -154,11 +154,31 @@ final class ProductController extends Controller
             ->limit(4)
             ->get();
 
+        $metaDescription = is_array($product->meta_description)
+            ? ($product->meta_description['content'] ?? null)
+            : null;
+
+        $seoDescription = $metaDescription
+            ?? $product->short_description
+            ?? (mb_strlen((string) $product->description) > 160
+                ? mb_substr((string) $product->description, 0, 157).'...'
+                : $product->description);
+
+        $canonicalUrl = url("/{$locale}/products/{$product->slug}");
+
         return Inertia::render('Products/Show', [
             'product' => $product,
             'reviewStats' => $reviewStats,
             'relatedProducts' => $relatedProducts,
             'recommendations' => Inertia::defer(fn () => $recommendations->execute($product)),
+            'seo' => [
+                'title' => $product->meta_title ?? $product->name,
+                'description' => $seoDescription,
+                'image' => $product->images[0] ?? null,
+                'canonical_url' => $canonicalUrl,
+                'price' => $product->sale_price ?? $product->price_cents,
+                'currency' => $product->currency ?? 'MYR',
+            ],
         ]);
     }
 }

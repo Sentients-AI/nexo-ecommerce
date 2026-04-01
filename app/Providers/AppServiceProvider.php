@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Inventory\Events\StockReplenished;
+use App\Domain\Inventory\Listeners\NotifyWaitlistSubscribers;
 use App\Domain\Loyalty\Events\PointsEarned;
 use App\Domain\Notification\Listeners\NotifyUserOnLoyaltyPointsEarned;
 use App\Domain\Notification\Listeners\NotifyUserOnOrderStatusChange;
@@ -55,6 +57,7 @@ final class AppServiceProvider extends ServiceProvider
         Event::listen(OrderPaid::class, GenerateDownloadsOnOrderPaid::class);
         Event::listen(RefundApproved::class, NotifyUserOnRefundApproved::class);
         Event::listen(PointsEarned::class, NotifyUserOnLoyaltyPointsEarned::class);
+        Event::listen(StockReplenished::class, NotifyWaitlistSubscribers::class);
     }
 
     /**

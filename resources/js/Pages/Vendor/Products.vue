@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 import { useCurrency } from '@/Composables/useCurrency';
@@ -42,6 +42,53 @@ const props = defineProps<Props>();
 const { formatPrice: formatCurrency } = useCurrency();
 
 const searchInput = ref(props.search ?? '');
+const selectedIds = ref<Set<number>>(new Set());
+const bulkProcessing = ref(false);
+
+const allSelected = computed(() =>
+    props.products.data.length > 0 &&
+    props.products.data.every(p => selectedIds.value.has(p.id)),
+);
+
+const someSelected = computed(() => selectedIds.value.size > 0);
+
+function toggleAll(): void {
+    if (allSelected.value) {
+        props.products.data.forEach(p => selectedIds.value.delete(p.id));
+    } else {
+        props.products.data.forEach(p => selectedIds.value.add(p.id));
+    }
+}
+
+function toggleOne(id: number): void {
+    if (selectedIds.value.has(id)) {
+        selectedIds.value.delete(id);
+    } else {
+        selectedIds.value.add(id);
+    }
+}
+
+function clearSelection(): void {
+    selectedIds.value.clear();
+}
+
+function runBulkAction(action: 'activate' | 'deactivate' | 'delete'): void {
+    if (selectedIds.value.size === 0) { return; }
+
+    if (action === 'delete' && !confirm(`Delete ${selectedIds.value.size} product(s)? This cannot be undone.`)) {
+        return;
+    }
+
+    bulkProcessing.value = true;
+
+    router.post('/vendor/products/bulk-action', {
+        action,
+        ids: [...selectedIds.value],
+    }, {
+        onSuccess: () => { selectedIds.value.clear(); },
+        onFinish: () => { bulkProcessing.value = false; },
+    });
+}
 
 function applyFilters(): void {
     router.get('/vendor/products', {
@@ -96,8 +143,7 @@ function stockClass(qty: number | undefined): string {
                     Import CSV
                 </Link>
                 <a
-                    href="/admin/products/create"
-                    target="_blank"
+                    href="/vendor/products/create"
                     class="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-400 transition-colors"
                 >
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
@@ -110,7 +156,6 @@ function stockClass(qty: number | undefined): string {
 
         <!-- Filters row -->
         <div class="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <!-- Search -->
             <div class="relative flex-1">
                 <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-navy-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -124,7 +169,6 @@ function stockClass(qty: number | undefined): string {
                 />
             </div>
 
-            <!-- Active filter -->
             <div class="flex gap-2">
                 <button
                     v-for="[val, label] in [[null, 'All'], ['1', 'Active'], ['0', 'Inactive']]"
@@ -140,6 +184,54 @@ function stockClass(qty: number | undefined): string {
             </div>
         </div>
 
+        <!-- Bulk action toolbar -->
+        <transition
+            enter-active-class="transition-all duration-150 ease-out"
+            enter-from-class="opacity-0 -translate-y-2"
+            enter-to-class="opacity-100 translate-y-0"
+            leave-active-class="transition-all duration-100 ease-in"
+            leave-from-class="opacity-100 translate-y-0"
+            leave-to-class="opacity-0 -translate-y-2"
+        >
+            <div
+                v-if="someSelected"
+                class="mb-4 flex items-center justify-between rounded-xl border border-brand-500/20 bg-brand-500/10 px-5 py-3"
+            >
+                <span class="text-sm font-medium text-brand-300">
+                    {{ selectedIds.size }} product{{ selectedIds.size === 1 ? '' : 's' }} selected
+                </span>
+                <div class="flex items-center gap-2">
+                    <button
+                        @click="runBulkAction('activate')"
+                        :disabled="bulkProcessing"
+                        class="rounded-lg border border-accent-500/30 bg-accent-500/10 px-3 py-1.5 text-xs font-medium text-accent-400 transition-colors hover:bg-accent-500/20 disabled:opacity-50"
+                    >
+                        Activate
+                    </button>
+                    <button
+                        @click="runBulkAction('deactivate')"
+                        :disabled="bulkProcessing"
+                        class="rounded-lg border border-navy-600/50 bg-navy-800/60 px-3 py-1.5 text-xs font-medium text-navy-300 transition-colors hover:bg-navy-700/60 hover:text-white disabled:opacity-50"
+                    >
+                        Deactivate
+                    </button>
+                    <button
+                        @click="runBulkAction('delete')"
+                        :disabled="bulkProcessing"
+                        class="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-xs font-medium text-red-400 transition-colors hover:bg-red-500/20 disabled:opacity-50"
+                    >
+                        Delete
+                    </button>
+                    <button
+                        @click="clearSelection"
+                        class="ml-1 text-xs text-navy-500 hover:text-navy-300 transition-colors"
+                    >
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </transition>
+
         <!-- Products table -->
         <div class="bento rounded-2xl border border-navy-800/60 bg-navy-900/60 overflow-hidden">
             <div v-if="products.data.length === 0" class="flex flex-col items-center justify-center py-20">
@@ -150,6 +242,15 @@ function stockClass(qty: number | undefined): string {
                 <table class="w-full text-sm">
                     <thead>
                         <tr class="border-b border-navy-800/40">
+                            <th class="px-5 py-3 w-10">
+                                <input
+                                    type="checkbox"
+                                    :checked="allSelected"
+                                    :indeterminate="someSelected && !allSelected"
+                                    @change="toggleAll"
+                                    class="h-4 w-4 rounded border-navy-600 bg-navy-800 accent-brand-500 cursor-pointer"
+                                />
+                            </th>
                             <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-navy-500">Product</th>
                             <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-navy-500">SKU</th>
                             <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-navy-500">Category</th>
@@ -165,7 +266,16 @@ function stockClass(qty: number | undefined): string {
                             v-for="product in products.data"
                             :key="product.id"
                             class="hover:bg-navy-800/30 transition-colors"
+                            :class="{ 'bg-brand-500/5': selectedIds.has(product.id) }"
                         >
+                            <td class="px-5 py-3.5 w-10">
+                                <input
+                                    type="checkbox"
+                                    :checked="selectedIds.has(product.id)"
+                                    @change="toggleOne(product.id)"
+                                    class="h-4 w-4 rounded border-navy-600 bg-navy-800 accent-brand-500 cursor-pointer"
+                                />
+                            </td>
                             <td class="px-5 py-3.5">
                                 <div class="flex items-center gap-3">
                                     <div class="h-9 w-9 shrink-0 rounded-lg bg-navy-700/50 overflow-hidden">
@@ -206,8 +316,7 @@ function stockClass(qty: number | undefined): string {
                             </td>
                             <td class="px-5 py-3.5 text-right">
                                 <a
-                                    :href="`/admin/products/${product.id}/edit`"
-                                    target="_blank"
+                                    :href="`/vendor/products/${product.id}/edit`"
                                     class="text-xs text-brand-400 hover:text-brand-300 transition-colors font-medium"
                                 >
                                     Edit
