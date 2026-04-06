@@ -50,6 +50,13 @@ const selectedShippingMethodId = ref<number | null>(props.shippingMethods[0]?.id
 const guestEmail = ref('');
 const guestName = ref('');
 
+const couponCode = ref('');
+const appliedCouponCode = ref<string | null>(null);
+const appliedCouponName = ref<string | null>(null);
+const discountCents = ref(0);
+const couponError = ref<string | null>(null);
+const couponLoading = ref(false);
+
 const isLoading = computed(() => checkoutLoading.value || stripeLoading.value || paymentProcessing.value || isSubmitting.value);
 
 const taxCents = computed(() => Math.round(props.cart.subtotal * 0.08));
@@ -57,7 +64,50 @@ const selectedShipping = computed(() =>
     props.shippingMethods.find(m => m.id === selectedShippingMethodId.value) ?? null
 );
 const shippingCents = computed(() => selectedShipping.value?.cost_cents ?? 0);
-const totalCents = computed(() => props.cart.subtotal + taxCents.value + shippingCents.value);
+const totalCents = computed(() => props.cart.subtotal + taxCents.value + shippingCents.value - discountCents.value);
+
+async function applyPromotion(): Promise<void> {
+    const code = couponCode.value.trim();
+    if (!code) return;
+
+    couponError.value = null;
+    couponLoading.value = true;
+
+    try {
+        const res = await fetch('/api/v1/promotions/preview', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken(),
+            },
+            credentials: 'include',
+            body: JSON.stringify({ cart_id: props.cart.id, code }),
+        });
+
+        const data = await res.json();
+
+        if (data.valid) {
+            appliedCouponCode.value = code;
+            appliedCouponName.value = data.promotion_name;
+            discountCents.value = data.discount_cents;
+            couponCode.value = '';
+        } else {
+            couponError.value = data.message ?? 'Invalid coupon code.';
+        }
+    } catch {
+        couponError.value = 'Failed to apply coupon. Please try again.';
+    } finally {
+        couponLoading.value = false;
+    }
+}
+
+function removePromotion(): void {
+    appliedCouponCode.value = null;
+    appliedCouponName.value = null;
+    discountCents.value = 0;
+    couponError.value = null;
+}
 
 async function handleInitiateCheckout() {
     clearError();
@@ -85,6 +135,7 @@ async function handleInitiateCheckout() {
             cart_id: props.cart.id,
             currency: currency.value,
             shipping_method_id: selectedShippingMethodId.value,
+            ...(appliedCouponCode.value ? { promotion_code: appliedCouponCode.value } : {}),
             ...(!props.isAuthenticated ? { guest_email: guestEmail.value, guest_name: guestName.value } : {}),
         }),
     });
@@ -302,6 +353,45 @@ function getIdempotencyKey(operation: string): string {
                             </div>
                         </div>
 
+                        <!-- Coupon code -->
+                        <div class="mt-5">
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Coupon Code</p>
+
+                            <!-- Applied coupon -->
+                            <div v-if="appliedCouponCode" class="flex items-center justify-between rounded-xl border border-accent-300 dark:border-accent-700 bg-accent-50 dark:bg-accent-900/20 px-4 py-2.5">
+                                <div>
+                                    <p class="text-sm font-medium text-accent-700 dark:text-accent-300">{{ appliedCouponCode }}</p>
+                                    <p class="text-xs text-accent-600 dark:text-accent-400">{{ appliedCouponName }} — -{{ formatPrice(discountCents) }}</p>
+                                </div>
+                                <button type="button" @click="removePromotion" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Coupon input -->
+                            <div v-else class="flex gap-2">
+                                <input
+                                    v-model="couponCode"
+                                    type="text"
+                                    placeholder="Enter coupon code"
+                                    @keydown.enter.prevent="applyPromotion"
+                                    class="flex-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+                                    :class="{ 'border-red-400 dark:border-red-600': couponError }"
+                                />
+                                <button
+                                    type="button"
+                                    @click="applyPromotion"
+                                    :disabled="couponLoading || !couponCode.trim()"
+                                    class="rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    {{ couponLoading ? '…' : 'Apply' }}
+                                </button>
+                            </div>
+                            <p v-if="couponError" class="mt-1.5 text-xs text-red-500 dark:text-red-400">{{ couponError }}</p>
+                        </div>
+
                         <!-- Price breakdown -->
                         <dl class="mt-6 space-y-4">
                             <div class="flex items-center justify-between">
@@ -309,6 +399,10 @@ function getIdempotencyKey(operation: string): string {
                                 <dd class="text-sm font-medium text-slate-900 dark:text-white">
                                     {{ formatPrice(cart.subtotal) }}
                                 </dd>
+                            </div>
+                            <div v-if="discountCents > 0" class="flex items-center justify-between">
+                                <dt class="text-sm text-accent-600 dark:text-accent-400">Discount ({{ appliedCouponCode }})</dt>
+                                <dd class="text-sm font-medium text-accent-600 dark:text-accent-400">-{{ formatPrice(discountCents) }}</dd>
                             </div>
                             <div class="flex items-center justify-between">
                                 <dt class="text-sm text-slate-600 dark:text-slate-400">Tax (8%)</dt>

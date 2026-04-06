@@ -6,6 +6,7 @@ namespace App\Domain\Product\Models;
 
 use App\Domain\Category\Models\Category;
 use App\Domain\Inventory\Models\Stock;
+use App\Domain\Question\Models\Question;
 use App\Domain\Review\Models\Review;
 use App\Domain\Tenant\Traits\BelongsToTenant;
 use App\Shared\Models\BaseModel;
@@ -104,6 +105,11 @@ final class Product extends BaseModel
     /**
      * Get the reviews for the product.
      */
+    public function questions(): HasMany
+    {
+        return $this->hasMany(Question::class);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);

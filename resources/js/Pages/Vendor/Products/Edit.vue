@@ -209,6 +209,13 @@ function confirmDelete(): void {
                             class="flex-1 rounded-xl border border-navy-700/50 bg-navy-800/50 px-4 py-2.5 text-sm text-white placeholder-navy-500 focus:border-brand-500/50 focus:outline-none focus:ring-1 focus:ring-brand-500/30"
                             @keydown.enter.prevent="addImageUrl"
                         />
+                        <button
+                            type="button"
+                            @click="(e) => addImageUrl(e)"
+                            class="rounded-xl border border-navy-700 px-4 py-2.5 text-sm text-navy-300 hover:border-navy-600 hover:text-white transition-colors"
+                        >
+                            Add
+                        </button>
                     </div>
 
                     <div v-if="form.images.length > 0" class="grid grid-cols-3 gap-3">

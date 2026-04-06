@@ -53,25 +53,23 @@ final readonly class CheckoutUseCase
                 ? User::query()->findOrFail($request->userId->toInt())
                 : null;
 
-            // Find and calculate promotion discount (guests skip promotions)
+            // Find and calculate promotion discount (guests can use code-based promotions)
             $promotionId = null;
             $discountCents = 0;
             $promotion = null;
 
-            if ($user !== null) {
-                $promotionResult = $this->findBestPromotion->execute(
-                    $cart,
-                    $user,
-                    $request->promotionCode
-                );
+            $promotionResult = $this->findBestPromotion->execute(
+                $cart,
+                $user,
+                $request->promotionCode
+            );
 
-                if ($promotionResult !== null) {
-                    $promotion = $promotionResult['promotion'];
-                    /** @var DiscountCalculationResult $discountResult */
-                    $discountResult = $promotionResult['result'];
-                    $promotionId = $promotion->id;
-                    $discountCents = $discountResult->discountCents;
-                }
+            if ($promotionResult !== null) {
+                $promotion = $promotionResult['promotion'];
+                /** @var DiscountCalculationResult $discountResult */
+                $discountResult = $promotionResult['result'];
+                $promotionId = $promotion->id;
+                $discountCents = $discountResult->discountCents;
             }
 
             // Loyalty discount only for authenticated users

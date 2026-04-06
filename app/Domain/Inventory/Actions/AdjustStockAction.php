@@ -6,6 +6,7 @@ namespace App\Domain\Inventory\Actions;
 
 use App\Domain\Inventory\DTOs\AdjustStockData;
 use App\Domain\Inventory\Enums\StockMovementType;
+use App\Domain\Inventory\Events\StockFellBelowThreshold;
 use App\Domain\Inventory\Events\StockUpdated;
 use App\Domain\Inventory\Models\Stock;
 use App\Domain\Inventory\Models\StockMovement;
@@ -26,6 +27,8 @@ final class AdjustStockAction
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            $threshold = (int) config('inventory.low_stock_threshold');
+            $wasAboveThreshold = $stock->quantity_available > $threshold;
             $newQuantity = $stock->quantity_available + $data->quantityChange;
 
             if ($newQuantity < 0) {
@@ -61,6 +64,15 @@ final class AdjustStockAction
                 $fresh->quantity_reserved,
                 'adjusted',
             );
+
+            if ($wasAboveThreshold && $fresh->quantity_available > 0 && $fresh->quantity_available <= $threshold) {
+                StockFellBelowThreshold::dispatch(
+                    (int) $data->productId,
+                    (int) $fresh->tenant_id,
+                    $fresh->quantity_available,
+                    $threshold,
+                );
+            }
 
             return $fresh;
         });

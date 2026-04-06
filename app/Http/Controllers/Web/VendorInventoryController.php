@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\Inventory\Events\StockFellBelowThreshold;
 use App\Domain\Inventory\Events\StockReplenished;
 use App\Domain\Inventory\Models\Stock;
 use App\Domain\Product\Models\Product;
@@ -32,10 +33,11 @@ final class VendorInventoryController extends Controller
                     ->orWhere('sku', 'like', "%{$search}%");
             }))
             ->when($lowStock, function ($q) {
-                $q->whereHas('stock', fn ($s) => $s->where('quantity_available', '<=', 5))
+                $threshold = config('inventory.low_stock_threshold');
+                $q->whereHas('stock', fn ($s) => $s->where('quantity_available', '<=', $threshold))
                     ->orWhereHas('variants', fn ($v) => $v->whereHas(
                         'stock',
-                        fn ($s) => $s->where('quantity_available', '<=', 5)
+                        fn ($s) => $s->where('quantity_available', '<=', $threshold)
                     ));
             })
             ->latest()
@@ -64,8 +66,10 @@ final class VendorInventoryController extends Controller
                 ]),
             ]);
 
+        $threshold = config('inventory.low_stock_threshold');
+
         $lowStockCount = Stock::query()
-            ->where('quantity_available', '<=', 5)
+            ->where('quantity_available', '<=', $threshold)
             ->where('quantity_available', '>', 0)
             ->count();
 
@@ -90,15 +94,29 @@ final class VendorInventoryController extends Controller
             'quantity_available' => ['required', 'integer', 'min:0'],
         ]);
 
+        $threshold = (int) config('inventory.low_stock_threshold');
         $wasOutOfStock = ! $stock->isInStock();
+        $wasAboveThreshold = $stock->quantity_available > $threshold;
 
         $stock->update(['quantity_available' => $validated['quantity_available']]);
 
-        if ($wasOutOfStock && $stock->fresh()?->isInStock()) {
+        $fresh = $stock->fresh();
+
+        if ($wasOutOfStock && $fresh?->isInStock()) {
             StockReplenished::dispatch(
                 $stock->product_id,
                 (int) $stock->tenant_id,
                 $validated['quantity_available'],
+            );
+        }
+
+        $newQuantity = $validated['quantity_available'];
+        if ($wasAboveThreshold && $newQuantity > 0 && $newQuantity <= $threshold) {
+            StockFellBelowThreshold::dispatch(
+                $stock->product_id,
+                (int) $stock->tenant_id,
+                $newQuantity,
+                $threshold,
             );
         }
 

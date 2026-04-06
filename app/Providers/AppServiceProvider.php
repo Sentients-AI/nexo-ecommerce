@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Domain\Inventory\Events\StockFellBelowThreshold;
 use App\Domain\Inventory\Events\StockReplenished;
+use App\Domain\Inventory\Listeners\NotifyVendorOnLowStock;
 use App\Domain\Inventory\Listeners\NotifyWaitlistSubscribers;
 use App\Domain\Loyalty\Events\PointsEarned;
 use App\Domain\Notification\Listeners\NotifyUserOnLoyaltyPointsEarned;
@@ -13,7 +15,9 @@ use App\Domain\Notification\Listeners\NotifyUserOnRefundApproved;
 use App\Domain\Order\Events\OrderCancelled;
 use App\Domain\Order\Events\OrderPaid;
 use App\Domain\Order\Events\OrderRefunded;
+use App\Domain\Order\Listeners\AdjustEarningOnRefund;
 use App\Domain\Order\Listeners\GenerateDownloadsOnOrderPaid;
+use App\Domain\Order\Listeners\RecordVendorEarning;
 use App\Domain\Payment\Contracts\PaymentGatewayService;
 use App\Domain\Refund\Events\RefundApproved;
 use App\Infrastructure\Payment\Stripe\PaymentGatewayService as StripePaymentGatewayService;
@@ -55,9 +59,12 @@ final class AppServiceProvider extends ServiceProvider
     {
         Event::listen([OrderPaid::class, OrderCancelled::class, OrderRefunded::class], NotifyUserOnOrderStatusChange::class);
         Event::listen(OrderPaid::class, GenerateDownloadsOnOrderPaid::class);
+        Event::listen(OrderPaid::class, RecordVendorEarning::class);
+        Event::listen(OrderRefunded::class, AdjustEarningOnRefund::class);
         Event::listen(RefundApproved::class, NotifyUserOnRefundApproved::class);
         Event::listen(PointsEarned::class, NotifyUserOnLoyaltyPointsEarned::class);
         Event::listen(StockReplenished::class, NotifyWaitlistSubscribers::class);
+        Event::listen(StockFellBelowThreshold::class, NotifyVendorOnLowStock::class);
     }
 
     /**

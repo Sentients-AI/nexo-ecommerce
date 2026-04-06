@@ -92,6 +92,48 @@ final class PromotionController extends Controller
     }
 
     /**
+     * Preview a promotion code discount — public, works for guests and authenticated users.
+     */
+    public function preview(ApplyPromotionRequest $request): JsonResponse
+    {
+        try {
+            $user = $request->user();
+            $cart = Cart::query()
+                ->with('items.product')
+                ->findOrFail($request->validated('cart_id'));
+
+            $result = $this->findBestPromotion->execute(
+                $cart,
+                $user,
+                $request->validated('code')
+            );
+
+            if ($result === null) {
+                return response()->json([
+                    'valid' => false,
+                    'message' => 'Promotion code is not valid or not applicable.',
+                ]);
+            }
+
+            return response()->json([
+                'valid' => true,
+                'promotion_name' => $result['promotion']->name,
+                'discount_cents' => $result['result']->discountCents,
+            ]);
+
+        } catch (PromotionNotApplicableException $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => $e->reason,
+            ]);
+        } catch (Throwable $e) {
+            report($e);
+
+            return $this->errorResponse(ErrorCode::InternalError, 'An error occurred while validating the promotion.');
+        }
+    }
+
+    /**
      * Validate a promotion code without applying it.
      */
     public function validate(ApplyPromotionRequest $request): JsonResponse

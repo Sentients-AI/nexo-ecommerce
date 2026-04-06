@@ -69,9 +69,27 @@ interface SeoMeta {
     currency: string;
 }
 
+interface QuestionAnswer {
+    id: number;
+    body: string;
+    is_vendor_answer: boolean;
+    author_name: string;
+    created_at: string;
+}
+
+interface QuestionItem {
+    id: number;
+    body: string;
+    is_answered: boolean;
+    author_name: string;
+    created_at: string;
+    answers: QuestionAnswer[];
+}
+
 interface Props {
     product: ProductApiResource & { active_variants?: ProductVariant[] };
     reviewStats: ReviewStats;
+    questionCount: number;
     relatedProducts: ProductApiResource[];
     recommendations?: ProductApiResource[];
     seo: SeoMeta;
@@ -96,7 +114,7 @@ const quantity = ref(1);
 const selectedImage = ref(0);
 const addedToCart = ref(false);
 const lightboxOpen = ref(false);
-const activeTab = ref<'description' | 'specifications' | 'reviews'>('description');
+const activeTab = ref<'description' | 'specifications' | 'reviews' | 'questions'>('description');
 
 // Variant state
 const variants = computed<ProductVariant[]>(() => (props.product as any).active_variants ?? []);
@@ -318,6 +336,62 @@ const hasAlreadyReviewed = computed(() => {
 function switchToReviews() {
     activeTab.value = 'reviews';
     loadReviews();
+}
+
+// ── Q&A state ────────────────────────────────────────────────────────────────
+const questions = ref<QuestionItem[]>([]);
+const questionsLoading = ref(false);
+const questionsLoaded = ref(false);
+const questionsNextPage = ref<string | null>(null);
+const questionBody = ref('');
+const questionSubmitting = ref(false);
+const answerBody = ref<Record<number, string>>({});
+const answerSubmitting = ref<Record<number, boolean>>({});
+const expandedAnswers = ref<Record<number, boolean>>({});
+
+async function loadQuestions() {
+    if (questionsLoaded.value || questionsLoading.value) return;
+    questionsLoading.value = true;
+    try {
+        const result = await useApi().get(`/api/v1/products/${props.product.slug}/questions`);
+        questions.value = result.data ?? [];
+        questionsNextPage.value = result.next_page_url || null;
+        questionsLoaded.value = true;
+    } finally {
+        questionsLoading.value = false;
+    }
+}
+
+function switchToQuestions() {
+    activeTab.value = 'questions';
+    loadQuestions();
+}
+
+async function submitQuestion() {
+    if (!questionBody.value.trim() || questionSubmitting.value) return;
+    questionSubmitting.value = true;
+    try {
+        const result = await useApi().post(`/api/v1/products/${props.product.slug}/questions`, { body: questionBody.value });
+        questions.value.unshift(result.data);
+        questionBody.value = '';
+    } finally {
+        questionSubmitting.value = false;
+    }
+}
+
+async function submitAnswer(question: QuestionItem) {
+    const body = answerBody.value[question.id];
+    if (!body?.trim() || answerSubmitting.value[question.id]) return;
+    answerSubmitting.value[question.id] = true;
+    try {
+        const result = await useApi().post(`/api/v1/questions/${question.id}/answers`, { body });
+        question.answers.push(result.data);
+        question.is_answered = true;
+        answerBody.value[question.id] = '';
+        expandedAnswers.value[question.id] = false;
+    } finally {
+        answerSubmitting.value[question.id] = false;
+    }
 }
 
 function formatDate(dateString: string): string {
@@ -868,6 +942,21 @@ async function copyLink(): Promise<void> {
                                 {{ reviewStats.review_count }}
                             </span>
                         </button>
+                        <button
+                            @click="switchToQuestions"
+                            class="py-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2"
+                            :class="activeTab === 'questions'
+                                ? 'border-brand-500 text-brand-600 dark:text-brand-400'
+                                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300'"
+                        >
+                            Q&amp;A
+                            <span
+                                v-if="questionCount > 0"
+                                class="rounded-full bg-slate-100 dark:bg-navy-800 px-2 py-0.5 text-xs font-medium"
+                            >
+                                {{ questionCount }}
+                            </span>
+                        </button>
                     </nav>
                 </div>
 
@@ -897,6 +986,125 @@ async function copyLink(): Promise<void> {
                                 <dd class="col-span-2 text-sm" :class="stockStatus.class">{{ stockStatus.text }}</dd>
                             </div>
                         </dl>
+                    </div>
+
+                    <!-- Q&A tab -->
+                    <div v-if="activeTab === 'questions'">
+                        <!-- Ask a question form -->
+                        <div class="mb-8 rounded-xl bg-white dark:bg-navy-900/60 border border-slate-100 dark:border-navy-800/60 p-6">
+                            <h3 class="text-base font-semibold text-slate-900 dark:text-white mb-4">Ask a question</h3>
+                            <div v-if="$page.props.auth?.user">
+                                <textarea
+                                    v-model="questionBody"
+                                    rows="3"
+                                    placeholder="What would you like to know about this product?"
+                                    class="block w-full rounded-xl border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-none"
+                                />
+                                <button
+                                    @click="submitQuestion"
+                                    :disabled="questionBody.trim().length < 10 || questionSubmitting"
+                                    class="mt-3 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-sm font-semibold px-5 py-2.5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {{ questionSubmitting ? 'Posting…' : 'Post Question' }}
+                                </button>
+                            </div>
+                            <p v-else class="text-sm text-slate-500 dark:text-slate-400">
+                                <Link :href="route('login', { locale: $page.props.locale ?? 'en' })" class="text-brand-600 hover:underline">Sign in</Link>
+                                to ask a question.
+                            </p>
+                        </div>
+
+                        <!-- Questions list -->
+                        <div v-if="questionsLoading && !questionsLoaded" class="flex justify-center py-12">
+                            <Spinner size="lg" />
+                        </div>
+
+                        <div v-else-if="questions.length > 0" class="space-y-6">
+                            <div
+                                v-for="q in questions"
+                                :key="q.id"
+                                class="rounded-xl bg-white dark:bg-navy-900/60 border border-slate-100 dark:border-navy-800/60 p-5"
+                            >
+                                <!-- Question -->
+                                <div class="flex gap-3">
+                                    <div class="flex-shrink-0 mt-0.5">
+                                        <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs font-bold">Q</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-slate-900 dark:text-white">{{ q.body }}</p>
+                                        <p class="mt-1 text-xs text-slate-400">{{ q.author_name }} · {{ q.created_at.slice(0, 10) }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Answers -->
+                                <div v-if="q.answers.length > 0" class="mt-4 space-y-3 pl-10">
+                                    <div
+                                        v-for="a in q.answers"
+                                        :key="a.id"
+                                        class="flex gap-3"
+                                    >
+                                        <div class="flex-shrink-0 mt-0.5">
+                                            <span
+                                                class="inline-flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold"
+                                                :class="a.is_vendor_answer
+                                                    ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400'
+                                                    : 'bg-slate-100 dark:bg-navy-800 text-slate-500 dark:text-slate-400'"
+                                            >A</span>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm text-slate-700 dark:text-slate-300">{{ a.body }}</p>
+                                            <p class="mt-1 text-xs text-slate-400">
+                                                <span v-if="a.is_vendor_answer" class="text-accent-600 dark:text-accent-400 font-medium mr-1">Seller</span>
+                                                {{ a.author_name }} · {{ a.created_at.slice(0, 10) }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Answer form for logged-in users -->
+                                <div v-if="$page.props.auth?.user" class="mt-4 pl-10">
+                                    <div v-if="!expandedAnswers[q.id]">
+                                        <button
+                                            @click="expandedAnswers[q.id] = true"
+                                            class="text-xs text-brand-600 hover:text-brand-500 font-medium transition-colors"
+                                        >
+                                            + Write an answer
+                                        </button>
+                                    </div>
+                                    <div v-else class="space-y-2">
+                                        <textarea
+                                            v-model="answerBody[q.id]"
+                                            rows="2"
+                                            placeholder="Share your answer…"
+                                            class="block w-full rounded-xl border border-slate-300 dark:border-navy-700 bg-white dark:bg-navy-800/60 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-none"
+                                        />
+                                        <div class="flex gap-2">
+                                            <button
+                                                @click="submitAnswer(q)"
+                                                :disabled="!answerBody[q.id]?.trim() || answerSubmitting[q.id]"
+                                                class="rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold px-4 py-2 transition-colors disabled:opacity-50"
+                                            >
+                                                {{ answerSubmitting[q.id] ? 'Posting…' : 'Post Answer' }}
+                                            </button>
+                                            <button
+                                                @click="expandedAnswers[q.id] = false"
+                                                class="rounded-lg text-slate-500 hover:text-slate-700 text-xs font-medium px-3 py-2 transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div v-else class="text-center py-12">
+                            <svg class="mx-auto h-12 w-12 text-slate-300 dark:text-slate-600" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                            </svg>
+                            <h3 class="mt-4 text-base font-medium text-slate-900 dark:text-white">No questions yet</h3>
+                            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Be the first to ask about this product.</p>
+                        </div>
                     </div>
 
                     <!-- Reviews tab -->

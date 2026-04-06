@@ -59,7 +59,7 @@ final class VendorDashboardController extends Controller
             ->get(['id', 'order_number', 'status', 'total_cents', 'created_at', 'user_id']);
 
         $lowStockProducts = Product::query()
-            ->whereHas('stock', fn ($q) => $q->where('quantity_available', '<=', 5)->where('quantity_available', '>', 0))
+            ->whereHas('stock', fn ($q) => $q->where('quantity_available', '<=', config('inventory.low_stock_threshold'))->where('quantity_available', '>', 0))
             ->with('stock:id,product_id,quantity_available')
             ->limit(8)
             ->get(['id', 'name', 'slug']);

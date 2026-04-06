@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\PromotionController;
+use App\Http\Controllers\Api\V1\QuestionController;
 use App\Http\Controllers\Api\V1\ReferralController;
 use App\Http\Controllers\Api\V1\RefundController;
 use App\Http\Controllers\Api\V1\ReviewController;
@@ -32,9 +33,19 @@ Route::prefix('v1')->group(function () {
     Route::get('/shipping-methods', [ShippingMethodController::class, 'index'])->name('api.v1.shipping-methods.index');
 });
 
+// Promotion preview — public, works for guests and authenticated users
+Route::prefix('v1')->middleware(['web'])->group(function () {
+    Route::post('/promotions/preview', [PromotionController::class, 'preview'])->name('api.v1.promotions.preview');
+});
+
 // Reviews (public listing)
 Route::prefix('v1')->group(function () {
     Route::get('/products/{product:slug}/reviews', [ReviewController::class, 'index'])->name('api.v1.products.reviews.index');
+});
+
+// Questions (public listing)
+Route::prefix('v1')->group(function () {
+    Route::get('/products/{product:slug}/questions', [QuestionController::class, 'index'])->name('api.v1.products.questions.index');
 });
 
 // Waitlist (public — no auth required)
@@ -67,6 +78,10 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
     Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store'])->name('api.v1.products.reviews.store');
     Route::post('/reviews/{review}/replies', [ReviewController::class, 'storeReply'])->name('api.v1.reviews.replies.store');
     Route::post('/reviews/{review}/vote', [ReviewController::class, 'vote'])->name('api.v1.reviews.vote');
+
+    // Questions (authenticated)
+    Route::post('/products/{product:slug}/questions', [QuestionController::class, 'store'])->name('api.v1.products.questions.store');
+    Route::post('/questions/{question}/answers', [QuestionController::class, 'storeAnswer'])->name('api.v1.questions.answers.store');
     // Checkout (auth:sanctum removed; guest checkout handled via optional auth)
 
     // Orders

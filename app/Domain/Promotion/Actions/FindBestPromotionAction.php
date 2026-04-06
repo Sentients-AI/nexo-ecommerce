@@ -25,13 +25,18 @@ final readonly class FindBestPromotionAction
      *
      * @return array{promotion: Promotion, result: DiscountCalculationResult}|null
      */
-    public function execute(Cart $cart, User $user, ?string $code = null): ?array
+    public function execute(Cart $cart, ?User $user, ?string $code = null): ?array
     {
         $cart->loadMissing('items.product');
 
         // If a code is provided, look up that specific promotion
         if ($code !== null) {
             return $this->findByCode($cart, $user, $code);
+        }
+
+        // Auto-apply promotions require an authenticated user for per-user limit checks
+        if ($user === null) {
+            return null;
         }
 
         // Otherwise, find the best auto-apply promotion
@@ -45,7 +50,7 @@ final readonly class FindBestPromotionAction
      *
      * @throws PromotionNotApplicableException
      */
-    private function findByCode(Cart $cart, User $user, string $code): array
+    private function findByCode(Cart $cart, ?User $user, string $code): array
     {
         $promotion = Promotion::query()
             ->where('code', $code)
@@ -65,13 +70,15 @@ final readonly class FindBestPromotionAction
             );
         }
 
-        // Validate user can use promotion
-        $userSpec = new UserCanUsePromotion($promotion);
-        if (! $userSpec->isSatisfiedBy($user)) {
-            throw new PromotionNotApplicableException(
-                reason: $userSpec->getFailureReason(),
-                promotionCode: $code,
-            );
+        // Validate per-user limit only for authenticated users (guests cannot be tracked)
+        if ($user !== null) {
+            $userSpec = new UserCanUsePromotion($promotion);
+            if (! $userSpec->isSatisfiedBy($user)) {
+                throw new PromotionNotApplicableException(
+                    reason: $userSpec->getFailureReason(),
+                    promotionCode: $code,
+                );
+            }
         }
 
         // Validate promotion applies to cart

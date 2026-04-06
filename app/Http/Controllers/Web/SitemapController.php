@@ -14,7 +14,7 @@ final class SitemapController extends Controller
     public function __invoke(): Response
     {
         $baseUrl = mb_rtrim(config('app.url'), '/');
-        $locales = ['en', 'ar', 'ms'];
+        $locales = config('app.locales');
 
         $products = Product::query()
             ->where('is_active', true)

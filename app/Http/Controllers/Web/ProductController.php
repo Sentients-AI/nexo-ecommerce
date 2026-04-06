@@ -166,9 +166,12 @@ final class ProductController extends Controller
 
         $canonicalUrl = url("/{$locale}/products/{$product->slug}");
 
+        $questionCount = $product->questions()->count();
+
         return Inertia::render('Products/Show', [
             'product' => $product,
             'reviewStats' => $reviewStats,
+            'questionCount' => $questionCount,
             'relatedProducts' => $relatedProducts,
             'recommendations' => Inertia::defer(fn () => $recommendations->execute($product)),
             'seo' => [

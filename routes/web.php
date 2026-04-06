@@ -13,18 +13,22 @@ use App\Http\Controllers\Web\OrderController;
 use App\Http\Controllers\Web\ProductController;
 use App\Http\Controllers\Web\ReferralWebController;
 use App\Http\Controllers\Web\RefundController;
+use App\Http\Controllers\Web\ReturnRequestController;
 use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SocialiteController;
 use App\Http\Controllers\Web\StoreController;
 use App\Http\Controllers\Web\VendorAnalyticsController;
 use App\Http\Controllers\Web\VendorCustomerController;
 use App\Http\Controllers\Web\VendorDashboardController;
+use App\Http\Controllers\Web\VendorEarningsController;
 use App\Http\Controllers\Web\VendorInventoryController;
 use App\Http\Controllers\Web\VendorOrderController;
 use App\Http\Controllers\Web\VendorOrderExportController;
 use App\Http\Controllers\Web\VendorProductController;
 use App\Http\Controllers\Web\VendorProductImportController;
 use App\Http\Controllers\Web\VendorPromotionController;
+use App\Http\Controllers\Web\VendorQuestionController;
+use App\Http\Controllers\Web\VendorReturnController;
 use App\Http\Controllers\Web\VendorSettingsController;
 use App\Http\Controllers\Webhooks\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -71,6 +75,12 @@ Route::prefix('vendor')
         Route::patch('/inventory/{stock}', [VendorInventoryController::class, 'update'])->name('inventory.update');
         Route::get('/customers', [VendorCustomerController::class, 'index'])->name('customers.index');
         Route::get('/analytics', [VendorAnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/earnings', [VendorEarningsController::class, 'index'])->name('earnings.index');
+        Route::get('/returns', [VendorReturnController::class, 'index'])->name('returns.index');
+        Route::patch('/returns/{return}/approve', [VendorReturnController::class, 'approve'])->name('returns.approve');
+        Route::patch('/returns/{return}/reject', [VendorReturnController::class, 'reject'])->name('returns.reject');
+        Route::get('/questions', [VendorQuestionController::class, 'index'])->name('questions.index');
+        Route::post('/questions/{question}/answer', [VendorQuestionController::class, 'answer'])->name('questions.answer');
         Route::get('/promotions', [VendorPromotionController::class, 'index'])->name('promotions.index');
         Route::patch('/promotions/{promotion}/toggle', [VendorPromotionController::class, 'toggle'])->name('promotions.toggle');
         Route::get('/settings', [VendorSettingsController::class, 'index'])->name('settings.index');
@@ -138,6 +148,10 @@ Route::prefix('{locale}')
             // Refunds
             Route::get('/orders/{orderId}/refund', [RefundController::class, 'create'])->name('refunds.create');
             Route::get('/refunds/{refund}', [RefundController::class, 'show'])->name('refunds.show');
+
+            // Return requests
+            Route::get('/orders/{orderId}/return', [ReturnRequestController::class, 'create'])->name('returns.create');
+            Route::post('/orders/{orderId}/return', [ReturnRequestController::class, 'store'])->name('returns.store');
 
             // Notifications
             Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
