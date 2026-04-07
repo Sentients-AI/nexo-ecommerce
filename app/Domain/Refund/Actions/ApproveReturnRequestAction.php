@@ -9,11 +9,11 @@ use App\Domain\User\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
-final class ApproveReturnRequestAction
+final readonly class ApproveReturnRequestAction
 {
     public function __construct(
-        private readonly RequestRefundAction $requestRefund,
-        private readonly ApproveRefundAction $approveRefund,
+        private RequestRefundAction $requestRefund,
+        private ApproveRefundAction $approveRefund,
     ) {}
 
     public function execute(ReturnRequest $returnRequest, User $admin, ?string $adminNotes): ReturnRequest

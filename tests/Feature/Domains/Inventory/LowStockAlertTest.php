@@ -36,11 +36,9 @@ describe('StockFellBelowThreshold event dispatched on inventory update', functio
             ->patch("/vendor/inventory/{$stock->id}", ['quantity_available' => 3])
             ->assertRedirect();
 
-        Event::assertDispatched(StockFellBelowThreshold::class, function ($e) use ($product) {
-            return $e->productId === $product->id
-                && $e->newQuantity === 3
-                && $e->threshold === 5;
-        });
+        Event::assertDispatched(StockFellBelowThreshold::class, fn ($e) => $e->productId === $product->id
+            && $e->newQuantity === 3
+            && $e->threshold === 5);
     });
 
     it('does not dispatch StockFellBelowThreshold when stock was already at or below threshold', function () {

@@ -35,7 +35,7 @@ final readonly class FindBestPromotionAction
         }
 
         // Auto-apply promotions require an authenticated user for per-user limit checks
-        if ($user === null) {
+        if (! $user instanceof User) {
             return null;
         }
 
@@ -71,7 +71,7 @@ final readonly class FindBestPromotionAction
         }
 
         // Validate per-user limit only for authenticated users (guests cannot be tracked)
-        if ($user !== null) {
+        if ($user instanceof User) {
             $userSpec = new UserCanUsePromotion($promotion);
             if (! $userSpec->isSatisfiedBy($user)) {
                 throw new PromotionNotApplicableException(

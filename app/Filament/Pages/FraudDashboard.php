@@ -32,8 +32,11 @@ final class FraudDashboard extends Dashboard
     public static function canAccess(): bool
     {
         $user = auth()->user();
+        if ($user?->isAdmin() === true) {
+            return true;
+        }
 
-        return $user?->isAdmin() === true || $user?->isSuperAdmin() === true;
+        return $user?->isSuperAdmin() === true;
     }
 
     public static function getNavigationBadge(): ?string

@@ -9,6 +9,8 @@ use App\Domain\Question\Actions\SubmitAnswerAction;
 use App\Domain\Question\Actions\SubmitQuestionAction;
 use App\Domain\Question\Models\Question;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\V1\QuestionAnswerResource;
+use App\Http\Resources\Api\V1\QuestionResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -23,7 +25,7 @@ final class QuestionController extends Controller
             ->latest()
             ->paginate(10);
 
-        return \App\Http\Resources\Api\V1\QuestionResource::collection($questions);
+        return QuestionResource::collection($questions);
     }
 
     public function store(Request $request, Product $product, SubmitQuestionAction $action): JsonResponse
@@ -37,7 +39,7 @@ final class QuestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new \App\Http\Resources\Api\V1\QuestionResource($question),
+            'data' => new QuestionResource($question),
         ], 201);
     }
 
@@ -54,7 +56,7 @@ final class QuestionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => new \App\Http\Resources\Api\V1\QuestionAnswerResource($answer),
+            'data' => new QuestionAnswerResource($answer),
         ], 201);
     }
 }
