@@ -3,10 +3,18 @@ import { ref } from 'vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import VendorLayout from '@/Layouts/VendorLayout.vue';
 
+interface Movement {
+    type: string;
+    quantity: number;
+    reason: string | null;
+    created_at: string;
+}
+
 interface StockInfo {
     id: number;
     quantity_available: number;
     quantity_reserved: number;
+    movements: Movement[];
 }
 
 interface VariantRow {
@@ -63,6 +71,21 @@ function toggleLowStock(): void {
 // Inline stock edit
 const editingStockId = ref<number | null>(null);
 const stockForm = useForm({ quantity_available: 0 });
+
+// Movement history toggle
+const expandedMovements = ref<Set<number>>(new Set());
+
+function toggleMovements(stockId: number): void {
+    if (expandedMovements.value.has(stockId)) {
+        expandedMovements.value.delete(stockId);
+    } else {
+        expandedMovements.value.add(stockId);
+    }
+}
+
+function formatMovementDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 function startEdit(stockId: number, currentQty: number): void {
     editingStockId.value = stockId;
@@ -174,36 +197,70 @@ function stockLabel(qty: number): string {
 
                 <!-- Product-level stock (no variants) -->
                 <div v-if="product.variants.length === 0" class="px-5 py-3">
-                    <div v-if="product.stock" class="flex items-center gap-4">
-                        <span class="text-sm text-navy-400 min-w-24">Base stock</span>
-                        <div class="flex items-center gap-3">
-                            <span
-                                class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
-                                :class="stockBadgeClass(product.stock.quantity_available)"
-                            >
-                                {{ stockLabel(product.stock.quantity_available) }}
-                            </span>
-                            <span class="text-xs text-navy-500">{{ product.stock.quantity_reserved }} reserved</span>
+                    <div v-if="product.stock" class="space-y-2">
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm text-navy-400 min-w-24">Base stock</span>
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+                                    :class="stockBadgeClass(product.stock.quantity_available)"
+                                >
+                                    {{ stockLabel(product.stock.quantity_available) }}
+                                </span>
+                                <span class="text-xs text-navy-500">{{ product.stock.quantity_reserved }} reserved</span>
+                            </div>
+
+                            <!-- Inline edit -->
+                            <div v-if="editingStockId === product.stock.id" class="flex items-center gap-2 ml-auto">
+                                <input
+                                    v-model.number="stockForm.quantity_available"
+                                    type="number"
+                                    min="0"
+                                    class="w-24 rounded-lg border border-navy-600/50 bg-navy-800 px-3 py-1.5 text-sm text-white focus:border-brand-500/50 focus:outline-none"
+                                />
+                                <button @click="saveStock(product.stock!.id)" class="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-400 transition-colors">Save</button>
+                                <button @click="cancelEdit" class="rounded-lg border border-navy-700/50 px-3 py-1.5 text-xs text-navy-400 hover:text-white transition-colors">Cancel</button>
+                            </div>
+                            <div v-else class="flex items-center gap-3 ml-auto">
+                                <button
+                                    v-if="product.stock.movements.length > 0"
+                                    @click="toggleMovements(product.stock!.id)"
+                                    class="text-xs text-navy-500 hover:text-navy-300 transition-colors"
+                                >
+                                    {{ expandedMovements.has(product.stock.id) ? 'Hide' : 'History' }}
+                                    ({{ product.stock.movements.length }})
+                                </button>
+                                <button
+                                    @click="startEdit(product.stock.id, product.stock.quantity_available)"
+                                    class="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                                >
+                                    Edit
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Inline edit -->
-                        <div v-if="editingStockId === product.stock.id" class="flex items-center gap-2 ml-auto">
-                            <input
-                                v-model.number="stockForm.quantity_available"
-                                type="number"
-                                min="0"
-                                class="w-24 rounded-lg border border-navy-600/50 bg-navy-800 px-3 py-1.5 text-sm text-white focus:border-brand-500/50 focus:outline-none"
-                            />
-                            <button @click="saveStock(product.stock!.id)" class="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-400 transition-colors">Save</button>
-                            <button @click="cancelEdit" class="rounded-lg border border-navy-700/50 px-3 py-1.5 text-xs text-navy-400 hover:text-white transition-colors">Cancel</button>
-                        </div>
-                        <button
-                            v-else
-                            @click="startEdit(product.stock.id, product.stock.quantity_available)"
-                            class="ml-auto text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                        <!-- Movement history -->
+                        <div
+                            v-if="expandedMovements.has(product.stock.id) && product.stock.movements.length > 0"
+                            class="mt-2 rounded-lg border border-navy-700/40 bg-navy-950/60 divide-y divide-navy-800/40"
                         >
-                            Edit
-                        </button>
+                            <div
+                                v-for="(mv, i) in product.stock.movements"
+                                :key="i"
+                                class="flex items-center justify-between px-3 py-2"
+                            >
+                                <div>
+                                    <span class="text-xs text-navy-400">{{ mv.reason ?? mv.type }}</span>
+                                    <span class="ml-2 text-xs text-navy-600">{{ formatMovementDate(mv.created_at) }}</span>
+                                </div>
+                                <span
+                                    class="text-xs font-semibold"
+                                    :class="mv.type === 'in' ? 'text-accent-400' : 'text-red-400'"
+                                >
+                                    {{ mv.type === 'in' ? '+' : '-' }}{{ mv.quantity }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     <div v-else class="text-xs text-navy-500 italic">No stock record</div>
                 </div>
@@ -213,50 +270,84 @@ function stockLabel(qty: number): string {
                     <div
                         v-for="variant in product.variants"
                         :key="variant.id"
-                        class="flex items-center gap-4 px-5 py-3"
+                        class="px-5 py-3 space-y-2"
                     >
-                        <div class="min-w-0 flex-1">
-                            <span class="text-xs font-mono text-navy-400">{{ variant.sku }}</span>
-                            <div class="flex gap-1 mt-0.5">
+                        <div class="flex items-center gap-4">
+                            <div class="min-w-0 flex-1">
+                                <span class="text-xs font-mono text-navy-400">{{ variant.sku }}</span>
+                                <div class="flex gap-1 mt-0.5">
+                                    <span
+                                        v-for="attr in variant.attributes"
+                                        :key="attr.type"
+                                        class="text-xs rounded bg-navy-700/50 px-1.5 py-0.5 text-navy-300"
+                                    >
+                                        {{ attr.value }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div v-if="variant.stock" class="flex items-center gap-3">
                                 <span
-                                    v-for="attr in variant.attributes"
-                                    :key="attr.type"
-                                    class="text-xs rounded bg-navy-700/50 px-1.5 py-0.5 text-navy-300"
+                                    class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+                                    :class="stockBadgeClass(variant.stock.quantity_available)"
                                 >
-                                    {{ attr.value }}
+                                    {{ stockLabel(variant.stock.quantity_available) }}
+                                </span>
+                                <span class="text-xs text-navy-500">{{ variant.stock.quantity_reserved }} reserved</span>
+                            </div>
+
+                            <!-- Inline edit for variant -->
+                            <div v-if="variant.stock && editingStockId === variant.stock.id" class="flex items-center gap-2">
+                                <input
+                                    v-model.number="stockForm.quantity_available"
+                                    type="number"
+                                    min="0"
+                                    class="w-24 rounded-lg border border-navy-600/50 bg-navy-800 px-3 py-1.5 text-sm text-white focus:border-brand-500/50 focus:outline-none"
+                                />
+                                <button @click="saveStock(variant.stock!.id)" class="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-400 transition-colors">Save</button>
+                                <button @click="cancelEdit" class="rounded-lg border border-navy-700/50 px-3 py-1.5 text-xs text-navy-400 hover:text-white transition-colors">Cancel</button>
+                            </div>
+                            <div v-else-if="variant.stock" class="flex items-center gap-3">
+                                <button
+                                    v-if="variant.stock.movements.length > 0"
+                                    @click="toggleMovements(variant.stock!.id)"
+                                    class="text-xs text-navy-500 hover:text-navy-300 transition-colors"
+                                >
+                                    {{ expandedMovements.has(variant.stock.id) ? 'Hide' : 'History' }}
+                                    ({{ variant.stock.movements.length }})
+                                </button>
+                                <button
+                                    @click="startEdit(variant.stock.id, variant.stock.quantity_available)"
+                                    class="text-xs text-brand-400 hover:text-brand-300 transition-colors"
+                                >
+                                    Edit
+                                </button>
+                            </div>
+                            <span v-else class="ml-auto text-xs text-navy-600 italic">No stock</span>
+                        </div>
+
+                        <!-- Movement history for variant -->
+                        <div
+                            v-if="variant.stock && expandedMovements.has(variant.stock.id) && variant.stock.movements.length > 0"
+                            class="rounded-lg border border-navy-700/40 bg-navy-950/60 divide-y divide-navy-800/40"
+                        >
+                            <div
+                                v-for="(mv, i) in variant.stock.movements"
+                                :key="i"
+                                class="flex items-center justify-between px-3 py-2"
+                            >
+                                <div>
+                                    <span class="text-xs text-navy-400">{{ mv.reason ?? mv.type }}</span>
+                                    <span class="ml-2 text-xs text-navy-600">{{ formatMovementDate(mv.created_at) }}</span>
+                                </div>
+                                <span
+                                    class="text-xs font-semibold"
+                                    :class="mv.type === 'in' ? 'text-accent-400' : 'text-red-400'"
+                                >
+                                    {{ mv.type === 'in' ? '+' : '-' }}{{ mv.quantity }}
                                 </span>
                             </div>
                         </div>
-
-                        <div v-if="variant.stock" class="flex items-center gap-3">
-                            <span
-                                class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
-                                :class="stockBadgeClass(variant.stock.quantity_available)"
-                            >
-                                {{ stockLabel(variant.stock.quantity_available) }}
-                            </span>
-                            <span class="text-xs text-navy-500">{{ variant.stock.quantity_reserved }} reserved</span>
-                        </div>
-
-                        <!-- Inline edit for variant -->
-                        <div v-if="variant.stock && editingStockId === variant.stock.id" class="flex items-center gap-2">
-                            <input
-                                v-model.number="stockForm.quantity_available"
-                                type="number"
-                                min="0"
-                                class="w-24 rounded-lg border border-navy-600/50 bg-navy-800 px-3 py-1.5 text-sm text-white focus:border-brand-500/50 focus:outline-none"
-                            />
-                            <button @click="saveStock(variant.stock!.id)" class="rounded-lg bg-brand-500 px-3 py-1.5 text-xs font-medium text-white hover:bg-brand-400 transition-colors">Save</button>
-                            <button @click="cancelEdit" class="rounded-lg border border-navy-700/50 px-3 py-1.5 text-xs text-navy-400 hover:text-white transition-colors">Cancel</button>
-                        </div>
-                        <button
-                            v-else-if="variant.stock"
-                            @click="startEdit(variant.stock.id, variant.stock.quantity_available)"
-                            class="ml-auto text-xs text-brand-400 hover:text-brand-300 transition-colors"
-                        >
-                            Edit
-                        </button>
-                        <span v-else class="ml-auto text-xs text-navy-600 italic">No stock</span>
                     </div>
                 </div>
             </div>

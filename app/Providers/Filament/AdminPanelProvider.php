@@ -42,11 +42,15 @@ final class AdminPanelProvider extends PanelProvider
             ->brandName('Control Plane')
             ->login()
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => Color::hex('#6747f5'), // Electric Indigo — matches brand-500
+                'gray' => Color::Slate,
                 'danger' => Color::Rose,
                 'warning' => Color::Amber,
                 'success' => Color::Emerald,
+                'info' => Color::Sky,
             ])
+            ->font('Inter')
+            ->viteTheme('resources/css/filament/admin.css')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
@@ -62,6 +66,9 @@ final class AdminPanelProvider extends PanelProvider
                     ->collapsed(false),
                 NavigationGroup::make('Catalog')
                     ->icon('heroicon-o-shopping-bag'),
+                NavigationGroup::make('Reports')
+                    ->icon('heroicon-o-chart-bar-square')
+                    ->collapsed(false),
                 NavigationGroup::make('System')
                     ->icon('heroicon-o-cog-6-tooth')
                     ->collapsed(),

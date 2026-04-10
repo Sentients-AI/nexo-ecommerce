@@ -88,6 +88,21 @@
     to   { opacity: 1; transform: translateY(0);   }
 }
 
+@keyframes marquee {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+
+@keyframes slide-down {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
 /* ============================================================
    GLOBAL UTILITIES
    ============================================================ */
@@ -179,6 +194,44 @@
 /* --- Fade in up --- */
 .animate-fade-in-up {
     animation: fade-in-up 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* --- Marquee ticker --- */
+.animate-marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 28s linear infinite;
+}
+
+.animate-marquee:hover {
+    animation-play-state: paused;
+}
+
+/* --- Slide down --- */
+.animate-slide-down {
+    animation: slide-down 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* --- Scale in --- */
+.animate-scale-in {
+    animation: scale-in 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* --- Nav active underline indicator --- */
+.nav-active {
+    position: relative;
+    color: oklch(0.58 0.24 284);
+}
+
+.nav-active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0.75rem;
+    right: 0.75rem;
+    height: 2px;
+    border-radius: 9999px;
+    background: oklch(0.58 0.24 284);
 }
 
 /* --- Custom scrollbar --- */

@@ -4,6 +4,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ProductCard from '@/Components/Products/ProductCard.vue';
+import Badge from '@/Components/UI/Badge.vue';
 import { useLocale } from '@/Composables/useLocale';
 import type { ProductApiResource, CategoryApiResource } from '@/types/api';
 
@@ -70,6 +71,25 @@ const stats = [
     { label: 'Brands', value: '200+' },
     { label: 'Orders Shipped', value: '1M+' },
 ];
+
+const productTab = ref<'featured' | 'new' | 'sale'>('featured');
+
+const trendingItems = [
+    '🔥 Trending: Wireless Earbuds',
+    '⚡ Flash Deal: 40% off Electronics',
+    '🌟 New: Summer Collection',
+    '💎 Premium: Designer Accessories',
+    '🎯 Top Rated: Smart Home Devices',
+    '🚀 New Brand: TechPro Launch',
+];
+
+const tabProducts = computed(() => {
+    if (!props.featuredProducts.length) { return []; }
+    if (productTab.value === 'sale') {
+        return props.featuredProducts.filter(p => p.sale_price_cents).slice(0, 8);
+    }
+    return props.featuredProducts.slice(0, 8);
+});
 </script>
 
 <template>
@@ -209,6 +229,22 @@ const stats = [
         </section>
 
         <!-- ========================================================
+             TRENDING TICKER
+             ======================================================== -->
+        <div class="overflow-hidden bg-navy-900 border-y border-navy-800 py-2.5">
+            <div class="animate-marquee flex items-center gap-10">
+                <span
+                    v-for="(item, i) in [...trendingItems, ...trendingItems]"
+                    :key="i"
+                    class="whitespace-nowrap text-sm font-medium text-navy-300 shrink-0"
+                >
+                    {{ item }}
+                    <span class="mx-4 text-navy-700">•</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- ========================================================
              BENEFITS BENTO SECTION
              ======================================================== -->
         <section class="py-12 bg-white dark:bg-navy-950 border-b border-slate-100 dark:border-navy-900">
@@ -243,45 +279,90 @@ const stats = [
         </section>
 
         <!-- ========================================================
-             FEATURED PRODUCTS
+             PRODUCTS (TABBED)
              ======================================================== -->
         <section v-if="featuredProducts.length > 0" class="py-16 sm:py-24 bg-white dark:bg-navy-950">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex items-end justify-between mb-10">
+                <!-- Header row -->
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-widest text-brand-500 dark:text-brand-400 mb-2">Curated Collection</p>
                         <h2 class="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">
-                            Featured Products
+                            Shop Products
                         </h2>
-                        <p class="mt-2 text-slate-500 dark:text-navy-400">
-                            Handpicked selections just for you
-                        </p>
                     </div>
-                    <Link
-                        :href="localePath('/products?featured=1')"
-                        class="hidden sm:inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-500 transition-colors"
-                    >
-                        View all
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
-                    </Link>
+
+                    <!-- Tabs -->
+                    <div class="flex items-center gap-1 rounded-xl bg-slate-100 dark:bg-navy-900/60 p-1 self-start sm:self-auto">
+                        <button
+                            v-for="tab in [
+                                { key: 'featured', label: 'Featured' },
+                                { key: 'new', label: 'New Arrivals' },
+                                { key: 'sale', label: 'On Sale' },
+                            ]"
+                            :key="tab.key"
+                            class="relative px-4 py-1.5 rounded-lg text-sm font-medium transition-all"
+                            :class="productTab === tab.key
+                                ? 'bg-white dark:bg-navy-800 text-slate-900 dark:text-white shadow-sm'
+                                : 'text-slate-500 dark:text-navy-400 hover:text-slate-700 dark:hover:text-navy-200'"
+                            @click="productTab = tab.key as typeof productTab"
+                        >
+                            {{ tab.label }}
+                            <Badge
+                                v-if="tab.key === 'sale'"
+                                variant="danger"
+                                size="xs"
+                                class="ml-1.5"
+                            >
+                                Hot
+                            </Badge>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    <ProductCard
-                        v-for="product in featuredProducts.slice(0, 8)"
-                        :key="product.id"
-                        :product="product"
-                    />
-                </div>
-
-                <div class="mt-8 text-center sm:hidden">
-                    <Link
-                        :href="localePath('/products?featured=1')"
-                        class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-400"
+                <!-- Product grid with tab transition -->
+                <Transition
+                    mode="out-in"
+                    enter-active-class="duration-200 ease-out"
+                    enter-from-class="opacity-0 translate-y-2"
+                    enter-to-class="opacity-100 translate-y-0"
+                    leave-active-class="duration-100 ease-in"
+                    leave-from-class="opacity-100"
+                    leave-to-class="opacity-0"
+                >
+                    <div
+                        :key="productTab"
+                        class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                     >
-                        View all featured products
+                        <template v-if="tabProducts.length > 0">
+                            <ProductCard
+                                v-for="product in tabProducts"
+                                :key="product.id"
+                                :product="product"
+                            />
+                        </template>
+                        <template v-else>
+                            <!-- Empty tab state -->
+                            <div class="col-span-full py-16 text-center">
+                                <p class="text-slate-400 dark:text-navy-500 text-sm">No products in this category yet.</p>
+                                <button
+                                    class="mt-3 text-sm font-medium text-brand-500 hover:text-brand-400 transition-colors"
+                                    @click="productTab = 'featured'"
+                                >
+                                    View featured instead
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </Transition>
+
+                <!-- View all CTA -->
+                <div class="mt-10 flex justify-center">
+                    <Link
+                        :href="localePath(productTab === 'sale' ? '/products?sale=1' : productTab === 'new' ? '/products?sort=newest' : '/products?featured=1')"
+                        class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900/50 px-6 py-2.5 text-sm font-semibold text-slate-700 dark:text-navy-200 hover:border-brand-300 dark:hover:border-brand-700 hover:text-brand-600 dark:hover:text-brand-400 shadow-sm transition-all"
+                    >
+                        View all products
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                         </svg>

@@ -1,0 +1,70 @@
+/* ============================================================
+   Control Plane — Custom Filament Theme
+   Matches the modular-ecommerce brand palette
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Typography ── */
+:root {
+    --font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ── Sidebar refinements ── */
+.fi-sidebar {
+    border-right-width: 1px;
+}
+
+/* ── Panel header ── */
+.fi-topbar {
+    border-bottom-width: 1px;
+}
+
+/* ── Smooth transitions on nav items ── */
+.fi-sidebar-item-button {
+    transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+/* ── Table row hover ── */
+.fi-ta-row:hover td {
+    background-color: rgb(248 250 252 / 0.5);
+}
+
+.dark .fi-ta-row:hover td {
+    background-color: rgb(15 23 42 / 0.4);
+}
+
+/* ── Card / section refinements ── */
+.fi-section {
+    border-radius: 0.75rem;
+}
+
+/* ── Stat widgets ── */
+.fi-wi-stats-overview-stat {
+    border-radius: 0.75rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fi-wi-stats-overview-stat:hover {
+    transform: translateY(-1px);
+}
+
+/* ── Badge styling ── */
+.fi-badge {
+    font-weight: 500;
+    letter-spacing: 0.01em;
+}
+
+/* ── Input focus ── */
+.fi-input:focus-within {
+    outline-color: #6747f5;
+}
+
+/* ── Button primary refinement ── */
+.fi-btn-color-primary {
+    box-shadow: 0 1px 2px 0 rgb(103 71 245 / 0.2);
+}
+
+.fi-btn-color-primary:hover {
+    box-shadow: 0 4px 8px 0 rgb(103 71 245 / 0.25);
+}

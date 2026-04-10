@@ -32,7 +32,9 @@ interface ReturnRow {
 interface PaginatedReturns {
     data: ReturnRow[];
     links: { url: string | null; label: string; active: boolean }[];
-    meta: { current_page: number; last_page: number; total: number };
+    current_page: number;
+    last_page: number;
+    total: number;
 }
 
 interface Props {
@@ -73,19 +75,19 @@ const approveForm = ref(makeActionForm());
 const rejectForm = ref(makeActionForm());
 
 function approve(row: ReturnRow) {
-    approveForm.value.patch(route('vendor.returns.approve', { return: row.id }), {
+    approveForm.value.patch(`/vendor/returns/${row.id}/approve`, {
         onSuccess: () => { actionRow.value = null; },
     });
 }
 
 function reject(row: ReturnRow) {
-    rejectForm.value.patch(route('vendor.returns.reject', { return: row.id }), {
+    rejectForm.value.patch(`/vendor/returns/${row.id}/reject`, {
         onSuccess: () => { actionRow.value = null; },
     });
 }
 
 function setTab(key: string) {
-    router.get(route('vendor.returns.index'), { status: key }, { preserveState: true, replace: true });
+    router.get('/vendor/returns', { status: key }, { preserveState: true, replace: true });
 }
 </script>
 
@@ -258,7 +260,7 @@ function setTab(key: string) {
             </div>
 
             <!-- Pagination -->
-            <div v-if="returns.meta.last_page > 1" class="flex items-center justify-center gap-1 p-4 border-t border-navy-800/60">
+            <div v-if="returns.last_page > 1" class="flex items-center justify-center gap-1 p-4 border-t border-navy-800/60">
                 <Link
                     v-for="link in returns.links"
                     :key="link.label"

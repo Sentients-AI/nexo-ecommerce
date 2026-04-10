@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\AddressController;
 use App\Http\Controllers\Web\AuthController;
+use App\Http\Controllers\Web\BundleController;
 use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\DownloadController;
+use App\Http\Controllers\Web\LoyaltyController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\OnboardingController;
 use App\Http\Controllers\Web\OrderController;
@@ -18,6 +20,7 @@ use App\Http\Controllers\Web\SitemapController;
 use App\Http\Controllers\Web\SocialiteController;
 use App\Http\Controllers\Web\StoreController;
 use App\Http\Controllers\Web\VendorAnalyticsController;
+use App\Http\Controllers\Web\VendorBundleController;
 use App\Http\Controllers\Web\VendorCustomerController;
 use App\Http\Controllers\Web\VendorDashboardController;
 use App\Http\Controllers\Web\VendorEarningsController;
@@ -84,6 +87,14 @@ Route::prefix('vendor')
         Route::get('/promotions', [VendorPromotionController::class, 'index'])->name('promotions.index');
         Route::patch('/promotions/{promotion}/toggle', [VendorPromotionController::class, 'toggle'])->name('promotions.toggle');
         Route::get('/settings', [VendorSettingsController::class, 'index'])->name('settings.index');
+
+        // Bundles
+        Route::get('/bundles', [VendorBundleController::class, 'index'])->name('bundles.index');
+        Route::get('/bundles/create', [VendorBundleController::class, 'create'])->name('bundles.create');
+        Route::post('/bundles', [VendorBundleController::class, 'store'])->name('bundles.store');
+        Route::get('/bundles/{bundle}/edit', [VendorBundleController::class, 'edit'])->name('bundles.edit');
+        Route::patch('/bundles/{bundle}', [VendorBundleController::class, 'update'])->name('bundles.update');
+        Route::delete('/bundles/{bundle}', [VendorBundleController::class, 'destroy'])->name('bundles.destroy');
     });
 
 // Referral links (global, no locale prefix needed)
@@ -106,6 +117,10 @@ Route::prefix('{locale}')
         // Products
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
         Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
+
+        // Bundles
+        Route::get('/bundles', [BundleController::class, 'index'])->name('bundles.index');
+        Route::get('/bundles/{slug}', [BundleController::class, 'show'])->name('bundles.show');
 
         // Stores
         Route::get('/stores/{slug}', [StoreController::class, 'show'])->name('stores.show');
@@ -152,6 +167,12 @@ Route::prefix('{locale}')
             // Return requests
             Route::get('/orders/{orderId}/return', [ReturnRequestController::class, 'create'])->name('returns.create');
             Route::post('/orders/{orderId}/return', [ReturnRequestController::class, 'store'])->name('returns.store');
+
+            // Referrals
+            Route::get('/referrals', [ReferralWebController::class, 'index'])->name('referrals.index');
+
+            // Loyalty
+            Route::get('/loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');
 
             // Notifications
             Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

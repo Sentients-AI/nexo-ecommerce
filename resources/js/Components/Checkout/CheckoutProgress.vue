@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-
 interface Step {
     id: string;
     name: string;
-    description?: string;
 }
 
 interface Props {
@@ -14,108 +11,89 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
     steps: () => [
-        { id: 'review', name: 'Review', description: 'Review your order' },
-        { id: 'payment', name: 'Payment', description: 'Complete payment' },
-        { id: 'complete', name: 'Complete', description: 'Order confirmed' },
+        { id: 'review',   name: 'Review Order' },
+        { id: 'payment',  name: 'Payment' },
+        { id: 'complete', name: 'Confirmed' },
     ],
 });
 
-function getStepStatus(index: number): 'complete' | 'current' | 'upcoming' {
-    if (index < props.currentStep) return 'complete';
-    if (index === props.currentStep) return 'current';
+function status(index: number): 'complete' | 'current' | 'upcoming' {
+    if (index < props.currentStep) { return 'complete'; }
+    if (index === props.currentStep) { return 'current'; }
     return 'upcoming';
 }
 </script>
 
 <template>
     <nav aria-label="Checkout progress">
-        <!-- Mobile view -->
+        <!-- Mobile: progress bar + label -->
         <div class="sm:hidden">
-            <div class="flex items-center justify-center gap-2 text-sm">
-                <span class="font-medium text-indigo-600 dark:text-indigo-400">
-                    Step {{ currentStep + 1 }} of {{ steps.length }}
+            <div class="flex items-center justify-between text-sm mb-2">
+                <span class="font-semibold text-slate-900 dark:text-white">
+                    {{ steps[currentStep]?.name }}
                 </span>
-                <span class="text-gray-500 dark:text-gray-400">
-                    &mdash; {{ steps[currentStep]?.name }}
+                <span class="text-slate-500 dark:text-navy-400 text-xs">
+                    {{ currentStep + 1 }} / {{ steps.length }}
                 </span>
             </div>
-            <!-- Progress bar -->
-            <div class="mt-3 h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
+            <div class="h-1.5 w-full rounded-full bg-slate-100 dark:bg-navy-800 overflow-hidden">
                 <div
-                    class="h-full rounded-full bg-indigo-600 transition-all duration-500"
+                    class="h-full rounded-full bg-brand-500 transition-all duration-500"
                     :style="{ width: `${((currentStep + 1) / steps.length) * 100}%` }"
                 />
             </div>
         </div>
 
-        <!-- Desktop view -->
-        <ol class="hidden sm:flex items-center">
+        <!-- Desktop: step indicators -->
+        <ol class="hidden sm:flex items-center gap-0">
             <li
-                v-for="(step, index) in steps"
+                v-for="(step, i) in steps"
                 :key="step.id"
-                class="relative flex-1"
-                :class="{ 'pr-8 sm:pr-20': index !== steps.length - 1 }"
+                class="flex items-center"
+                :class="i < steps.length - 1 ? 'flex-1' : ''"
             >
-                <!-- Connector line -->
-                <div
-                    v-if="index !== steps.length - 1"
-                    class="absolute top-4 left-0 -right-2 sm:-right-10 h-0.5"
-                    :class="[
-                        getStepStatus(index) === 'complete'
-                            ? 'bg-indigo-600'
-                            : 'bg-gray-200 dark:bg-gray-700'
-                    ]"
-                    style="left: calc(50% + 1rem)"
-                />
-
-                <div class="group flex flex-col items-center">
-                    <!-- Step indicator -->
+                <!-- Step -->
+                <div class="flex flex-col items-center shrink-0">
                     <span
-                        class="relative z-10 flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200"
+                        class="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200"
                         :class="{
-                            'bg-indigo-600 text-white': getStepStatus(index) === 'complete',
-                            'border-2 border-indigo-600 bg-white dark:bg-gray-800 text-indigo-600': getStepStatus(index) === 'current',
-                            'border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400': getStepStatus(index) === 'upcoming',
+                            'bg-brand-500 text-white shadow-sm shadow-brand-500/30':
+                                status(i) === 'complete',
+                            'border-2 border-brand-500 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400':
+                                status(i) === 'current',
+                            'border-2 border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 text-slate-400 dark:text-navy-500':
+                                status(i) === 'upcoming',
                         }"
                     >
-                        <!-- Checkmark for complete -->
                         <svg
-                            v-if="getStepStatus(index) === 'complete'"
-                            class="h-5 w-5"
+                            v-if="status(i) === 'complete'"
+                            class="h-4.5 w-4.5"
                             viewBox="0 0 20 20"
                             fill="currentColor"
                         >
-                            <path
-                                fill-rule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clip-rule="evenodd"
-                            />
+                            <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
                         </svg>
-                        <!-- Step number for current/upcoming -->
-                        <span v-else class="text-sm font-semibold">
-                            {{ index + 1 }}
-                        </span>
+                        <span v-else>{{ i + 1 }}</span>
                     </span>
-
-                    <!-- Step label -->
                     <span
-                        class="mt-2 text-sm font-medium transition-colors duration-200"
+                        class="mt-1.5 text-xs font-medium whitespace-nowrap transition-colors duration-200"
                         :class="{
-                            'text-indigo-600 dark:text-indigo-400': getStepStatus(index) === 'complete' || getStepStatus(index) === 'current',
-                            'text-gray-500 dark:text-gray-400': getStepStatus(index) === 'upcoming',
+                            'text-brand-600 dark:text-brand-400': status(i) !== 'upcoming',
+                            'text-slate-400 dark:text-navy-500': status(i) === 'upcoming',
                         }"
                     >
                         {{ step.name }}
                     </span>
-
-                    <!-- Step description -->
-                    <span
-                        v-if="step.description"
-                        class="mt-0.5 text-xs text-gray-500 dark:text-gray-400 text-center hidden lg:block"
-                    >
-                        {{ step.description }}
-                    </span>
                 </div>
+
+                <!-- Connector -->
+                <div
+                    v-if="i < steps.length - 1"
+                    class="flex-1 h-0.5 mx-3 mb-5 rounded-full transition-all duration-500"
+                    :class="status(i) === 'complete'
+                        ? 'bg-brand-500'
+                        : 'bg-slate-200 dark:bg-navy-700'"
+                />
             </li>
         </ol>
     </nav>

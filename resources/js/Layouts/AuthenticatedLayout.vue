@@ -6,6 +6,8 @@ import CartBadge from '@/Components/Layout/CartBadge.vue';
 import NotificationBell from '@/Components/Layout/NotificationBell.vue';
 import UserDropdown from '@/Components/Layout/UserDropdown.vue';
 import ChatWidget from '@/Components/Chat/ChatWidget.vue';
+import Alert from '@/Components/UI/Alert.vue';
+import BottomNav from '@/Components/Layout/BottomNav.vue';
 import { useLocale } from '@/Composables/useLocale';
 import { useWishlist } from '@/Composables/useWishlist';
 
@@ -110,57 +112,22 @@ onUnmounted(() => {
         <MobileNav :show="mobileNavOpen" @close="mobileNavOpen = false" />
 
         <!-- Flash messages -->
-        <div v-if="flash.success || flash.error" class="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 mt-4">
-            <Transition
-                enter-active-class="duration-300 ease-out"
-                enter-from-class="opacity-0 -translate-y-2"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="duration-200 ease-in"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 -translate-y-2"
-            >
-                <div
-                    v-if="flash.success"
-                    class="rounded-xl bg-accent-50 dark:bg-accent-900/30 p-4 border border-accent-200 dark:border-accent-800/50"
-                >
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-500">
-                            <svg class="h-3.5 w-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 01.143 1.052l-8 10.5a.75.75 0 01-1.127.075l-4.5-4.5a.75.75 0 011.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 011.05-.143z" clip-rule="evenodd" />
-                            </svg>
-                        </div>
-                        <p class="text-sm font-medium text-accent-800 dark:text-accent-200">{{ flash.success }}</p>
-                    </div>
-                </div>
-            </Transition>
-            <Transition
-                enter-active-class="duration-300 ease-out"
-                enter-from-class="opacity-0 -translate-y-2"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="duration-200 ease-in"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 -translate-y-2"
-            >
-                <div
-                    v-if="flash.error"
-                    class="rounded-xl bg-red-50 dark:bg-red-900/30 p-4 border border-red-200 dark:border-red-800/50"
-                >
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500">
-                            <svg class="h-3.5 w-3.5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-                            </svg>
-                        </div>
-                        <p class="text-sm font-medium text-red-800 dark:text-red-200">{{ flash.error }}</p>
-                    </div>
-                </div>
-            </Transition>
+        <div v-if="flash.success || flash.error" class="mx-auto max-w-7xl w-full px-4 sm:px-6 lg:px-8 mt-4 space-y-2">
+            <Alert v-if="flash.success" variant="success" :dismissible="true">
+                {{ flash.success }}
+            </Alert>
+            <Alert v-if="flash.error" variant="danger" :dismissible="true">
+                {{ flash.error }}
+            </Alert>
         </div>
 
         <!-- Main content -->
-        <main class="flex-1">
+        <main class="flex-1 pb-16 sm:pb-0">
             <slot />
         </main>
+
+        <!-- Mobile bottom navigation -->
+        <BottomNav />
 
         <!-- Footer -->
         <footer class="bg-slate-900 dark:bg-navy-950 border-t border-slate-800/60 dark:border-navy-900 mt-auto">
@@ -216,12 +183,20 @@ onUnmounted(() => {
                     <p class="text-sm text-slate-600">
                         &copy; {{ new Date().getFullYear() }} Store. {{ t('footer.rights') }}
                     </p>
-                    <div class="flex items-center gap-2">
-                        <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-500"></span>
-                        </span>
-                        <span class="text-xs text-slate-600">All systems operational</span>
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <div class="rounded px-2 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold tracking-wide">VISA</div>
+                            <div class="rounded px-2 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold tracking-wide">MC</div>
+                            <div class="rounded px-2 py-1 bg-slate-800 text-slate-400 text-[10px] font-bold tracking-wide">STRIPE</div>
+                        </div>
+                        <div class="h-3 w-px bg-slate-700" />
+                        <div class="flex items-center gap-2">
+                            <span class="relative flex h-2 w-2">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-400 opacity-75" />
+                                <span class="relative inline-flex rounded-full h-2 w-2 bg-accent-500" />
+                            </span>
+                            <span class="text-xs text-slate-600">All systems operational</span>
+                        </div>
                     </div>
                 </div>
             </div>

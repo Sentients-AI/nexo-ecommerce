@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\BundleController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\ConversationController;
@@ -31,6 +32,16 @@ Route::prefix('v1')->middleware(['web'])->group(function () {
 // Shipping methods (public — available per tenant context)
 Route::prefix('v1')->group(function () {
     Route::get('/shipping-methods', [ShippingMethodController::class, 'index'])->name('api.v1.shipping-methods.index');
+});
+
+// Bundles (public listing; add-to-cart uses web session)
+Route::prefix('v1')->group(function () {
+    Route::get('/bundles', [BundleController::class, 'index'])->name('api.v1.bundles.index');
+    Route::get('/bundles/{slug}', [BundleController::class, 'show'])->name('api.v1.bundles.show');
+});
+
+Route::prefix('v1')->middleware(['web'])->group(function () {
+    Route::post('/bundles/{slug}/cart', [BundleController::class, 'addToCart'])->name('api.v1.bundles.cart');
 });
 
 // Promotion preview — public, works for guests and authenticated users

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Web;
 
+use App\Domain\Inventory\Enums\StockMovementType;
 use App\Domain\Inventory\Events\StockFellBelowThreshold;
 use App\Domain\Inventory\Events\StockReplenished;
 use App\Domain\Inventory\Models\Stock;
+use App\Domain\Inventory\Models\StockMovement;
 use App\Domain\Product\Models\Product;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
@@ -23,9 +25,10 @@ final class VendorInventoryController extends Controller
 
         $products = Product::query()
             ->with([
-                'stock:id,product_id,variant_id,quantity_available,quantity_reserved',
-                'variants' => fn ($q) => $q->with('stock:id,product_id,variant_id,quantity_available,quantity_reserved')
-                    ->orderBy('sort_order'),
+                'stock' => fn ($q) => $q->with(['movements' => fn ($m) => $m->latest()->limit(10)]),
+                'variants' => fn ($q) => $q->with([
+                    'stock' => fn ($sq) => $sq->with(['movements' => fn ($m) => $m->latest()->limit(10)]),
+                ])->orderBy('sort_order'),
                 'variants.attributeValues.attributeType',
             ])
             ->when($search, fn ($q) => $q->where(function ($q) use ($search) {
@@ -50,6 +53,12 @@ final class VendorInventoryController extends Controller
                     'id' => $p->stock->id,
                     'quantity_available' => $p->stock->quantity_available,
                     'quantity_reserved' => $p->stock->quantity_reserved,
+                    'movements' => $p->stock->movements->map(fn (StockMovement $m) => [
+                        'type' => $m->type->value,
+                        'quantity' => $m->quantity,
+                        'reason' => $m->reason,
+                        'created_at' => $m->created_at?->toIso8601String(),
+                    ]),
                 ] : null,
                 'variants' => $p->variants->map(fn ($v) => [
                     'id' => $v->id,
@@ -62,6 +71,12 @@ final class VendorInventoryController extends Controller
                         'id' => $v->stock->id,
                         'quantity_available' => $v->stock->quantity_available,
                         'quantity_reserved' => $v->stock->quantity_reserved,
+                        'movements' => $v->stock->movements->map(fn (StockMovement $m) => [
+                            'type' => $m->type->value,
+                            'quantity' => $m->quantity,
+                            'reason' => $m->reason,
+                            'created_at' => $m->created_at?->toIso8601String(),
+                        ]),
                     ] : null,
                 ]),
             ]);
@@ -97,8 +112,20 @@ final class VendorInventoryController extends Controller
         $threshold = (int) config('inventory.low_stock_threshold');
         $wasOutOfStock = ! $stock->isInStock();
         $wasAboveThreshold = $stock->quantity_available > $threshold;
+        $quantityChange = $validated['quantity_available'] - $stock->quantity_available;
 
         $stock->update(['quantity_available' => $validated['quantity_available']]);
+
+        if ($quantityChange !== 0) {
+            StockMovement::query()->create([
+                'stock_id' => $stock->id,
+                'product_id' => $stock->product_id,
+                'type' => $quantityChange > 0 ? StockMovementType::In : StockMovementType::Out,
+                'quantity' => abs($quantityChange),
+                'reason' => 'Vendor manual adjustment',
+                'user_id' => $request->user()?->id,
+            ]);
+        }
 
         $fresh = $stock->fresh();
 

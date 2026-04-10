@@ -1009,7 +1009,7 @@ async function copyLink(): Promise<void> {
                                 </button>
                             </div>
                             <p v-else class="text-sm text-slate-500 dark:text-slate-400">
-                                <Link :href="route('login', { locale: $page.props.locale ?? 'en' })" class="text-brand-600 hover:underline">Sign in</Link>
+                                <Link :href="`/${$page.props.locale ?? 'en'}/login`" class="text-brand-600 hover:underline">Sign in</Link>
                                 to ask a question.
                             </p>
                         </div>

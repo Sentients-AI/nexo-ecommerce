@@ -76,7 +76,7 @@ function submit() {
         quantity,
         reason,
     }));
-    form.post(route('returns.store', { orderId: props.order.id }));
+    form.post(`/en/orders/${props.order.id}/return`);
 }
 </script>
 
@@ -87,7 +87,7 @@ function submit() {
         <div class="max-w-2xl mx-auto px-4 py-8">
             <div class="mb-6">
                 <Link
-                    :href="route('orders.show', { orderId: order.id, locale: 'en' })"
+                    :href="`/en/orders/${order.id}`"
                     class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1 mb-4"
                 >
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

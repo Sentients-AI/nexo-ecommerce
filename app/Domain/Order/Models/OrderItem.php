@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Order\Models;
 
+use App\Domain\Bundle\Models\Bundle;
 use App\Domain\Product\Models\Product;
 use App\Domain\Product\Models\ProductVariant;
 use App\Domain\Tenant\Traits\BelongsToTenant;
@@ -32,6 +33,8 @@ final class OrderItem extends BaseModel
         'order_id',
         'product_id',
         'variant_id',
+        'bundle_id',
+        'bundle_name_snapshot',
         'price_cents_snapshot',
         'tax_cents_snapshot',
         'quantity',
@@ -61,6 +64,14 @@ final class OrderItem extends BaseModel
     public function variant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class, 'variant_id');
+    }
+
+    /**
+     * Get the bundle (if this item is a bundle).
+     */
+    public function bundle(): BelongsTo
+    {
+        return $this->belongsTo(Bundle::class);
     }
 
     /**

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Domain\Inventory\Models\Stock;
+use App\Domain\Inventory\Models\StockMovement;
 use App\Domain\Order\Models\Order;
 use App\Domain\Product\Models\Product;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
@@ -128,6 +129,40 @@ describe('Vendor inventory page', function () {
             ->assertRedirect();
 
         expect($stock->fresh()->quantity_available)->toBe(50);
+    });
+
+    it('creates a stock movement when quantity changes', function () {
+        $product = Product::factory()->create();
+        $stock = Stock::factory()->for($product)->create(['quantity_available' => 5]);
+
+        $this->withoutMiddleware(ValidateCsrfToken::class)
+            ->patch("/vendor/inventory/{$stock->id}", ['quantity_available' => 30]);
+
+        expect(StockMovement::query()->where('stock_id', $stock->id)->count())->toBe(1)
+            ->and(StockMovement::query()->where('stock_id', $stock->id)->first()->quantity)->toBe(25);
+    });
+
+    it('does not create a stock movement when quantity is unchanged', function () {
+        $product = Product::factory()->create();
+        $stock = Stock::factory()->for($product)->create(['quantity_available' => 10]);
+
+        $this->withoutMiddleware(ValidateCsrfToken::class)
+            ->patch("/vendor/inventory/{$stock->id}", ['quantity_available' => 10]);
+
+        expect(StockMovement::query()->where('stock_id', $stock->id)->count())->toBe(0);
+    });
+
+    it('includes movement history in inventory index response', function () {
+        $product = Product::factory()->create();
+        $stock = Stock::factory()->for($product)->create(['quantity_available' => 10]);
+        StockMovement::factory()->for($stock)->create(['quantity' => 5, 'reason' => 'Vendor manual adjustment']);
+
+        $this->get('/vendor/inventory')
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Vendor/Inventory')
+                ->has('products.data.0.stock.movements', 1)
+            );
     });
 
     it('rejects negative stock quantity', function () {

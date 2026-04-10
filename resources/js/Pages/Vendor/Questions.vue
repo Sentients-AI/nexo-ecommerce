@@ -24,7 +24,9 @@ interface QuestionRow {
 interface PaginatedQuestions {
     data: QuestionRow[];
     links: { url: string | null; label: string; active: boolean }[];
-    meta: { current_page: number; last_page: number; total: number };
+    current_page: number;
+    last_page: number;
+    total: number;
 }
 
 interface Props {
@@ -53,7 +55,7 @@ function getForm(questionId: number) {
 
 function submitAnswer(question: QuestionRow) {
     const form = getForm(question.id);
-    form.post(route('vendor.questions.answer', { question: question.id }), {
+    form.post(`/vendor/questions/${question.id}/answer`, {
         onSuccess: () => {
             expandedAnswer.value = null;
         },
@@ -61,7 +63,7 @@ function submitAnswer(question: QuestionRow) {
 }
 
 function setFilter(f: string) {
-    router.get(route('vendor.questions.index'), { filter: f }, { preserveState: true, replace: true });
+    router.get('/vendor/questions', { filter: f }, { preserveState: true, replace: true });
 }
 </script>
 
@@ -125,7 +127,7 @@ function setFilter(f: string) {
                                 <span>{{ q.created_at }}</span>
                                 <span>·</span>
                                 <Link
-                                    :href="route('products.show', { locale: 'en', product: q.product.slug })"
+                                    :href="`/en/products/${q.product.slug}`"
                                     class="text-brand-400 hover:text-brand-300 transition-colors"
                                 >
                                     {{ q.product.name }}
@@ -197,7 +199,7 @@ function setFilter(f: string) {
             </div>
 
             <!-- Pagination -->
-            <div v-if="questions.meta.last_page > 1" class="flex items-center justify-center gap-1 p-4 border-t border-navy-800/60">
+            <div v-if="questions.last_page > 1" class="flex items-center justify-center gap-1 p-4 border-t border-navy-800/60">
                 <Link
                     v-for="link in questions.links"
                     :key="link.label"

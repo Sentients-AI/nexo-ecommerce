@@ -20,7 +20,9 @@ interface EarningRow {
 interface PaginatedEarnings {
     data: EarningRow[];
     links: { url: string | null; label: string; active: boolean }[];
-    meta: { current_page: number; last_page: number; total: number };
+    current_page: number;
+    last_page: number;
+    total: number;
 }
 
 interface Props {
@@ -140,7 +142,7 @@ const kpis = [
                     <p class="text-xs text-navy-400 mt-0.5">One record per paid order</p>
                 </div>
                 <div class="text-xs text-navy-500 bg-navy-800/60 rounded-lg px-2.5 py-1">
-                    {{ earnings.meta.total }} records
+                    {{ earnings.total }} records
                 </div>
             </div>
 
@@ -165,7 +167,7 @@ const kpis = [
                         <tr v-for="row in earnings.data" :key="row.id" class="hover:bg-navy-800/30 transition-colors">
                             <td class="px-5 py-3 text-white font-medium">
                                 <Link
-                                    :href="route('vendor.orders.index')"
+                                    href="/vendor/orders"
                                     class="hover:text-brand-400 transition-colors"
                                 >
                                     {{ row.order_number ?? '—' }}
@@ -197,7 +199,7 @@ const kpis = [
             </div>
 
             <!-- Pagination -->
-            <div v-if="earnings.meta.last_page > 1" class="flex items-center justify-center gap-1 p-4 border-t border-navy-800/60">
+            <div v-if="earnings.last_page > 1" class="flex items-center justify-center gap-1 p-4 border-t border-navy-800/60">
                 <Link
                     v-for="link in earnings.links"
                     :key="link.label"
