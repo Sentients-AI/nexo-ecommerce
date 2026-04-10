@@ -155,7 +155,7 @@ describe('Vendor inventory page', function () {
     it('includes movement history in inventory index response', function () {
         $product = Product::factory()->create();
         $stock = Stock::factory()->for($product)->create(['quantity_available' => 10]);
-        StockMovement::factory()->for($stock)->create(['quantity' => 5, 'reason' => 'Vendor manual adjustment']);
+        StockMovement::factory()->for($stock)->create(['product_id' => $product->id, 'quantity' => 5, 'reason' => 'Vendor manual adjustment']);
 
         $this->get('/vendor/inventory')
             ->assertOk()

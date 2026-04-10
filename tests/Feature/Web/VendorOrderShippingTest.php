@@ -24,10 +24,12 @@ describe('POST /vendor/orders/{order}/ship', function () {
 
         $order = Order::factory()->create(['status' => OrderStatus::Paid]);
 
+        $deliveryDate = now()->addDays(7)->toDateString();
+
         $this->post("/vendor/orders/{$order->id}/ship", [
             'carrier' => 'FedEx',
             'tracking_number' => '1Z999AA10123456784',
-            'estimated_delivery_at' => '2026-04-10',
+            'estimated_delivery_at' => $deliveryDate,
         ])->assertRedirect();
 
         $order->refresh();
@@ -36,7 +38,7 @@ describe('POST /vendor/orders/{order}/ship', function () {
             ->and($order->carrier)->toBe('FedEx')
             ->and($order->tracking_number)->toBe('1Z999AA10123456784')
             ->and($order->shipped_at)->not->toBeNull()
-            ->and($order->estimated_delivery_at->toDateString())->toBe('2026-04-10');
+            ->and($order->estimated_delivery_at->toDateString())->toBe($deliveryDate);
 
         Notification::assertSentTo($order->user, OrderShippedNotification::class);
     });
