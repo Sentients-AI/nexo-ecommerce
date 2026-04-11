@@ -24,11 +24,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\Access\Authorizable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Cashier\Billable;
 use Laravel\Sanctum\HasApiTokens;
 
 final class User extends BaseModel implements AuthenticatableContract, AuthorizableContract, CanResetPasswordContract, FilamentUser
 {
-    use Authenticatable, Authorizable, BelongsToTenant, CanResetPassword, HasApiTokens, HasFactory, MustVerifyEmail, Notifiable;
+    use Authenticatable, Authorizable, BelongsToTenant, Billable, CanResetPassword, HasApiTokens, HasFactory, MustVerifyEmail, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -42,6 +43,10 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
         'role_id',
         'tenant_id',
         'google_id',
+        'stripe_id',
+        'pm_type',
+        'pm_last_four',
+        'trial_ends_at',
     ];
 
     /**
@@ -152,6 +157,7 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'trial_ends_at' => 'datetime',
         ];
     }
 }

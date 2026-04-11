@@ -679,3 +679,51 @@ Search engine discoverability is a hard requirement for any public storefront. C
 **Consequences**
 - `/sitemap.xml` is tenant-scoped (uses global tenant context, no auth required)
 - `seo.canonical_url` prevents duplicate-content penalties from locale variants
+
+---
+
+## 2026-04-09 — Product bundles as first-class domain objects
+
+**Decision**
+Bundles are modelled as their own domain entity (`Bundle` + `BundleItem`) with nullable `product_id` on cart items rather than using promotions or product variants.
+
+**Reason**
+Bundles have their own SKU, price, and discount logic distinct from variant pricing and promotional discounts. First-class modelling keeps the checkout pipeline clean.
+
+**Trade-offs**
+- Extra join when cart items can be either a product or a bundle.
+
+**Consequences**
+- Cart and order items carry an optional `bundle_id`; the checkout handles both paths without branching.
+
+---
+
+## 2026-04-09 — Subscription billing via Laravel Cashier
+
+**Decision**
+Recurring subscriptions use Laravel Cashier (Stripe Billing) rather than a custom billing engine.
+
+**Reason**
+Cashier handles webhook sync, trial periods, proration, and the Stripe Customer Portal out of the box.
+
+**Trade-offs**
+- Tighter coupling to Stripe; switching payment providers requires replacing Cashier.
+
+**Consequences**
+- Subscription state is always authoritative from Stripe webhooks; local state is a cache.
+
+---
+
+## 2026-04-10 — CSS-first Filament theme customisation
+
+**Decision**
+Admin panel theming uses a custom CSS file (`resources/css/filament/admin.css`) with CSS custom properties rather than PHP theme configuration.
+
+**Reason**
+Filament v5 recommends CSS-first approach; easier to maintain without PHP compilation.
+
+**Trade-offs**
+- Changes require a CSS build step.
+
+**Consequences**
+- Electric Indigo (`#6747f5`) brand colour is applied consistently across the admin panel.

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Web\AddressController;
 use App\Http\Controllers\Web\AuthController;
+use App\Http\Controllers\Web\BillingController;
 use App\Http\Controllers\Web\BundleController;
 use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
 use App\Http\Controllers\Web\DownloadController;
+use App\Http\Controllers\Web\FlashSaleController;
+use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\LoyaltyController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\OnboardingController;
@@ -35,7 +38,6 @@ use App\Http\Controllers\Web\VendorReturnController;
 use App\Http\Controllers\Web\VendorSettingsController;
 use App\Http\Controllers\Webhooks\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Stripe webhook — no auth/CSRF (signature verification is done in controller)
 Route::post('/webhooks/stripe', StripeWebhookController::class)->name('webhooks.stripe');
@@ -112,7 +114,7 @@ Route::prefix('{locale}')
     ->middleware('locale')
     ->group(function () {
         // Home page
-        Route::get('/', fn () => Inertia::render('Home'))->name('home');
+        Route::get('/', HomeController::class)->name('home');
 
         // Products
         Route::get('/products', [ProductController::class, 'index'])->name('products.index');
@@ -127,6 +129,9 @@ Route::prefix('{locale}')
 
         // Cart
         Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+
+        // Flash sales
+        Route::get('/flash-sales', [FlashSaleController::class, 'index'])->name('flash-sales.index');
 
         // Wishlist
         Route::get('/wishlist', [ProductController::class, 'wishlist'])->name('wishlist.index');
@@ -173,6 +178,12 @@ Route::prefix('{locale}')
 
             // Loyalty
             Route::get('/loyalty', [LoyaltyController::class, 'index'])->name('loyalty.index');
+
+            // Subscriptions / Billing
+            Route::get('/subscriptions', [BillingController::class, 'index'])->name('subscriptions.index');
+            Route::post('/subscriptions/{plan}/checkout', [BillingController::class, 'checkout'])->name('subscriptions.checkout');
+            Route::post('/subscriptions/cancel', [BillingController::class, 'cancel'])->name('subscriptions.cancel');
+            Route::get('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
 
             // Notifications
             Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

@@ -829,6 +829,121 @@ PRIMARY KEY (product_variant_id, variant_attribute_value_id)
 
 ---
 
+## 15. Product Bundles
+
+### bundles
+
+```sql
+id                          BIGINT PK
+tenant_id                   BIGINT FK → tenants.id NULLABLE INDEX
+name                        VARCHAR(255)
+slug                        VARCHAR(255) UNIQUE INDEX
+description                 TEXT NULLABLE
+price_cents                 INT
+compare_at_price_cents      INT NULLABLE
+images                      JSON NULLABLE
+is_active                   BOOLEAN DEFAULT true
+created_at                  TIMESTAMP
+updated_at                  TIMESTAMP
+```
+
+**Notes**
+
+- Bundle price is set at the bundle level and is not derived from the sum of its items
+- `compare_at_price_cents` is the original/crossed-out price shown to communicate savings
+- `images` is a JSON array of image URLs for the bundle
+
+---
+
+### bundle_items
+
+```sql
+id              BIGINT PK
+bundle_id       BIGINT FK → bundles.id INDEX
+product_id      BIGINT FK → products.id NULLABLE INDEX
+variant_id      BIGINT FK → product_variants.id NULLABLE INDEX
+quantity        INT DEFAULT 1
+created_at      TIMESTAMP
+updated_at      TIMESTAMP
+```
+
+**Notes**
+
+- Either `product_id` or `variant_id` should be set; `variant_id` takes precedence for variant-level items
+- `quantity` is the number of that item included in the bundle
+
+---
+
+### cart_items / order_items — bundle_id column
+
+`cart_items` and `order_items` each carry an optional `bundle_id FK → bundles.id`. When set, `product_id` is `NULL` and the item represents a whole bundle rather than an individual product. The checkout pipeline handles both paths without branching.
+
+---
+
+## 16. Subscriptions (Laravel Cashier)
+
+### subscriptions
+
+```sql
+id              BIGINT PK
+user_id         BIGINT FK → users.id INDEX
+name            VARCHAR(255)
+stripe_id       VARCHAR(255) UNIQUE INDEX
+stripe_status   VARCHAR(255) INDEX
+stripe_price    VARCHAR(255) NULLABLE
+quantity        INT NULLABLE
+trial_ends_at   TIMESTAMP NULLABLE
+ends_at         TIMESTAMP NULLABLE
+created_at      TIMESTAMP
+updated_at      TIMESTAMP
+```
+
+**Notes**
+
+- Managed by Laravel Cashier; state is authoritative from Stripe webhooks — local rows are a cache
+- `stripe_status` mirrors the Stripe subscription status (e.g., `active`, `trialing`, `canceled`)
+
+---
+
+### subscription_items
+
+```sql
+id                  BIGINT PK
+subscription_id     BIGINT FK → subscriptions.id INDEX
+stripe_id           VARCHAR(255) UNIQUE INDEX
+stripe_product      VARCHAR(255) NULLABLE
+stripe_price        VARCHAR(255) INDEX
+quantity            INT NULLABLE
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+---
+
+### subscription_plans
+
+```sql
+id                  BIGINT PK
+tenant_id           BIGINT FK → tenants.id NULLABLE INDEX
+name                VARCHAR(255)
+slug                VARCHAR(255) INDEX
+stripe_price_id     VARCHAR(255) UNIQUE INDEX
+price_cents         INT
+interval            ENUM('monthly','yearly')
+features            JSON NULLABLE
+is_active           BOOLEAN DEFAULT true
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+**Notes**
+
+- `stripe_price_id` links the plan to a Stripe Price object
+- `features` is a JSON array of feature strings displayed on the plans page
+- Plans are tenant-scoped; a `NULL` tenant_id indicates a platform-wide plan
+
+---
+
 ## 15. User Addresses
 
 ### user_addresses

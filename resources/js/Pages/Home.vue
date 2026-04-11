@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
@@ -8,20 +8,86 @@ import Badge from '@/Components/UI/Badge.vue';
 import { useLocale } from '@/Composables/useLocale';
 import type { ProductApiResource, CategoryApiResource } from '@/types/api';
 
+interface FlashSaleProduct {
+    id: number;
+    name: string;
+    slug: string;
+    price_cents: number;
+    image: string | null;
+    in_stock: boolean;
+    discounted_price_cents: number;
+}
+
+interface FlashSale {
+    id: number;
+    name: string;
+    discount_type: 'fixed' | 'percentage';
+    discount_value: number;
+    ends_at: string;
+    seconds_remaining: number;
+    products: FlashSaleProduct[];
+}
+
 interface Props {
     featuredProducts?: ProductApiResource[];
     categories?: CategoryApiResource[];
+    flashSales?: FlashSale[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
     featuredProducts: () => [],
     categories: () => [],
+    flashSales: () => [],
 });
 
 const page = usePage();
 const isAuthenticated = computed(() => page.props.auth?.user !== null);
 const Layout = computed(() => isAuthenticated.value ? AuthenticatedLayout : GuestLayout);
 const { localePath } = useLocale();
+
+// Flash sale countdown state: saleId → seconds remaining
+const flashCountdowns = ref<Record<number, number>>({});
+let flashTimer: ReturnType<typeof setInterval> | null = null;
+
+onMounted(() => {
+    props.flashSales.forEach(s => {
+        flashCountdowns.value[s.id] = s.seconds_remaining;
+    });
+    if (props.flashSales.length > 0) {
+        flashTimer = setInterval(() => {
+            for (const id of Object.keys(flashCountdowns.value)) {
+                const current = flashCountdowns.value[Number(id)];
+                if (current > 0) {
+                    flashCountdowns.value[Number(id)] = current - 1;
+                }
+            }
+        }, 1000);
+    }
+});
+
+onUnmounted(() => {
+    if (flashTimer) {
+        clearInterval(flashTimer);
+    }
+});
+
+function formatFlashCountdown(seconds: number): string {
+    if (seconds <= 0) { return '00:00:00'; }
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return [h, m, s].map(n => String(n).padStart(2, '0')).join(':');
+}
+
+function discountLabel(sale: FlashSale): string {
+    return sale.discount_type === 'percentage'
+        ? `${(sale.discount_value / 100).toFixed(0)}% OFF`
+        : `$${(sale.discount_value / 100).toFixed(2)} OFF`;
+}
+
+function flashPrice(cents: number): string {
+    return '$' + (cents / 100).toFixed(2);
+}
 
 const email = ref('');
 const isSubscribed = ref(false);
@@ -273,6 +339,97 @@ const tabProducts = computed(() => {
                             <h3 class="text-sm font-semibold text-slate-900 dark:text-white">{{ benefit.title }}</h3>
                             <p class="text-xs text-slate-500 dark:text-navy-400">{{ benefit.description }}</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================
+             FLASH SALES
+             ======================================================== -->
+        <section v-if="flashSales.length > 0" class="py-12 sm:py-16 bg-white dark:bg-navy-950">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div v-for="sale in flashSales" :key="sale.id" class="mb-10 last:mb-0">
+                    <!-- Sale header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">⚡</span>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-bold text-white uppercase tracking-wide">
+                                        {{ discountLabel(sale) }}
+                                    </span>
+                                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">{{ sale.name }}</h2>
+                                </div>
+                                <p class="text-sm text-slate-500 dark:text-navy-400 mt-0.5">Limited-time deal — grab it before it's gone</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-2">
+                                <span class="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide">Ends in</span>
+                                <span class="text-lg font-mono font-bold text-red-600 dark:text-red-400 tabular-nums">
+                                    {{ formatFlashCountdown(flashCountdowns[sale.id] ?? 0) }}
+                                </span>
+                            </div>
+                            <Link
+                                :href="localePath('/flash-sales')"
+                                class="text-sm font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-500 transition-colors whitespace-nowrap"
+                            >
+                                See all →
+                            </Link>
+                        </div>
+                    </div>
+
+                    <!-- Product strip -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <Link
+                            v-for="product in sale.products"
+                            :key="product.id"
+                            :href="localePath(`/products/${product.slug}`)"
+                            class="group relative rounded-2xl border border-slate-100 dark:border-navy-800 bg-white dark:bg-navy-900/60 overflow-hidden hover:shadow-md transition-all"
+                        >
+                            <!-- Discount badge -->
+                            <div class="absolute top-2 left-2 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white z-10">
+                                {{ discountLabel(sale) }}
+                            </div>
+
+                            <!-- Sold out overlay -->
+                            <div
+                                v-if="!product.in_stock"
+                                class="absolute inset-0 bg-white/60 dark:bg-black/60 flex items-center justify-center z-20 rounded-2xl"
+                            >
+                                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">Sold Out</span>
+                            </div>
+
+                            <!-- Image -->
+                            <div class="aspect-square bg-slate-100 dark:bg-navy-800 overflow-hidden">
+                                <img
+                                    v-if="product.image"
+                                    :src="product.image"
+                                    :alt="product.name"
+                                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                                <div v-else class="w-full h-full flex items-center justify-center text-slate-300 dark:text-navy-600">
+                                    <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M13.5 12h.008v.008H13.5V12zm0 0H9m4.06-7.19l-4.125-4.125a1.802 1.802 0 00-2.557 0L3 8.25m0 0v11.25A2.25 2.25 0 005.25 21.75h13.5A2.25 2.25 0 0021 19.5V8.25m-18 0h18" />
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Info -->
+                            <div class="p-3">
+                                <p class="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">{{ product.name }}</p>
+                                <div class="mt-1.5 flex items-baseline gap-2">
+                                    <span class="text-base font-bold text-red-600 dark:text-red-400">
+                                        {{ flashPrice(product.discounted_price_cents) }}
+                                    </span>
+                                    <span class="text-xs text-slate-400 line-through">
+                                        {{ flashPrice(product.price_cents) }}
+                                    </span>
+                                </div>
+                            </div>
+                        </Link>
                     </div>
                 </div>
             </div>

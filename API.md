@@ -1252,6 +1252,105 @@ Subscribe to a back-in-stock email alert for an out-of-stock product. Public —
 
 ---
 
+## Bundles
+
+### GET /api/v1/bundles
+
+List all active bundles for the current tenant. Public — no authentication required.
+
+**Response 200:**
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Starter Kit",
+      "slug": "starter-kit",
+      "description": "Everything you need to get started.",
+      "price_cents": 4999,
+      "compare_at_price_cents": 6500,
+      "is_active": true,
+      "items": [
+        { "product_id": 1, "variant_id": null, "quantity": 2 }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### GET /api/v1/bundles/{slug}
+
+Get a single active bundle with its items. Public — no authentication required.
+
+**Response 200:** Full bundle object (same shape as list item above).
+
+**Response 404:** Bundle not found or inactive.
+
+---
+
+### POST /api/v1/bundles/{slug}/cart
+
+Add a bundle to the current cart as a single cart item.
+
+- **Headers:** `Authorization: Bearer {token}`
+
+**Response 201:**
+
+```json
+{
+  "data": {
+    "id": 5,
+    "bundle_id": 1,
+    "bundle_name": "Starter Kit",
+    "quantity": 1,
+    "price_cents": 4999
+  }
+}
+```
+
+**Errors:**
+- 404 — Bundle not found or inactive
+- 422 `CART_ALREADY_COMPLETED` — Cart already checked out
+
+---
+
+## Subscriptions
+
+Subscription endpoints are web routes rendered via Inertia. They require an authenticated session.
+
+### GET /en/subscriptions
+
+Render the subscription plans page listing all active plans for the current tenant.
+
+- **Auth:** Required (web session)
+- **Response:** Inertia page `Subscriptions/Index.vue` with `plans` prop
+
+---
+
+### POST /en/subscriptions/{plan}/checkout
+
+Redirect the authenticated user to a Stripe Checkout session for the given subscription plan.
+
+- **Auth:** Required (web session)
+- **Response:** 302 redirect to Stripe Checkout URL
+
+**Errors:**
+- 404 — Plan not found or inactive
+
+---
+
+### GET /en/subscriptions/portal
+
+Redirect the authenticated user to their Stripe Billing Portal where they can manage, upgrade, or cancel their subscription.
+
+- **Auth:** Required (web session)
+- **Response:** 302 redirect to Stripe Billing Portal URL
+
+---
+
 ## Webhooks
 
 ### POST /api/webhooks/stripe

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue';
 import { Head, Link, usePage, Deferred } from '@inertiajs/vue3';
 import { useStockUpdates, usePriceUpdates } from '@/Composables/useStockUpdates';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
@@ -86,6 +86,15 @@ interface QuestionItem {
     answers: QuestionAnswer[];
 }
 
+interface FlashSaleProp {
+    name: string;
+    discount_type: 'fixed' | 'percentage';
+    discount_value: number;
+    ends_at: string;
+    seconds_remaining: number;
+    discounted_price_cents: number;
+}
+
 interface Props {
     product: ProductApiResource & { active_variants?: ProductVariant[] };
     reviewStats: ReviewStats;
@@ -93,9 +102,14 @@ interface Props {
     relatedProducts: ProductApiResource[];
     recommendations?: ProductApiResource[];
     seo: SeoMeta;
+    flashSale?: FlashSaleProp | null;
 }
 
 const props = defineProps<Props>();
+
+// Flash sale countdown
+const flashCountdown = ref(props.flashSale?.seconds_remaining ?? 0);
+let flashTimer: ReturnType<typeof setInterval> | null = null;
 
 const page = usePage();
 const { addToCart, loading: cartLoading, error: cartError } = useCart();
@@ -105,9 +119,25 @@ const { addToRecentlyViewed } = useRecentlyViewed();
 const { t, localePath } = useLocale();
 const { get: apiGet } = useApi();
 
-// Track product view on mount
+// Track product view on mount; start flash sale countdown
 onMounted(() => {
     addToRecentlyViewed(props.product.id);
+
+    if (props.flashSale && flashCountdown.value > 0) {
+        flashTimer = setInterval(() => {
+            if (flashCountdown.value > 0) {
+                flashCountdown.value -= 1;
+            } else if (flashTimer) {
+                clearInterval(flashTimer);
+            }
+        }, 1000);
+    }
+});
+
+onUnmounted(() => {
+    if (flashTimer) {
+        clearInterval(flashTimer);
+    }
 });
 
 const quantity = ref(1);
@@ -418,6 +448,14 @@ const shareLinks = computed(() => ({
     linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(props.seo.canonical_url)}`,
 }));
 
+function formatFlashCountdown(seconds: number): string {
+    if (seconds <= 0) { return '00:00:00'; }
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return [h, m, s].map(n => String(n).padStart(2, '0')).join(':');
+}
+
 async function copyLink(): Promise<void> {
     try {
         await navigator.clipboard.writeText(props.seo.canonical_url);
@@ -616,6 +654,30 @@ async function copyLink(): Promise<void> {
                             <span class="text-gray-500 dark:text-gray-400">{{ t('products.sold_by') }}</span>
                             <span class="font-medium text-brand-600 dark:text-brand-400">{{ product.tenant.name }}</span>
                         </Link>
+                    </div>
+
+                    <!-- Flash Sale Banner -->
+                    <div
+                        v-if="flashSale && flashCountdown > 0"
+                        class="mt-5 flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3"
+                    >
+                        <div class="flex items-center gap-2 flex-1">
+                            <span class="text-lg">⚡</span>
+                            <div>
+                                <p class="text-sm font-bold text-red-700 dark:text-red-400">{{ flashSale.name }}</p>
+                                <p class="text-xs text-red-600 dark:text-red-500">
+                                    Flash deal — save
+                                    <span v-if="flashSale.discount_type === 'percentage'">{{ (flashSale.discount_value / 100).toFixed(0) }}%</span>
+                                    <span v-else>${{ (flashSale.discount_value / 100).toFixed(2) }}</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 shrink-0">
+                            <span class="text-xs font-medium text-red-600 dark:text-red-400 uppercase tracking-wide">Ends in</span>
+                            <span class="text-lg font-mono font-bold text-red-700 dark:text-red-400 tabular-nums">
+                                {{ formatFlashCountdown(flashCountdown) }}
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Price -->

@@ -2,8 +2,8 @@
 
 **System**: Nexo — Modular E-Commerce System
 **Live URL**: https://store.aljebal-albeedos.com
-**Version**: 1.3
-**Review Date**: 2026-03-28
+**Version**: 2.0
+**Review Date**: 2026-04-10
 **Status**: Deployed to Production
 
 ---
@@ -39,6 +39,8 @@ This document establishes the trust contract for the Modular E-Commerce System. 
 | Tenant data isolation | Global TenantScope on all tenant-scoped models |
 | One review per user/product | Database unique constraint (product_id, user_id) |
 | Real-time message delivery | Laravel Reverb WebSocket broadcast with DB persistence |
+| Bundle price integrity | Bundle price set at bundle level, not summed from items |
+| Subscription lifecycle | Cashier + Stripe webhooks sync subscription state |
 
 ### Risk Profile
 
@@ -46,6 +48,8 @@ This document establishes the trust contract for the Modular E-Commerce System. 
 |------------|------|------------|
 | **LOW** | Stock consistency | Database locks + transactions |
 | **LOW** | Payment idempotency | Multiple guard layers |
+| **LOW** | Bundle pricing | Price set at bundle level; no runtime aggregation |
+| **LOW** | Subscription state | Stripe webhooks + Cashier keep local state in sync |
 | **MEDIUM** | Event processing lag | Queue monitoring required |
 | **MEDIUM** | External API failures | Retry + compensation patterns |
 

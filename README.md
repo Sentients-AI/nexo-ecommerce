@@ -42,6 +42,10 @@ A Domain-Driven Design (DDD) **multi-tenant** e-commerce platform built with Lar
 - **Real-time Chat** — WebSocket-powered customer-support conversations (Laravel Reverb)
 - **Social Login** — Google OAuth via Laravel Socialite
 - **Internationalization** — English, Arabic (RTL), and Malay locales
+- **Product Bundles** — First-class bundle domain (Bundle + BundleItem); bundle price set at bundle level; add bundle as a single cart item; vendor bundle management
+- **Subscription Products** — Recurring billing via Laravel Cashier + Stripe Billing; subscription plans, Stripe Checkout redirect, Stripe Billing Portal, trial support
+- **Advanced Analytics Dashboard** — Filament admin page with stats widget, revenue trend chart, and top products widget
+- **Fraud Detection Dashboard** — Filament admin page surfacing high-risk orders and anomaly signals
 - **Admin Control Plane** — Filament 5 panel with tenant management, dashboards, and operations
 - **Observability** — Metrics, alerting, audit logs, correlation IDs, performance budgets
 
@@ -342,3 +346,4 @@ vendor/bin/rector
 | [docs/ARCHITECTURE_DECISIONS.md](docs/ARCHITECTURE_DECISIONS.md) | Deep-dive architecture decisions with rationale |
 | [docs/COMPREHENSIVE_CODEBASE_GUIDE.md](docs/COMPREHENSIVE_CODEBASE_GUIDE.md) | Full codebase walkthrough |
 | [docs/QUICK_REFERENCE.md](docs/QUICK_REFERENCE.md) | Fast lookup for common patterns and file locations |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues and resolution steps |

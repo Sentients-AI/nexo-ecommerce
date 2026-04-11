@@ -44,6 +44,10 @@ final class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'tenant_id' => Context::get('tenant_id') ?? Tenant::factory(),
             'role_id' => null,
+            'stripe_id' => null,
+            'pm_type' => null,
+            'pm_last_four' => null,
+            'trial_ends_at' => null,
         ];
     }
 

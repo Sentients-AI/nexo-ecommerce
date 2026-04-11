@@ -32,6 +32,8 @@ final class HandleStripeEventJob implements ShouldQueue
         match ($this->event->type) {
             'payment_intent.succeeded' => $this->handleSuccess(),
             'payment_intent.payment_failed' => $this->handleFailure(),
+            'customer.subscription.updated',
+            'customer.subscription.deleted' => $this->handleSubscriptionChange(),
             default => null,
         };
     }
@@ -47,6 +49,24 @@ final class HandleStripeEventJob implements ShouldQueue
         }
 
         app(ConfirmPaymentIntentAction::class)->execute($intent);
+    }
+
+    private function handleSubscriptionChange(): void
+    {
+        $stripeSubscription = $this->event->data->object;
+
+        $subscription = \Laravel\Cashier\Subscription::where('stripe_id', $stripeSubscription->id)->first();
+
+        if (! $subscription) {
+            return;
+        }
+
+        $subscription->update([
+            'stripe_status' => $stripeSubscription->status,
+            'ends_at' => $stripeSubscription->cancel_at
+                ? \Carbon\Carbon::createFromTimestamp($stripeSubscription->cancel_at)
+                : null,
+        ]);
     }
 
     private function handleFailure(): void

@@ -28,6 +28,8 @@ Fast lookup for common tasks and code locations.
 | Send abandoned cart email | `app/Domain/Cart/Actions/SendAbandonedCartRecoveryEmailsAction.php` | Stamps `recovery_email_sent_at` |
 | Create tenant + admin | `app/Domain/Tenant/Actions/CreateTenantWithAdminUser.php` | Used by onboarding flow |
 | Subscribe to waitlist | `app/Http/Controllers/Api/V1/WaitlistController.php` | Stores email; fires when stock replenished |
+| Create bundle | `app/Http/Controllers/Web/VendorBundleController.php` | Vendor creates/edits bundles |
+| Add bundle to cart | `app/Http/Controllers/Api/V1/BundleController.php` addToCart | Bundle added as single cart item |
 
 ### Multi-Tenancy
 
@@ -66,6 +68,9 @@ Fast lookup for common tasks and code locations.
 | ReferralUsage | `app/Domain/Referral/Models/ReferralUsage.php` | referrer_user_id, referee_user_id, coupon_code |
 | WaitlistSubscription | `app/Domain/Inventory/Models/WaitlistSubscription.php` | product_id, tenant_id, email, notified_at |
 | TaxZone (+ models) | `app/Domain/Tax/Models/` | Configurable tax zones/rates per tenant |
+| Bundle | `app/Domain/Bundle/Models/Bundle.php` | name, slug, price_cents, compare_at_price_cents, items |
+| BundleItem | `app/Domain/Bundle/Models/BundleItem.php` | bundle_id, product_id, variant_id, quantity |
+| SubscriptionPlan | `app/Filament/Resources/SubscriptionPlanResource.php` | name, stripe_price_id, price_cents, interval, features |
 
 ### Validation Rules
 

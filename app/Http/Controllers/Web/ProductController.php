@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Web;
 use App\Domain\Category\Models\Category;
 use App\Domain\Product\Actions\GetProductRecommendationsAction;
 use App\Domain\Product\Models\Product;
+use App\Domain\Promotion\Models\Promotion;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Context;
@@ -168,11 +169,37 @@ final class ProductController extends Controller
 
         $questionCount = $product->questions()->count();
 
+        $now = now();
+        $activeFlashSale = Promotion::query()
+            ->where('is_flash_sale', true)
+            ->where('is_active', true)
+            ->where('starts_at', '<=', $now)
+            ->where('ends_at', '>=', $now)
+            ->where(function ($q) use ($product): void {
+                $q->where('scope', 'all')
+                    ->orWhereHas('products', fn ($pq) => $pq->where('products.id', $product->id))
+                    ->orWhereHas('categories', fn ($cq) => $cq->where('categories.id', $product->category_id));
+            })
+            ->orderBy('ends_at')
+            ->first();
+
+        $flashSale = $activeFlashSale ? [
+            'name' => $activeFlashSale->name,
+            'discount_type' => $activeFlashSale->discount_type->value,
+            'discount_value' => $activeFlashSale->discount_value,
+            'ends_at' => $activeFlashSale->ends_at?->toIso8601String(),
+            'seconds_remaining' => $activeFlashSale->timeRemainingSeconds(),
+            'discounted_price_cents' => $activeFlashSale->discount_type->value === 'percentage'
+                ? (int) round($product->price_cents * (1 - $activeFlashSale->discount_value / 10000))
+                : max(0, $product->price_cents - (int) $activeFlashSale->discount_value),
+        ] : null;
+
         return Inertia::render('Products/Show', [
             'product' => $product,
             'reviewStats' => $reviewStats,
             'questionCount' => $questionCount,
             'relatedProducts' => $relatedProducts,
+            'flashSale' => $flashSale,
             'recommendations' => Inertia::defer(fn () => $recommendations->execute($product)),
             'seo' => [
                 'title' => $product->meta_title ?? $product->name,
