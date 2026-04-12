@@ -27,7 +27,7 @@ final class StockMovementFactory extends Factory
     public function definition(): array
     {
         return [
-            'product_id' => Product::factory()->create(),
+            'product_id' => Product::factory(),
             'stock_id' => Stock::factory(),
             'type' => fake()->randomElement(StockMovementType::getTypes()),
             'quantity' => fake()->numberBetween(1, 100),
