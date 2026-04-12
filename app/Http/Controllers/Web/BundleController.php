@@ -46,7 +46,7 @@ final class BundleController extends Controller
             ->with('items.product.stock', 'items.variant')
             ->firstOrFail();
 
-        $inStock = $bundle->items->every(function ($item) {
+        $inStock = $bundle->items->every(function ($item): bool {
             $stock = $item->variant?->stock ?? $item->product?->stock;
 
             return $stock && $stock->quantity_available >= $item->quantity;

@@ -260,7 +260,7 @@ describe('suspicious user signals', function (): void {
         $flagged = User::query()
             ->whereRaw('(SELECT COUNT(*) FROM orders WHERE orders.user_id = users.id) >= 2')
             ->whereRaw(
-                '(SELECT COUNT(*) FROM orders WHERE orders.user_id = users.id AND refunded_amount_cents > 0) / (SELECT COUNT(*) FROM orders WHERE orders.user_id = users.id) >= ?',
+                '(SELECT COUNT(*) FROM orders WHERE orders.user_id = users.id AND refunded_amount_cents > 0) >= ? * (SELECT COUNT(*) FROM orders WHERE orders.user_id = users.id)',
                 [$highRefundRate]
             )
             ->count();

@@ -23,7 +23,7 @@ final class SubscriptionPlansTable
 
                 TextColumn::make('billing_interval')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => ucfirst($state)),
+                    ->formatStateUsing(fn ($state) => ucfirst((string) $state)),
 
                 TextColumn::make('price_cents')
                     ->label('Price')

@@ -9,9 +9,11 @@ use App\Domain\Payment\Actions\ConfirmPaymentIntentAction;
 use App\Domain\Payment\Events\PaymentFailed;
 use App\Domain\Payment\Models\PaymentIntent;
 use App\Shared\Domain\DomainEventRecorder;
+use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Laravel\Cashier\Subscription;
 
 final class HandleStripeEventJob implements ShouldQueue
 {
@@ -55,7 +57,7 @@ final class HandleStripeEventJob implements ShouldQueue
     {
         $stripeSubscription = $this->event->data->object;
 
-        $subscription = \Laravel\Cashier\Subscription::where('stripe_id', $stripeSubscription->id)->first();
+        $subscription = Subscription::where('stripe_id', $stripeSubscription->id)->first();
 
         if (! $subscription) {
             return;
@@ -64,7 +66,7 @@ final class HandleStripeEventJob implements ShouldQueue
         $subscription->update([
             'stripe_status' => $stripeSubscription->status,
             'ends_at' => $stripeSubscription->cancel_at
-                ? \Carbon\Carbon::createFromTimestamp($stripeSubscription->cancel_at)
+                ? Carbon::createFromTimestamp($stripeSubscription->cancel_at)
                 : null,
         ]);
     }

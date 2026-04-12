@@ -159,7 +159,7 @@ final class BundleController extends Controller
         ];
 
         if ($detailed) {
-            $data['in_stock'] = $bundle->items->every(function (BundleItem $item) {
+            $data['in_stock'] = $bundle->items->every(function (BundleItem $item): bool {
                 $stock = $item->variant?->stock ?? $item->product?->stock;
 
                 return $stock && $stock->quantity_available >= $item->quantity;

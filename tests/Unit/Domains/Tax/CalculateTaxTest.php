@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 use App\Domain\Tax\Actions\CalculateTax;
 use App\Domain\Tax\DTOs\TaxCalculationData;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-uses(TestCase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 it('tax is calculated from configured rate', function () {
 
