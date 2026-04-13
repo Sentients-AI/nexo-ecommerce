@@ -9,6 +9,7 @@ use App\Domain\Product\Models\Product;
 use App\Domain\Promotion\Enums\DiscountType;
 use App\Domain\Promotion\Enums\PromotionScope;
 use App\Domain\Promotion\Models\Promotion;
+use App\Domain\Promotion\Models\PromotionExperiment;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -183,6 +184,22 @@ final class PromotionForm
                             ->label('End Date')
                             ->required()
                             ->after('starts_at'),
+                    ]),
+
+                Section::make('A/B Experiment')
+                    ->description('Assign this promotion to an A/B experiment to compare performance')
+                    ->columns(2)
+                    ->schema([
+                        Select::make('experiment_id')
+                            ->label('Experiment')
+                            ->options(PromotionExperiment::query()->pluck('name', 'id'))
+                            ->nullable()
+                            ->searchable(),
+
+                        Select::make('variant')
+                            ->label('Variant')
+                            ->options(['A' => 'Variant A', 'B' => 'Variant B'])
+                            ->nullable(),
                     ]),
 
                 Section::make('Constraints')

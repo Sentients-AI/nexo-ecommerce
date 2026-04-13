@@ -14,6 +14,7 @@ use App\Shared\Models\BaseModel;
 use Carbon\Carbon;
 use Database\Factories\PromotionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -46,7 +47,17 @@ final class Promotion extends BaseModel
         'get_quantity',
         'tiers',
         'is_flash_sale',
+        'experiment_id',
+        'variant',
     ];
+
+    /**
+     * Get the A/B experiment this promotion belongs to.
+     */
+    public function experiment(): BelongsTo
+    {
+        return $this->belongsTo(PromotionExperiment::class, 'experiment_id');
+    }
 
     /**
      * Get the products this promotion applies to.
