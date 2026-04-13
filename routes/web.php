@@ -35,6 +35,7 @@ use App\Http\Controllers\Web\VendorProductImportController;
 use App\Http\Controllers\Web\VendorPromotionController;
 use App\Http\Controllers\Web\VendorQuestionController;
 use App\Http\Controllers\Web\VendorReturnController;
+use App\Http\Controllers\Web\VendorReviewController;
 use App\Http\Controllers\Web\VendorSettingsController;
 use App\Http\Controllers\Webhooks\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -86,6 +87,8 @@ Route::prefix('vendor')
         Route::patch('/returns/{return}/reject', [VendorReturnController::class, 'reject'])->name('returns.reject');
         Route::get('/questions', [VendorQuestionController::class, 'index'])->name('questions.index');
         Route::post('/questions/{question}/answer', [VendorQuestionController::class, 'answer'])->name('questions.answer');
+        Route::get('/reviews', [VendorReviewController::class, 'index'])->name('reviews.index');
+        Route::post('/reviews/{review}/reply', [VendorReviewController::class, 'reply'])->name('reviews.reply');
         Route::get('/promotions', [VendorPromotionController::class, 'index'])->name('promotions.index');
         Route::patch('/promotions/{promotion}/toggle', [VendorPromotionController::class, 'toggle'])->name('promotions.toggle');
         Route::get('/settings', [VendorSettingsController::class, 'index'])->name('settings.index');
