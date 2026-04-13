@@ -15,6 +15,7 @@ use App\Http\Controllers\Web\LoyaltyController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\OnboardingController;
 use App\Http\Controllers\Web\OrderController;
+use App\Http\Controllers\Web\OrderTrackingController;
 use App\Http\Controllers\Web\ProductController;
 use App\Http\Controllers\Web\ReferralWebController;
 use App\Http\Controllers\Web\RefundController;
@@ -141,6 +142,9 @@ Route::prefix('{locale}')
 
         // Wishlist
         Route::get('/wishlist', [ProductController::class, 'wishlist'])->name('wishlist.index');
+
+        // Order tracking (public — accessible without authentication)
+        Route::match(['get', 'post'], '/track', [OrderTrackingController::class, 'show'])->name('track.show');
 
         // Authentication
         Route::middleware('guest')->group(function () {
