@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Domain\Promotion\Models\Promotion;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Context;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -44,8 +45,19 @@ final class HomeController extends Controller
                 ]),
             ]);
 
+        $tenant = Context::get('tenant');
+        $storefront = $tenant ? [
+            'name' => $tenant->name,
+            'description' => $tenant->description,
+            'banner_path' => $tenant->banner_path,
+            'logo_path' => $tenant->logo_path,
+            'accent_color' => $tenant->accent_color,
+            'social_links' => $tenant->social_links ?? [],
+        ] : null;
+
         return Inertia::render('Home', [
             'flashSales' => $flashSales,
+            'storefront' => $storefront,
         ]);
     }
 }

@@ -37,6 +37,7 @@ use App\Http\Controllers\Web\VendorQuestionController;
 use App\Http\Controllers\Web\VendorReturnController;
 use App\Http\Controllers\Web\VendorReviewController;
 use App\Http\Controllers\Web\VendorSettingsController;
+use App\Http\Controllers\Web\VendorStorefrontController;
 use App\Http\Controllers\Webhooks\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -91,6 +92,8 @@ Route::prefix('vendor')
         Route::post('/reviews/{review}/reply', [VendorReviewController::class, 'reply'])->name('reviews.reply');
         Route::get('/promotions', [VendorPromotionController::class, 'index'])->name('promotions.index');
         Route::patch('/promotions/{promotion}/toggle', [VendorPromotionController::class, 'toggle'])->name('promotions.toggle');
+        Route::get('/storefront', [VendorStorefrontController::class, 'index'])->name('storefront.index');
+        Route::patch('/storefront', [VendorStorefrontController::class, 'update'])->name('storefront.update');
         Route::get('/settings', [VendorSettingsController::class, 'index'])->name('settings.index');
 
         // Bundles

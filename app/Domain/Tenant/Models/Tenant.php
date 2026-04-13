@@ -26,6 +26,10 @@ final class Tenant extends BaseModel
         'domain',
         'email',
         'description',
+        'logo_path',
+        'banner_path',
+        'accent_color',
+        'social_links',
         'is_active',
         'settings',
         'trial_ends_at',
@@ -102,6 +106,7 @@ final class Tenant extends BaseModel
         return [
             'is_active' => 'boolean',
             'settings' => 'array',
+            'social_links' => 'array',
             'trial_ends_at' => 'datetime',
             'subscribed_at' => 'datetime',
         ];

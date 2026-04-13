@@ -28,16 +28,27 @@ interface FlashSale {
     products: FlashSaleProduct[];
 }
 
+interface StorefrontData {
+    name: string;
+    description: string | null;
+    banner_path: string | null;
+    logo_path: string | null;
+    accent_color: string | null;
+    social_links: Record<string, string>;
+}
+
 interface Props {
     featuredProducts?: ProductApiResource[];
     categories?: CategoryApiResource[];
     flashSales?: FlashSale[];
+    storefront?: StorefrontData | null;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     featuredProducts: () => [],
     categories: () => [],
     flashSales: () => [],
+    storefront: null,
 });
 
 const page = usePage();
@@ -162,6 +173,17 @@ const tabProducts = computed(() => {
     <Head title="Home" />
 
     <component :is="Layout">
+        <!-- ========================================================
+             STOREFRONT BANNER (when tenant has set one)
+             ======================================================== -->
+        <div v-if="storefront?.banner_path" class="relative w-full overflow-hidden" style="max-height: 280px;">
+            <img :src="storefront.banner_path" :alt="storefront.name" class="w-full object-cover" style="max-height: 280px;" />
+            <div class="absolute inset-0 bg-gradient-to-t from-navy-950/80 to-transparent" />
+            <div v-if="storefront.description" class="absolute bottom-0 left-0 right-0 p-6">
+                <p class="max-w-2xl text-sm text-white/90">{{ storefront.description }}</p>
+            </div>
+        </div>
+
         <!-- ========================================================
              HERO SECTION
              ======================================================== -->
