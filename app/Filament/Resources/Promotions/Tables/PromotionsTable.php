@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\Promotions\Tables;
 
+use App\Domain\Promotion\Actions\GenerateBulkCodesAction;
 use App\Domain\Promotion\Enums\DiscountType;
 use App\Domain\Promotion\Enums\PromotionScope;
+use App\Domain\Promotion\Models\Promotion;
 use Carbon\Carbon;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -78,6 +84,15 @@ final class PromotionsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                TextColumn::make('batch_id')
+                    ->label('Batch')
+                    ->badge()
+                    ->color('info')
+                    ->formatStateUsing(fn ($state) => $state ? mb_substr($state, 0, 8).'…' : null)
+                    ->placeholder('—')
+                    ->copyable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
                 TextColumn::make('created_at')
                     ->label('Created')
                     ->dateTime()
@@ -108,6 +123,35 @@ final class PromotionsTable
                     ]),
             ])
             ->recordActions([
+                Action::make('generateBulkCodes')
+                    ->label('Generate Bulk Codes')
+                    ->icon(Heroicon::OutlinedDocumentDuplicate)
+                    ->color('gray')
+                    ->form([
+                        TextInput::make('count')
+                            ->label('Number of codes')
+                            ->numeric()
+                            ->required()
+                            ->default(10)
+                            ->minValue(1)
+                            ->maxValue(500),
+                        TextInput::make('prefix')
+                            ->label('Code prefix (optional)')
+                            ->placeholder('e.g. SUMMER')
+                            ->maxLength(20),
+                    ])
+                    ->action(function (Promotion $record, array $data, GenerateBulkCodesAction $generator): void {
+                        $generated = $generator->execute(
+                            template: $record,
+                            count: (int) $data['count'],
+                            prefix: $data['prefix'] ?? '',
+                        );
+
+                        Notification::make()
+                            ->title("Generated {$generated->count()} codes")
+                            ->success()
+                            ->send();
+                    }),
                 ViewAction::make(),
                 EditAction::make(),
             ])

@@ -49,6 +49,7 @@ final class Promotion extends BaseModel
         'is_flash_sale',
         'experiment_id',
         'variant',
+        'batch_id',
     ];
 
     /**
