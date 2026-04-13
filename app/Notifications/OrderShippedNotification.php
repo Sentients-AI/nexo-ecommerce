@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Domain\Order\Models\Order;
+use App\Notifications\Channels\SmsChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -19,9 +20,22 @@ final class OrderShippedNotification extends Notification implements ShouldQueue
     /**
      * @return array<int, string>
      */
+    /**
+     * @return array<int, string>
+     */
     public function via(object $notifiable): array
     {
-        return ['mail', 'database', 'broadcast'];
+        $channels = ['mail', 'database', 'broadcast'];
+        if (filled($notifiable->phone_number ?? null) && ($notifiable->sms_notifications_enabled ?? false)) {
+            $channels[] = SmsChannel::class;
+        }
+
+        return $channels;
+    }
+
+    public function toSms(object $notifiable): string
+    {
+        return "Your order #{$this->order->order_number} has shipped via {$this->order->carrier}. Track: ".url('/en/track');
     }
 
     public function toMail(object $notifiable): MailMessage

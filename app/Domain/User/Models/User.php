@@ -40,6 +40,8 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
         'name',
         'email',
         'password',
+        'phone_number',
+        'sms_notifications_enabled',
         'role_id',
         'tenant_id',
         'google_id',
@@ -158,6 +160,7 @@ final class User extends BaseModel implements AuthenticatableContract, Authoriza
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'trial_ends_at' => 'datetime',
+            'sms_notifications_enabled' => 'boolean',
         ];
     }
 }
