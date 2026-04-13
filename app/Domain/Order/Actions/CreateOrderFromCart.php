@@ -91,7 +91,10 @@ final readonly class CreateOrderFromCart
             // Apply loyalty discount on top of promotion discount
             $loyaltyDiscountCents = min($data->loyaltyDiscountCents, max(0, (int) $subtotalCents - $discountCents));
 
-            $subtotalAfterDiscount = $subtotalCents - $discountCents - $loyaltyDiscountCents;
+            // Apply gift card discount after promotion and loyalty
+            $giftCardDiscountCents = min($data->giftCardDiscountCents, max(0, (int) $subtotalCents - $discountCents - $loyaltyDiscountCents));
+
+            $subtotalAfterDiscount = $subtotalCents - $discountCents - $loyaltyDiscountCents - $giftCardDiscountCents;
 
             $shippingCountry = $data->shippingAddress['country'] ?? $data->shippingAddress['country_code'] ?? null;
             $shippingRegion = $data->shippingAddress['state'] ?? $data->shippingAddress['region_code'] ?? null;
@@ -123,6 +126,7 @@ final readonly class CreateOrderFromCart
             $convertedShippingCents = $this->currencyService->convertCents($shippingCents, $baseCurrency, $checkoutCurrency);
             $convertedDiscountCents = $this->currencyService->convertCents($discountCents, $baseCurrency, $checkoutCurrency);
             $convertedLoyaltyDiscountCents = $this->currencyService->convertCents($loyaltyDiscountCents, $baseCurrency, $checkoutCurrency);
+            $convertedGiftCardDiscountCents = $this->currencyService->convertCents($giftCardDiscountCents, $baseCurrency, $checkoutCurrency);
 
             // STEP 2: Create order AFTER stock validation passes
             $guestToken = $data->userId === null ? (string) Str::uuid() : null;
@@ -145,6 +149,7 @@ final readonly class CreateOrderFromCart
                 'promotion_id' => $data->promotionId,
                 'discount_cents' => $convertedDiscountCents,
                 'loyalty_discount_cents' => $convertedLoyaltyDiscountCents,
+                'gift_card_discount_cents' => $convertedGiftCardDiscountCents,
                 'shipping_method_id' => $data->shippingMethodId,
             ]);
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\BundleController;
 use App\Http\Controllers\Api\V1\CartController;
 use App\Http\Controllers\Api\V1\CheckoutController;
 use App\Http\Controllers\Api\V1\ConversationController;
+use App\Http\Controllers\Api\V1\GiftCardController;
 use App\Http\Controllers\Api\V1\LoyaltyController;
 use App\Http\Controllers\Api\V1\MessageController;
 use App\Http\Controllers\Api\V1\NotificationController;
@@ -47,6 +48,11 @@ Route::prefix('v1')->middleware(['web'])->group(function () {
 // Promotion preview — public, works for guests and authenticated users
 Route::prefix('v1')->middleware(['web'])->group(function () {
     Route::post('/promotions/preview', [PromotionController::class, 'preview'])->name('api.v1.promotions.preview');
+});
+
+// Gift card preview — public, works for guests and authenticated users
+Route::prefix('v1')->middleware(['web'])->group(function () {
+    Route::post('/gift-cards/preview', [GiftCardController::class, 'preview'])->name('api.v1.gift-cards.preview');
 });
 
 // Reviews (public listing)

@@ -9,6 +9,9 @@ use App\Application\DTOs\Response\CheckoutResponse;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\Specifications\CartHasItems;
 use App\Domain\Cart\Specifications\CartIsNotCompleted;
+use App\Domain\GiftCard\Actions\RedeemGiftCardAction;
+use App\Domain\GiftCard\Actions\ValidateGiftCardAction;
+use App\Domain\GiftCard\Models\GiftCard;
 use App\Domain\Loyalty\Actions\RedeemPointsAction;
 use App\Domain\Loyalty\DTOs\RedeemPointsData;
 use App\Domain\Loyalty\Exceptions\InsufficientPointsException;
@@ -34,6 +37,8 @@ final readonly class CheckoutUseCase
         private FindBestPromotionAction $findBestPromotion,
         private RecordPromotionUsageAction $recordPromotionUsage,
         private RedeemPointsAction $redeemPoints,
+        private ValidateGiftCardAction $validateGiftCard,
+        private RedeemGiftCardAction $redeemGiftCard,
     ) {}
 
     public function execute(CheckoutRequest $request): CheckoutResponse
@@ -89,6 +94,15 @@ final readonly class CheckoutUseCase
                 $loyaltyDiscountCents = $request->redeemPoints * (int) config('loyalty.points_value_cents');
             }
 
+            // Gift card discount (works for guests too)
+            $giftCard = null;
+            $giftCardDiscountCents = 0;
+            if ($request->giftCardCode !== null && $request->giftCardCode !== '') {
+                $giftCard = $this->validateGiftCard->execute($request->giftCardCode);
+                $cartSubtotal = $cart->subtotal - $discountCents - $loyaltyDiscountCents;
+                $giftCardDiscountCents = min($giftCard->balance_cents, max(0, (int) $cartSubtotal));
+            }
+
             // Create order through domain action
             $order = $this->createOrderFromCart->execute(
                 new CreateOrderData(
@@ -98,6 +112,7 @@ final readonly class CheckoutUseCase
                     promotionId: $promotionId,
                     discountCents: $discountCents,
                     loyaltyDiscountCents: $loyaltyDiscountCents,
+                    giftCardDiscountCents: $giftCardDiscountCents,
                     shippingMethodId: $request->shippingMethodId,
                     guestEmail: $request->guestEmail,
                     guestName: $request->guestName,
@@ -123,6 +138,12 @@ final readonly class CheckoutUseCase
                     referenceType: 'orders',
                     referenceId: $order->id,
                 ));
+            }
+
+            // Redeem gift card after order creation (inside same transaction)
+            if ($giftCard instanceof GiftCard && $giftCardDiscountCents > 0) {
+                $lockedCard = GiftCard::query()->lockForUpdate()->findOrFail($giftCard->id);
+                $this->redeemGiftCard->execute($lockedCard, $order, $giftCardDiscountCents);
             }
 
             // Create payment intent

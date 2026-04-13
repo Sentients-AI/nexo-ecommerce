@@ -58,6 +58,12 @@ const discountCents = ref(0);
 const couponError = ref<string | null>(null);
 const couponLoading = ref(false);
 
+const giftCardCode = ref('');
+const appliedGiftCardCode = ref<string | null>(null);
+const giftCardDiscountCents = ref(0);
+const giftCardError = ref<string | null>(null);
+const giftCardLoading = ref(false);
+
 const isLoading = computed(() => checkoutLoading.value || stripeLoading.value || paymentProcessing.value || isSubmitting.value);
 
 const taxCents = computed(() => Math.round(props.cart.subtotal * 0.08));
@@ -65,7 +71,7 @@ const selectedShipping = computed(() =>
     props.shippingMethods.find(m => m.id === selectedShippingMethodId.value) ?? null
 );
 const shippingCents = computed(() => selectedShipping.value?.cost_cents ?? 0);
-const totalCents = computed(() => props.cart.subtotal + taxCents.value + shippingCents.value - discountCents.value);
+const totalCents = computed(() => props.cart.subtotal + taxCents.value + shippingCents.value - discountCents.value - giftCardDiscountCents.value);
 
 async function applyPromotion(): Promise<void> {
     const code = couponCode.value.trim();
@@ -110,6 +116,47 @@ function removePromotion(): void {
     couponError.value = null;
 }
 
+async function applyGiftCard(): Promise<void> {
+    const code = giftCardCode.value.trim();
+    if (!code) return;
+
+    giftCardError.value = null;
+    giftCardLoading.value = true;
+
+    try {
+        const res = await fetch('/api/v1/gift-cards/preview', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-XSRF-TOKEN': getCsrfToken(),
+            },
+            credentials: 'include',
+            body: JSON.stringify({ code }),
+        });
+
+        const data = await res.json();
+
+        if (data.valid) {
+            appliedGiftCardCode.value = code.toUpperCase();
+            giftCardDiscountCents.value = data.balance_cents;
+            giftCardCode.value = '';
+        } else {
+            giftCardError.value = data.message ?? 'Invalid gift card code.';
+        }
+    } catch {
+        giftCardError.value = 'Failed to apply gift card. Please try again.';
+    } finally {
+        giftCardLoading.value = false;
+    }
+}
+
+function removeGiftCard(): void {
+    appliedGiftCardCode.value = null;
+    giftCardDiscountCents.value = 0;
+    giftCardError.value = null;
+}
+
 async function handleInitiateCheckout() {
     clearError();
     submitError.value = null;
@@ -137,6 +184,7 @@ async function handleInitiateCheckout() {
             currency: currency.value,
             shipping_method_id: selectedShippingMethodId.value,
             ...(appliedCouponCode.value ? { promotion_code: appliedCouponCode.value } : {}),
+            ...(appliedGiftCardCode.value ? { gift_card_code: appliedGiftCardCode.value } : {}),
             ...(!props.isAuthenticated ? { guest_email: guestEmail.value, guest_name: guestName.value } : {}),
         }),
     });
@@ -427,6 +475,53 @@ function getIdempotencyKey(operation: string): string {
                             </div>
                         </div>
 
+                        <!-- Gift Card -->
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-navy-400 mb-2">Gift Card</p>
+
+                            <!-- Applied -->
+                            <div
+                                v-if="appliedGiftCardCode"
+                                class="flex items-center gap-3 rounded-xl border border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2.5"
+                            >
+                                <svg class="h-4 w-4 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+                                </svg>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-300 truncate">{{ appliedGiftCardCode }}</p>
+                                    <p class="text-xs text-emerald-600 dark:text-emerald-400">−{{ formatPrice(giftCardDiscountCents) }} applied</p>
+                                </div>
+                                <button type="button" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors" @click="removeGiftCard">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Input -->
+                            <div v-else>
+                                <div class="flex gap-2">
+                                    <input
+                                        v-model="giftCardCode"
+                                        type="text"
+                                        placeholder="GIFT CARD CODE"
+                                        :class="giftCardError ? 'border-red-400 dark:border-red-600' : 'border-slate-200 dark:border-navy-700'"
+                                        class="flex-1 rounded-xl border bg-slate-50 dark:bg-navy-900 px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:border-brand-500 focus:bg-white dark:focus:bg-navy-800 focus:outline-none focus:ring-1 focus:ring-brand-500 transition-colors uppercase tracking-widest"
+                                        @keydown.enter.prevent="applyGiftCard"
+                                    />
+                                    <button
+                                        type="button"
+                                        :disabled="giftCardLoading || !giftCardCode.trim()"
+                                        class="rounded-xl border border-slate-200 dark:border-navy-700 px-4 py-2.5 text-sm font-semibold text-slate-600 dark:text-navy-300 hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                        @click="applyGiftCard"
+                                    >
+                                        {{ giftCardLoading ? '…' : 'Apply' }}
+                                    </button>
+                                </div>
+                                <p v-if="giftCardError" class="mt-1.5 text-xs text-red-500 dark:text-red-400">{{ giftCardError }}</p>
+                            </div>
+                        </div>
+
                         <!-- Price breakdown -->
                         <div class="rounded-xl bg-slate-50 dark:bg-navy-800/40 p-4 space-y-2.5">
                             <div class="flex justify-between text-sm">
@@ -436,6 +531,10 @@ function getIdempotencyKey(operation: string): string {
                             <div v-if="discountCents > 0" class="flex justify-between text-sm">
                                 <span class="text-accent-600 dark:text-accent-400">Discount ({{ appliedCouponCode }})</span>
                                 <span class="font-medium text-accent-600 dark:text-accent-400">−{{ formatPrice(discountCents) }}</span>
+                            </div>
+                            <div v-if="giftCardDiscountCents > 0" class="flex justify-between text-sm">
+                                <span class="text-emerald-600 dark:text-emerald-400">Gift Card ({{ appliedGiftCardCode }})</span>
+                                <span class="font-medium text-emerald-600 dark:text-emerald-400">−{{ formatPrice(giftCardDiscountCents) }}</span>
                             </div>
                             <div class="flex justify-between text-sm">
                                 <span class="text-slate-600 dark:text-navy-400">Tax (8%)</span>

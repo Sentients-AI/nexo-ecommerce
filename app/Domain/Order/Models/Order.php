@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Order\Models;
 
+use App\Domain\GiftCard\Models\GiftCardRedemption;
 use App\Domain\Order\Enums\OrderStatus;
 use App\Domain\Payment\Models\PaymentIntent;
 use App\Domain\Promotion\Models\Promotion;
@@ -47,6 +48,7 @@ final class Order extends BaseModel
         'promotion_id',
         'discount_cents',
         'loyalty_discount_cents',
+        'gift_card_discount_cents',
         'shipping_address',
         'shipping_method_id',
         'carrier',
@@ -101,6 +103,11 @@ final class Order extends BaseModel
     public function promotion(): BelongsTo
     {
         return $this->belongsTo(Promotion::class);
+    }
+
+    public function giftCardRedemptions(): HasMany
+    {
+        return $this->hasMany(GiftCardRedemption::class);
     }
 
     /**
@@ -246,6 +253,7 @@ final class Order extends BaseModel
             'refunded_amount_cents' => 'integer',
             'discount_cents' => 'integer',
             'loyalty_discount_cents' => 'integer',
+            'gift_card_discount_cents' => 'integer',
             'base_total_cents' => 'integer',
             'exchange_rate' => 'float',
             'status' => OrderStatus::class,

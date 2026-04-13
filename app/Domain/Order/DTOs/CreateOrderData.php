@@ -22,6 +22,8 @@ final class CreateOrderData extends BaseData
         public ?int $promotionId = null,
         public int $discountCents = 0,
         public int $loyaltyDiscountCents = 0,
+        public int $giftCardDiscountCents = 0,
+        public ?string $giftCardCode = null,
         public ?int $shippingMethodId = null,
         public ?string $guestEmail = null,
         public ?string $guestName = null,

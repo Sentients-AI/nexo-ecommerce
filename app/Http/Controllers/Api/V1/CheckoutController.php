@@ -9,6 +9,7 @@ use App\Application\UseCases\Order\CheckoutUseCase;
 use App\Domain\Cart\Exceptions\EmptyCartException;
 use App\Domain\Cart\Models\Cart;
 use App\Domain\Cart\ValueObjects\CartId;
+use App\Domain\GiftCard\Exceptions\GiftCardException;
 use App\Domain\Idempotency\Actions\EnsureIdempotentAction;
 use App\Domain\Idempotency\Actions\StoreIdempotencyResultAction;
 use App\Domain\Inventory\Exceptions\InsufficientStockException;
@@ -78,6 +79,7 @@ final class CheckoutController extends Controller
                         : null,
                     guestEmail: $request->validated('guest_email'),
                     guestName: $request->validated('guest_name'),
+                    giftCardCode: $request->validated('gift_card_code'),
                 )
             );
 
@@ -110,6 +112,8 @@ final class CheckoutController extends Controller
 
             return response()->json($responseData);
 
+        } catch (GiftCardException $e) {
+            return $this->errorResponse(ErrorCode::ValidationFailed, $e->getMessage());
         } catch (EmptyCartException) {
             return $this->errorResponse(ErrorCode::CartEmpty, 'Cannot checkout with an empty cart.');
         } catch (InsufficientPointsException $e) {

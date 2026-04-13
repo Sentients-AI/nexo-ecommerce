@@ -19,6 +19,7 @@ final readonly class CheckoutRequest
         public ?int $shippingMethodId = null,
         public ?string $guestEmail = null,
         public ?string $guestName = null,
+        public ?string $giftCardCode = null,
     ) {}
 
     /**

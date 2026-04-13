@@ -26,6 +26,7 @@ final class CheckoutRequest extends FormRequest
             'shipping_method_id' => ['nullable', 'integer', 'exists:shipping_methods,id'],
             'guest_email' => $this->user() ? ['nullable'] : ['required', 'email', 'max:255'],
             'guest_name' => ['nullable', 'string', 'max:100'],
+            'gift_card_code' => ['nullable', 'string', 'max:20'],
         ];
     }
 
