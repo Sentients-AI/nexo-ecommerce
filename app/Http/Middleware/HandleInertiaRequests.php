@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Domain\User\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Context;
 use Inertia\Middleware;
@@ -43,10 +44,32 @@ final class HandleInertiaRequests extends Middleware
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
             ],
+            'impersonation' => fn () => $this->resolveImpersonation($request),
             'locale' => $locale,
             'supportedLocales' => ['en', 'ar', 'ms'],
             'isRtl' => $locale === 'ar',
             'translations' => fn () => $this->getTranslations($locale),
+        ];
+    }
+
+    /**
+     * Resolve impersonation state for the current request.
+     *
+     * @return array{active: bool, original_admin_name: string|null}
+     */
+    private function resolveImpersonation(Request $request): array
+    {
+        $originalAdminId = $request->session()->get('original_admin_id');
+
+        if (! $originalAdminId) {
+            return ['active' => false, 'original_admin_name' => null];
+        }
+
+        $admin = User::query()->find($originalAdminId);
+
+        return [
+            'active' => true,
+            'original_admin_name' => $admin?->name,
         ];
     }
 

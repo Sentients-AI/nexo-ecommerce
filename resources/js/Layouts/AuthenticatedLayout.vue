@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import MobileNav from '@/Components/Layout/MobileNav.vue';
 import CartBadge from '@/Components/Layout/CartBadge.vue';
 import NotificationBell from '@/Components/Layout/NotificationBell.vue';
@@ -12,7 +12,8 @@ import { useLocale } from '@/Composables/useLocale';
 import { useWishlist } from '@/Composables/useWishlist';
 
 const page = usePage();
-const flash = computed(() => page.props.flash);
+const flash = computed(() => page.props.flash as { success?: string; error?: string });
+const impersonation = computed(() => page.props.impersonation as { active: boolean; original_admin_name: string | null });
 const { t, localePath } = useLocale();
 const { count: wishlistCount } = useWishlist();
 
@@ -35,6 +36,25 @@ onUnmounted(() => {
 
 <template>
     <div class="min-h-screen flex flex-col bg-slate-50 dark:bg-navy-950">
+        <!-- Impersonation banner -->
+        <div
+            v-if="impersonation.active"
+            class="bg-amber-500 text-amber-950 text-sm font-medium px-4 py-2 flex items-center justify-between gap-4"
+        >
+            <span>
+                You are impersonating
+                <strong>{{ (page.props.auth as any)?.user?.name }}</strong>
+                as <strong>{{ impersonation.original_admin_name }}</strong>.
+            </span>
+            <button
+                type="button"
+                class="rounded bg-amber-950/15 hover:bg-amber-950/25 px-3 py-1 text-xs font-semibold transition-colors"
+                @click="router.post('/impersonation/stop')"
+            >
+                Stop Impersonating
+            </button>
+        </div>
+
         <!-- Navigation -->
         <nav
             class="sticky top-0 z-40 transition-all duration-300"

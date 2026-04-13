@@ -12,6 +12,7 @@ use App\Http\Controllers\Web\ContentPageController;
 use App\Http\Controllers\Web\DownloadController;
 use App\Http\Controllers\Web\FlashSaleController;
 use App\Http\Controllers\Web\HomeController;
+use App\Http\Controllers\Web\ImpersonationController;
 use App\Http\Controllers\Web\LoyaltyController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\OnboardingController;
@@ -42,6 +43,12 @@ use App\Http\Controllers\Web\VendorSettingsController;
 use App\Http\Controllers\Web\VendorStorefrontController;
 use App\Http\Controllers\Webhooks\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
+
+// Admin impersonation (super admin only)
+Route::middleware('auth')->group(function () {
+    Route::post('/impersonation/{user}/start', [ImpersonationController::class, 'start'])->name('impersonation.start');
+    Route::post('/impersonation/stop', [ImpersonationController::class, 'stop'])->name('impersonation.stop');
+});
 
 // Stripe webhook — no auth/CSRF (signature verification is done in controller)
 Route::post('/webhooks/stripe', StripeWebhookController::class)->name('webhooks.stripe');

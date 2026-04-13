@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace App\Filament\Resources\Users\Tables;
 
 use App\Domain\Role\Models\Role;
+use App\Domain\User\Models\User;
 use Filament\Actions\ViewAction;
+use Filament\Notifications\Notification;
+use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Auth;
 
 final class UsersTable
 {
@@ -61,6 +66,35 @@ final class UsersTable
                     ->searchable(),
             ])
             ->recordActions([
+                Action::make('impersonate')
+                    ->label('Impersonate')
+                    ->icon(Heroicon::OutlinedUserCircle)
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Impersonate User')
+                    ->modalDescription(fn (User $record): string => "You will be logged in as {$record->name}. A banner will appear allowing you to stop impersonating.")
+                    ->visible(fn (): bool => Auth::user()?->isSuperAdmin() ?? false)
+                    ->action(function (User $record): void {
+                        /** @var User $admin */
+                        $admin = Auth::user();
+
+                        if ($record->isSuperAdmin()) {
+                            Notification::make()
+                                ->title('Cannot impersonate another super admin.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        session([
+                            'impersonating_as' => $record->id,
+                            'original_admin_id' => $admin->id,
+                        ]);
+
+                        Auth::loginUsingId($record->id);
+                    })
+                    ->successRedirectUrl('/en'),
                 ViewAction::make(),
             ]);
     }
