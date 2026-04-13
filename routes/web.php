@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\BillingController;
 use App\Http\Controllers\Web\BundleController;
 use App\Http\Controllers\Web\CartController;
 use App\Http\Controllers\Web\CheckoutController;
+use App\Http\Controllers\Web\ContentPageController;
 use App\Http\Controllers\Web\DownloadController;
 use App\Http\Controllers\Web\FlashSaleController;
 use App\Http\Controllers\Web\HomeController;
@@ -145,6 +146,9 @@ Route::prefix('{locale}')
 
         // Order tracking (public — accessible without authentication)
         Route::match(['get', 'post'], '/track', [OrderTrackingController::class, 'show'])->name('track.show');
+
+        // Content pages (public CMS pages — must be last to avoid route conflicts)
+        Route::get('/pages/{slug}', [ContentPageController::class, 'show'])->name('pages.show');
 
         // Authentication
         Route::middleware('guest')->group(function () {
