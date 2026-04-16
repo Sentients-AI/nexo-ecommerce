@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 final class Promotion extends BaseModel
 {
@@ -240,11 +241,24 @@ final class Promotion extends BaseModel
     }
 
     /**
-     * Increment the usage count.
+     * Atomically increment the usage count, respecting the usage limit.
+     * Returns true if the increment succeeded, false if the limit was already reached.
      */
-    public function incrementUsageCount(): void
+    public function incrementUsageCount(): bool
     {
-        $this->increment('usage_count');
+        $affected = DB::table('promotions')
+            ->where('id', $this->id)
+            ->where(function ($query): void {
+                $query->whereNull('usage_limit')
+                    ->orWhereColumn('usage_count', '<', 'usage_limit');
+            })
+            ->increment('usage_count');
+
+        if ($affected > 0) {
+            $this->usage_count++;
+        }
+
+        return $affected > 0;
     }
 
     /**

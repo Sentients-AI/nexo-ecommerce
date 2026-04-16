@@ -9,6 +9,7 @@ use App\Domain\Promotion\Models\Promotion;
 use App\Domain\Promotion\Models\PromotionUsage;
 use App\Domain\User\Models\User;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 final readonly class RecordPromotionUsageAction
 {
@@ -19,10 +20,10 @@ final readonly class RecordPromotionUsageAction
         int $discountCents,
     ): PromotionUsage {
         return DB::transaction(function () use ($promotion, $user, $order, $discountCents): PromotionUsage {
-            // Increment the promotion usage count
-            $promotion->incrementUsageCount();
+            if (! $promotion->incrementUsageCount()) {
+                throw new RuntimeException('Promotion usage limit has been reached.');
+            }
 
-            // Create usage record
             return PromotionUsage::query()->create([
                 'promotion_id' => $promotion->id,
                 'user_id' => $user->id,
