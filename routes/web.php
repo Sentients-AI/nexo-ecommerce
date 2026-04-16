@@ -44,9 +44,12 @@ use App\Http\Controllers\Web\VendorStorefrontController;
 use App\Http\Controllers\Webhooks\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
-// Admin impersonation (super admin only)
-Route::middleware('auth')->group(function () {
+// Admin impersonation
+Route::middleware(['auth', 'super_admin'])->group(function () {
     Route::post('/impersonation/{user}/start', [ImpersonationController::class, 'start'])->name('impersonation.start');
+});
+
+Route::middleware('auth')->group(function () {
     Route::post('/impersonation/stop', [ImpersonationController::class, 'stop'])->name('impersonation.stop');
 });
 

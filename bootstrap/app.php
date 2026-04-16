@@ -10,6 +10,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Inertia\Inertia;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -23,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->validateCsrfTokens(except: [
             'webhooks/stripe',
+            '_boost/*',
         ]);
 
         $middleware->redirectGuestsTo(function (Request $request): string {
@@ -37,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.subdomain' => ResolveTenantFromSubdomain::class,
             'tenant.user' => ResolveTenantFromUser::class,
             'locale' => SetLocaleFromUrl::class,
+            'super_admin' => App\Http\Middleware\EnsureSuperAdmin::class,
         ]);
 
         $middleware->web(append: [
@@ -55,5 +59,20 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../app/Domain/*/Listeners',
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request): ?Response {
+            $status = $response->getStatusCode();
+
+            $handled = [400, 401, 403, 404, 405, 419, 429, 500, 503];
+
+            if (! in_array($status, $handled, true) || ! $request->inertia()) {
+                return null;
+            }
+
+            return Inertia::render('Error', [
+                'statusCode' => $status,
+                'message' => $e->getMessage(),
+            ])
+                ->toResponse($request)
+                ->setStatusCode($status);
+        });
     })->create();
