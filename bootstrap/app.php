@@ -10,9 +10,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -59,13 +59,17 @@ return Application::configure(basePath: dirname(__DIR__))
         __DIR__.'/../app/Domain/*/Listeners',
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->respond(function (Response $response, Throwable $e, Request $request): ?Response {
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request): Response {
+            if (! $request->inertia()) {
+                return $response;
+            }
+
             $status = $response->getStatusCode();
 
             $handled = [400, 401, 403, 404, 405, 419, 429, 500, 503];
 
-            if (! in_array($status, $handled, true) || ! $request->inertia()) {
-                return null;
+            if (! in_array($status, $handled, true)) {
+                return $response;
             }
 
             return Inertia::render('Error', [

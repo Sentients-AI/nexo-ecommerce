@@ -61,7 +61,7 @@ describe('impersonation stop', function (): void {
 
         // Now stop it
         $this->post('/impersonation/stop')
-            ->assertRedirect('/admin');
+            ->assertRedirect('/control-plane');
 
         expect(session('impersonating_as'))->toBeNull()
             ->and(session('original_admin_id'))->toBeNull()
@@ -71,7 +71,7 @@ describe('impersonation stop', function (): void {
     it('stop works even with no active impersonation session', function (): void {
         $this->actingAs($this->superAdmin)
             ->post('/impersonation/stop')
-            ->assertRedirect('/admin');
+            ->assertRedirect('/control-plane');
     });
 });
 
