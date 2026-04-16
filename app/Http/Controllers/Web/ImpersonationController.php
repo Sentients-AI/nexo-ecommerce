@@ -8,6 +8,7 @@ use App\Domain\User\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 final class ImpersonationController
 {
@@ -27,6 +28,15 @@ final class ImpersonationController
         $request->session()->put('original_admin_id', $admin->id);
 
         Auth::loginUsingId($user->id);
+        $request->session()->regenerate();
+
+        Log::info('impersonation.started', [
+            'admin_id' => $admin->id,
+            'admin_email' => $admin->email,
+            'target_user_id' => $user->id,
+            'target_user_email' => $user->email,
+            'ip' => $request->ip(),
+        ]);
 
         return redirect('/en');
     }
@@ -41,8 +51,14 @@ final class ImpersonationController
 
         if ($originalAdminId) {
             Auth::loginUsingId($originalAdminId);
+            $request->session()->regenerate();
+
+            Log::info('impersonation.stopped', [
+                'admin_id' => $originalAdminId,
+                'ip' => $request->ip(),
+            ]);
         }
 
-        return redirect('/admin');
+        return redirect('/control-plane');
     }
 }
