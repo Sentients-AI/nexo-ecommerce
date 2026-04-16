@@ -22,7 +22,7 @@ use App\Http\Controllers\Api\V1\WaitlistController;
 use Illuminate\Support\Facades\Route;
 
 // Cart (works with session, no auth required)
-Route::prefix('v1')->middleware(['web'])->group(function () {
+Route::prefix('v1')->middleware(['web', 'throttle:60,1'])->group(function () {
     Route::get('/cart', [CartController::class, 'show'])->name('api.v1.cart.show');
     Route::post('/cart/items', [CartController::class, 'addItem'])->name('api.v1.cart.add');
     Route::put('/cart/items/{item}', [CartController::class, 'updateItem'])->name('api.v1.cart.update');
@@ -31,47 +31,47 @@ Route::prefix('v1')->middleware(['web'])->group(function () {
 });
 
 // Shipping methods (public — available per tenant context)
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/shipping-methods', [ShippingMethodController::class, 'index'])->name('api.v1.shipping-methods.index');
 });
 
 // Bundles (public listing; add-to-cart uses web session)
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/bundles', [BundleController::class, 'index'])->name('api.v1.bundles.index');
     Route::get('/bundles/{slug}', [BundleController::class, 'show'])->name('api.v1.bundles.show');
 });
 
-Route::prefix('v1')->middleware(['web'])->group(function () {
+Route::prefix('v1')->middleware(['web', 'throttle:60,1'])->group(function () {
     Route::post('/bundles/{slug}/cart', [BundleController::class, 'addToCart'])->name('api.v1.bundles.cart');
 });
 
 // Promotion preview — public, works for guests and authenticated users
-Route::prefix('v1')->middleware(['web'])->group(function () {
+Route::prefix('v1')->middleware(['web', 'throttle:30,1'])->group(function () {
     Route::post('/promotions/preview', [PromotionController::class, 'preview'])->name('api.v1.promotions.preview');
 });
 
 // Gift card preview — public, works for guests and authenticated users
-Route::prefix('v1')->middleware(['web'])->group(function () {
+Route::prefix('v1')->middleware(['web', 'throttle:30,1'])->group(function () {
     Route::post('/gift-cards/preview', [GiftCardController::class, 'preview'])->name('api.v1.gift-cards.preview');
 });
 
 // Reviews (public listing)
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/products/{product:slug}/reviews', [ReviewController::class, 'index'])->name('api.v1.products.reviews.index');
 });
 
 // Questions (public listing)
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/products/{product:slug}/questions', [QuestionController::class, 'index'])->name('api.v1.products.questions.index');
 });
 
 // Waitlist (public — no auth required)
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['throttle:20,1'])->group(function () {
     Route::post('/products/{product:slug}/waitlist', [WaitlistController::class, 'store'])->name('api.v1.products.waitlist.store');
 });
 
 // Checkout — no auth required (supports both authenticated and guest users)
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['throttle:20,1'])->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'checkout'])->name('api.v1.checkout');
 });
 
@@ -81,7 +81,7 @@ Route::prefix('v1')->middleware(['auth:sanctum'])->group(function () {
 });
 
 // Search (public: products and categories; authenticated: orders)
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['throttle:30,1'])->group(function () {
     Route::get('/search/products', [SearchController::class, 'products'])->name('api.v1.search.products');
     Route::get('/search/categories', [SearchController::class, 'categories'])->name('api.v1.search.categories');
 });
