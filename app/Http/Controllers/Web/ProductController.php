@@ -127,6 +127,7 @@ final class ProductController extends Controller
             $product->increment('view_count');
             session()->put($sessionKey, true);
         }
+        $product->loadCount('questions');
         $product->load([
             'category',
             'stock',
@@ -135,14 +136,18 @@ final class ProductController extends Controller
             'activeVariants.stock',
         ]);
 
+        $reviewAggregates = $product->reviews()->approved()
+            ->selectRaw('rating, count(*) as count')
+            ->groupBy('rating')
+            ->get();
+
+        $reviewCount = (int) $reviewAggregates->sum('count');
         $reviewStats = [
-            'average_rating' => ($avg = $product->reviews()->approved()->avg('rating')) !== null ? round((float) $avg, 1) : null,
-            'review_count' => $product->reviews()->approved()->count(),
-            'distribution' => $product->reviews()->approved()
-                ->selectRaw('rating, count(*) as count')
-                ->groupBy('rating')
-                ->pluck('count', 'rating')
-                ->toArray(),
+            'average_rating' => $reviewCount > 0
+                ? round($reviewAggregates->sum(fn ($r) => $r->rating * $r->count) / $reviewCount, 1)
+                : null,
+            'review_count' => $reviewCount,
+            'distribution' => $reviewAggregates->pluck('count', 'rating')->toArray(),
         ];
 
         $relatedProducts = Product::query()
@@ -167,7 +172,7 @@ final class ProductController extends Controller
 
         $canonicalUrl = url("/{$locale}/products/{$product->slug}");
 
-        $questionCount = $product->questions()->count();
+        $questionCount = $product->questions_count;
 
         $now = now();
         $activeFlashSale = Promotion::query()

@@ -6,6 +6,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\User\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Context;
 use Inertia\Middleware;
 
@@ -38,7 +39,19 @@ final class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'unread_notifications_count' => fn () => $request->user()?->unreadNotifications()->count() ?? 0,
+            'unread_notifications_count' => function () use ($request): int {
+                $user = $request->user();
+
+                if (! $user) {
+                    return 0;
+                }
+
+                return (int) Cache::remember(
+                    "unread_notifications:{$user->id}",
+                    60,
+                    fn () => $user->unreadNotifications()->count(),
+                );
+            },
             'currency' => fn () => Context::get('tenant')?->getSetting('currency', config('tenancy.default_settings.currency', 'MYR')) ?? 'MYR',
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
@@ -74,18 +87,23 @@ final class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * Load translations for the given locale.
+     * Load translations for the given locale, cached forever until cleared.
      *
      * @return array<string, string>
      */
     private function getTranslations(string $locale): array
     {
-        $path = lang_path("{$locale}/ui.php");
+        return Cache::rememberForever(
+            "translations:{$locale}",
+            function () use ($locale): array {
+                $path = lang_path("{$locale}/ui.php");
 
-        if (file_exists($path)) {
-            return require $path;
-        }
+                if (file_exists($path)) {
+                    return require $path;
+                }
 
-        return require lang_path('en/ui.php');
+                return require lang_path('en/ui.php');
+            },
+        );
     }
 }
