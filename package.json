@@ -22,7 +22,9 @@
     "dependencies": {
         "@inertiajs/vue3": "^2.3.13",
         "@stripe/stripe-js": "^8.7.0",
+        "@types/dompurify": "^3.0.5",
         "@vitejs/plugin-vue": "^6.0.3",
+        "dompurify": "^3.4.0",
         "vue": "^3.5.27",
         "vue-i18n": "^11.2.8"
     }

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Head, usePage } from '@inertiajs/vue3';
+import DOMPurify from 'dompurify';
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 
@@ -48,7 +49,7 @@ const Layout = computed(() => isAuthenticated.value ? AuthenticatedLayout : Gues
                     prose-ul:text-slate-600 dark:prose-ul:text-navy-300
                     prose-ol:text-slate-600 dark:prose-ol:text-navy-300
                     prose-blockquote:border-brand-500 prose-blockquote:text-slate-500 dark:prose-blockquote:text-navy-400"
-                v-html="page.body"
+                v-html="DOMPurify.sanitize(page.body ?? '')"
             />
 
             <div v-else class="text-slate-400 dark:text-navy-600 italic">
