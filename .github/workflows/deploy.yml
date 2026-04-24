@@ -53,7 +53,7 @@ jobs:
           coverage: none
 
       - name: Install PHP dependencies
-        run: composer install --no-dev --no-interaction --optimize-autoloader --prefer-dist
+        run: composer install --no-dev --no-interaction --no-scripts --prefer-dist
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
