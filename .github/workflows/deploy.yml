@@ -69,12 +69,17 @@ jobs:
 
       # ── SSH deploy ──────────────────────────────────────────
       # Required GitHub secrets:
-      #   DEPLOY_HOST    — server hostname or IP (e.g. aljebal-albeedos.com)
-      #   DEPLOY_PORT    — SSH port (e.g. 21098)
-      #   DEPLOY_USER    — SSH username (e.g. aljedkrq)
-      #   DEPLOY_KEY     — private SSH key (RSA or Ed25519)
-      #   DEPLOY_PATH    — absolute path to the app on the server
-      #   DEPLOY_PHP     — path to PHP binary on server (e.g. /home/aljedkrq/php84)
+      #   DEPLOY_HOST     — server hostname or IP (e.g. aljebal-albeedos.com)
+      #   DEPLOY_PORT     — SSH port (e.g. 21098)
+      #   DEPLOY_USER     — SSH username (e.g. aljedkrq)
+      #   DEPLOY_KEY      — private SSH key (RSA or Ed25519)
+      #   DEPLOY_PATH     — absolute path to the Laravel app root on the server
+      #                     (e.g. /home/aljedkrq/nexo-ecommerce)
+      #   DEPLOY_PHP      — path to PHP binary on server (e.g. /home/aljedkrq/php84)
+      #   DEPLOY_WEBROOT  — absolute path to the domain's web document root
+      #                     (e.g. /home/aljedkrq/store.aljebal-albeedos.com)
+      #                     Required when the web root differs from DEPLOY_PATH/public
+      #                     Check cPanel → Domains → Document Root for the value.
       # ────────────────────────────────────────────────────────
       - name: Setup SSH agent
         uses: webfactory/ssh-agent@v0.9.0
@@ -107,14 +112,22 @@ jobs:
 
       - name: Upload built assets
         env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_HOST:    ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT:    ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER:    ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH:    ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_WEBROOT: ${{ secrets.DEPLOY_WEBROOT }}
         run: |
           rsync -az --delete -e "ssh -p $DEPLOY_PORT" \
             public/build/ \
             $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/public/build/
+
+          # If the domain's web root differs from DEPLOY_PATH/public, also
+          # place assets there so the web server can serve them directly.
+          if [ -n "$DEPLOY_WEBROOT" ]; then
+            ssh -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST \
+              "mkdir -p $DEPLOY_WEBROOT && ln -sfn $DEPLOY_PATH/public/build $DEPLOY_WEBROOT/build"
+          fi
 
       - name: Finalize deploy
         env:
