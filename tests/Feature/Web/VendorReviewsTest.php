@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Product\Models\Product;
 use App\Domain\Review\Models\Review;
 use App\Domain\Review\Models\ReviewReply;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,7 +47,7 @@ describe('GET /vendor/reviews', function (): void {
         $replied = Review::factory()->create(['is_approved' => true]);
         ReviewReply::factory()->create(['review_id' => $replied->id, 'tenant_id' => $replied->tenant_id]);
 
-        Review::factory()->create(['is_approved' => true, 'product_id' => App\Domain\Product\Models\Product::factory()]); // unreplied, different product
+        Review::factory()->create(['is_approved' => true, 'product_id' => Product::factory()]); // unreplied, different product
 
         $this->get('/vendor/reviews?filter=unreplied')
             ->assertOk()
@@ -55,9 +56,9 @@ describe('GET /vendor/reviews', function (): void {
 
     it('returns unreplied_count', function (): void {
         foreach (range(1, 3) as $_) {
-            Review::factory()->create(['is_approved' => true, 'product_id' => App\Domain\Product\Models\Product::factory()]);
+            Review::factory()->create(['is_approved' => true, 'product_id' => Product::factory()]);
         }
-        $replied = Review::factory()->create(['is_approved' => true, 'product_id' => App\Domain\Product\Models\Product::factory()]);
+        $replied = Review::factory()->create(['is_approved' => true, 'product_id' => Product::factory()]);
         ReviewReply::factory()->create(['review_id' => $replied->id, 'tenant_id' => $replied->tenant_id]);
 
         $this->get('/vendor/reviews?filter=all')

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveTenantFromSubdomain;
 use App\Http\Middleware\ResolveTenantFromUser;
@@ -40,7 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'tenant.subdomain' => ResolveTenantFromSubdomain::class,
             'tenant.user' => ResolveTenantFromUser::class,
             'locale' => SetLocaleFromUrl::class,
-            'super_admin' => App\Http\Middleware\EnsureSuperAdmin::class,
+            'super_admin' => EnsureSuperAdmin::class,
         ]);
 
         $middleware->web(append: [
@@ -60,11 +61,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ])
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->respond(function (Response $response, Throwable $e, Request $request): Response {
-            if (! $request->inertia()) {
+            if (! $request->inertia() && ! $request->wantsJson()) {
                 return $response;
             }
 
             $status = $response->getStatusCode();
+
+            if ($e instanceof HttpException) {
+                $status = $e->getStatusCode();
+            }
 
             $handled = [400, 401, 403, 404, 405, 419, 429, 500, 503];
 

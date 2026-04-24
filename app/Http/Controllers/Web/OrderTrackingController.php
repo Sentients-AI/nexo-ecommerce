@@ -41,9 +41,9 @@ final class OrderTrackingController extends Controller
             if ($order && mb_strtolower($orderEmail) === mb_strtolower($request->string('email')->value())) {
                 $trackingUrl = null;
                 if ($order->tracking_number && $order->carrier) {
-                    $carrierKey = mb_strtolower($order->carrier);
+                    $carrierKey = mb_strtolower((string) $order->carrier);
                     if (isset(self::CARRIER_TRACKING_URLS[$carrierKey])) {
-                        $trackingUrl = sprintf(self::CARRIER_TRACKING_URLS[$carrierKey], urlencode($order->tracking_number));
+                        $trackingUrl = sprintf(self::CARRIER_TRACKING_URLS[$carrierKey], urlencode((string) $order->tracking_number));
                     }
                 }
 

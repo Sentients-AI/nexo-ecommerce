@@ -3,6 +3,13 @@
    Matches the modular-ecommerce brand palette
    ============================================================ */
 
+/* Required: import Filament's compiled base theme (utilities + components) */
+@import '../../../vendor/filament/filament/resources/css/theme.css';
+
+/* Tell Tailwind v4 where to scan for Filament component classes */
+@source '../../../app/Filament/**/*';
+@source '../../../resources/views/filament/**/*';
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* ── Typography ── */

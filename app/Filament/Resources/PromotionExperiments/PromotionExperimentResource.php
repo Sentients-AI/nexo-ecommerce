@@ -87,7 +87,7 @@ final class PromotionExperimentResource extends Resource
                             return 'No promotions assigned to this experiment yet.';
                         }
 
-                        return $variants->map(function ($promo) {
+                        return $variants->map(function ($promo): string {
                             $usages = $promo->usages()->count();
                             $revenue = $promo->usages()->join('orders', 'promotion_usages.order_id', '=', 'orders.id')
                                 ->sum('orders.total_cents');

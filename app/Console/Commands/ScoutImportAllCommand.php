@@ -32,11 +32,13 @@ final class ScoutImportAllCommand extends Command
 
             if ($fresh) {
                 $this->info("Flushing {$shortName}...");
-                $this->call('scout:flush', ['model' => $model]);
+                $model::removeAllFromSearch();
             }
 
             $this->info("Importing {$shortName}...");
-            $this->call('scout:import', ['model' => $model]);
+            $model::makeAllSearchable();
+
+            $this->info("✓ {$shortName} indexed.");
         }
 
         $this->info('All searchable models imported successfully.');

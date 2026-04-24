@@ -6,10 +6,10 @@ namespace App\Filament\Resources\Users\Tables;
 
 use App\Domain\Role\Models\Role;
 use App\Domain\User\Models\User;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;

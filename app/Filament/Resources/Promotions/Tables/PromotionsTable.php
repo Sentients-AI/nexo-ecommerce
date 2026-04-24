@@ -9,12 +9,12 @@ use App\Domain\Promotion\Enums\DiscountType;
 use App\Domain\Promotion\Enums\PromotionScope;
 use App\Domain\Promotion\Models\Promotion;
 use Carbon\Carbon;
+use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -88,7 +88,7 @@ final class PromotionsTable
                     ->label('Batch')
                     ->badge()
                     ->color('info')
-                    ->formatStateUsing(fn ($state) => $state ? mb_substr($state, 0, 8).'…' : null)
+                    ->formatStateUsing(fn ($state) => $state ? mb_substr((string) $state, 0, 8).'…' : null)
                     ->placeholder('—')
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true),

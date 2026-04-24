@@ -28,7 +28,7 @@ describe('CreateGiftCardAction', function (): void {
         expect($card->initial_balance_cents)->toBe(5000)
             ->and($card->balance_cents)->toBe(5000)
             ->and($card->is_active)->toBeTrue()
-            ->and(strlen($card->code))->toBe(10);
+            ->and(mb_strlen((string) $card->code))->toBe(10);
     });
 
     it('uses a provided code', function (): void {

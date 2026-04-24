@@ -46,7 +46,7 @@ final class GiftCardResource extends Resource
                     ->maxLength(20)
                     ->helperText('Leave blank to auto-generate a 10-character code.')
                     ->afterStateHydrated(fn ($component, $state) => $component->state(mb_strtoupper((string) $state)))
-                    ->dehydrateStateUsing(fn ($state) => $state !== '' && $state !== null ? mb_strtoupper($state) : null),
+                    ->dehydrateStateUsing(fn ($state) => $state !== '' && $state !== null ? mb_strtoupper((string) $state) : null),
 
                 TextInput::make('initial_balance_cents')
                     ->label('Balance (cents)')
@@ -81,7 +81,7 @@ final class GiftCardResource extends Resource
         ];
     }
 
-    protected static function handleRecordCreation(array $data): GiftCard
+    public static function handleRecordCreation(array $data): GiftCard
     {
         return app(CreateGiftCardAction::class)->execute(
             initialBalanceCents: (int) $data['initial_balance_cents'],
