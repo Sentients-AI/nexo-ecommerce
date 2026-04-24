@@ -84,6 +84,27 @@ jobs:
       - name: Add server to known hosts
         run: ssh-keyscan -p ${{ secrets.DEPLOY_PORT }} -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Pull latest code & install PHP dependencies
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PHP:  ${{ secrets.DEPLOY_PHP }}
+        run: |
+          ssh -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST << EOF
+            set -e
+            PHP="${DEPLOY_PHP:-php}"
+            cd $DEPLOY_PATH
+
+            echo "==> Pulling latest code"
+            git pull origin main
+
+            echo "==> Installing PHP dependencies"
+            COMPOSER=\$(which composer 2>/dev/null || echo "\$HOME/bin/composer")
+            \$PHP \$COMPOSER install --no-dev --no-interaction --optimize-autoloader --prefer-dist
+          EOF
+
       - name: Upload built assets
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -91,9 +112,11 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
         run: |
-          scp -P $DEPLOY_PORT -r public/build $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/public/
+          rsync -az --delete -e "ssh -p $DEPLOY_PORT" \
+            public/build/ \
+            $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/public/build/
 
-      - name: Deploy
+      - name: Finalize deploy
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
@@ -107,13 +130,6 @@ jobs:
             set -e
             PHP="${DEPLOY_PHP:-php}"
             cd $DEPLOY_PATH
-
-            echo "==> Pulling latest code"
-            git pull origin main
-
-            echo "==> Installing PHP dependencies"
-            COMPOSER=\$(which composer 2>/dev/null || echo "\$HOME/bin/composer")
-            \$PHP \$COMPOSER install --no-dev --no-interaction --optimize-autoloader --prefer-dist
 
             echo "==> Caching configuration"
             \$PHP artisan config:cache
@@ -139,7 +155,7 @@ jobs:
               \$PHP artisan scout:import "App\Domain\Order\Models\Order"
             fi
 
-            echo "==> Done"
+            echo "==> Done (\$(ls $DEPLOY_PATH/public/build/assets/ | wc -l) assets)"
           EOF
 
       - name: Notify on failure
